@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: workhub
+
+  profiles:
+    active: dev
+    include: secret  # 민감한 정보를 application-secret.yml에서 로드
