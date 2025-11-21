@@ -55,7 +55,7 @@ public class Post {
     private String projectNodeId;
 
     @OneToMany(mappedBy = "parentPostId")
-    private List<Post> posts;
+    private List<PostFile> posts;
 
 
 }
