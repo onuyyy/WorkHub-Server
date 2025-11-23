@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "check_list_comment_file")
+@Table(name = "check_list_item_file")
 @Entity
 public class CheckListItemFile {
 

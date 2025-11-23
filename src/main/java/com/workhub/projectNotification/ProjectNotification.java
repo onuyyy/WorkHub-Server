@@ -31,7 +31,7 @@ public class ProjectNotification {
     @Column(name = "notification_content", length = 100)
     private String notificationContent;
 
-    @Column(name = "related_url", length = 50)
+    @Column(name = "related_url", length = 100)
     private String relatedUrl;
 
     @Column(name = "created_at")
