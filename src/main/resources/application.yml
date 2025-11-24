@@ -9,5 +9,10 @@ spring:
     baseline-version: 0
 
   profiles:
-    active: dev
-    include: secret  # 민감한 정보를 application-secret.yml에서 로드
+    # dev 프로필을 기본으로 사용하되 필요 시 SPRING_PROFILES_ACTIVE로 덮어쓴다
+    default: dev
+    group:
+      dev:
+        - secret
+      prod:
+        - secret

@@ -43,6 +43,13 @@ Work Hub는 웹 개발사와 고객사 간의 프로젝트 관리 및 커뮤니�
 - **배포 환경**: Docker
 - **문서화**: Swagger
 
+## CI 파이프라인
+
+- `.github/workflows/ci.yml` 워크플로우가 `main`, `develop` 대상 PR 생성·업데이트 시 자동으로 실행되어 `./gradlew clean test --build-cache`를 수행합니다.
+- 워크플로우 내부 `services`에서 Postgres 16, Redis 7 컨테이너를 띄우고 `SPRING_PROFILES_ACTIVE=test`로 테스트 전용 설정(`src/main/resources/application-test.yml`)을 적용합니다.
+- CI 실행에 필요한 Secrets: `CI_DB_PASSWORD`(데이터베이스 비밀번호). 필요 시 `TEST_DB_URL`, `TEST_DB_USERNAME`, `TEST_REDIS_*`를 추가로 등록하면 기본값 대신 사용할 수 있습니다.
+- 로컬에서 CI 환경을 재현하려면 `docker compose up postgres redis` 실행 후 `SPRING_PROFILES_ACTIVE=test ./gradlew clean test`를 수행하세요.
+
 ---
 
 ### PostgreSQL 채택 이유
