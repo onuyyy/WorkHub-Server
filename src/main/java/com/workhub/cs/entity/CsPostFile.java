@@ -1,20 +1,19 @@
 package com.workhub.cs.entity;
 
+import com.workhub.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
+import lombok.experimental.SuperBuilder;
 
 @Getter
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "cs_post_file")
 @Entity
-public class CsPostFile {
+public class CsPostFile extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,9 +28,6 @@ public class CsPostFile {
 
     @Column(name = "file_order")
     private Integer fileOrder;
-
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
 
     @Column(name = "cs_post_id")
     private Long csPostId;

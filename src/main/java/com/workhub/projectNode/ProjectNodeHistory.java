@@ -1,30 +1,27 @@
 package com.workhub.projectNode;
 
+import com.workhub.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
+import lombok.experimental.SuperBuilder;
 
 @Getter
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "project_node_history")
-public class ProjectNodeHistory {
+public class ProjectNodeHistory extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "project_node_history_id")
     private Long projectNodeHistoryId;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status")
     private Status status;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
 
     @Column(name = "comment", columnDefinition = "TEXT")
     private String comment;
