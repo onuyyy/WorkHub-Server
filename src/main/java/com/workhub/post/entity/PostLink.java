@@ -7,12 +7,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "link")
+@Table(name = "post_link")
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Link {
+public class PostLink {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

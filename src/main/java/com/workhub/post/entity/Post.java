@@ -21,10 +21,6 @@ public class Post {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne
-    @JoinColumn(name = "parent_post_id")
-    private Long parentPostId;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false)
     private PostType type;
@@ -54,8 +50,11 @@ public class Post {
     @Column(name = "project_node_id")
     private String projectNodeId;
 
-    @OneToMany(mappedBy = "parentPostId")
-    private List<PostFile> posts;
+    @ManyToOne
+    @JoinColumn(name = "parent_post_id")
+    private Post parentPostId;
 
+    @OneToMany(mappedBy = "parentPostId")
+    private List<Post> posts;
 
 }
