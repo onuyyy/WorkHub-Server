@@ -1,20 +1,21 @@
 package com.workhub.projectNotification.entity;
 
+import com.workhub.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
 
 @Getter
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "project_notification")
 @Entity
-public class ProjectNotification {
+public class ProjectNotification extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,9 +34,6 @@ public class ProjectNotification {
 
     @Column(name = "related_url", length = 100)
     private String relatedUrl;
-
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
 
     @Column(name = "read_at")
     private LocalDateTime readAt;
