@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Builder
@@ -40,4 +42,6 @@ public class CheckListComment {
     @Column(name = "check_list_item_id")
     private Long checkListItemId;
 
+    @OneToMany(mappedBy = "parent")
+    private List<CheckListComment> children = new ArrayList<>();
 }
