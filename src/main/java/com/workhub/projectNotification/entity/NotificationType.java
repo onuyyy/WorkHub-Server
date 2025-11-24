@@ -1,4 +1,4 @@
-package com.workhub.projectNotification;
+package com.workhub.projectNotification.entity;
 
 public enum NotificationType {
     REVIEW_REQUEST,

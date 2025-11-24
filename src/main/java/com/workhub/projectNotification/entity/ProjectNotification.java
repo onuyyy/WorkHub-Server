@@ -1,4 +1,4 @@
-package com.workhub.projectNotification;
+package com.workhub.projectNotification.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
