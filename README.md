@@ -10,6 +10,8 @@
 7. [코드 컨벤션](#7-코드-컨벤션)
 8. [Git 전략](#8-git-전략)
 9. [PR/코드 리뷰 프로세스](#9-pr코드-리뷰-프로세스)
+10. [기타 참고사항](#10-기타-참고사항)
+11. [로그 관리](#11-로그-관리)
 
 ---
 
@@ -441,6 +443,80 @@ refactor: UserService 코드 정리
 
 ### 모니터링
 - 에러 트래킹: Sentry 대시보드에서 확인
+
+---
+
+## 11. 로그 관리
+
+### 11-1. Docker Compose 실행
+
+```bash
+# 전체 서비스 실행 (Redis + Spring Boot)
+DB_PASSWORD=your_password docker compose up -d
+
+# 빌드 포함 실행
+DB_PASSWORD=your_password docker compose up --build -d
+
+# 로그 확인
+docker logs -f workhub-app
+
+# 서비스 중지
+docker compose down
+```
+
+### 11-2. 로그 확인 방법
+
+| 방법 | 명령어/위치 | 용도 |
+|------|------------|------|
+| **Docker Logs** | `docker logs -f workhub-app` | 실시간 디버깅 |
+| **로컬 파일** | `docker exec workhub-app tail -f /app/logs/workhub.log` | 로컬 백업 |
+| **CloudWatch Console** | AWS Console → CloudWatch → Logs → /ecs/workhub | 검색, 필터링, 분석 |
+| **CloudWatch CLI** | `aws logs tail /ecs/workhub --follow` | CLI에서 실시간 확인 |
+
+### 11-3. 로그 활용 예시
+
+#### 개발 환경
+```bash
+# 실시간 로그 확인
+docker logs -f workhub-app
+
+# ERROR만 필터링
+docker logs workhub-app 2>&1 | grep ERROR
+
+# 최근 100줄만 보기
+docker logs --tail 100 workhub-app
+```
+
+#### 운영 환경 (EC2)
+```bash
+# CloudWatch Logs 실시간 확인
+aws logs tail /ecs/workhub --follow
+
+# 특정 키워드 검색
+aws logs filter-log-events \
+  --log-group-name /ecs/workhub \
+  --filter-pattern "ERROR"
+```
+
+### 11-4. CloudWatch Logs 설정
+
+#### EC2 IAM 역할 설정
+
+1. **IAM → Roles → Create role**
+2. **Trusted entity**: AWS service → EC2
+3. **Permissions**: `CloudWatchAgentServerPolicy` 선택
+4. **Role name**: `EC2-CloudWatch-Logs-Role`
+5. **EC2 인스턴스에 역할 부여**: EC2 Console → Actions → Security → Modify IAM role
+
+#### 로그 확인
+- **Console**: CloudWatch → Logs → Log groups → `/ecs/workhub`
+- **CLI**: `aws logs tail /ecs/workhub --follow`
+
+### 11-5. 로그 파일 위치
+
+- **컨테이너 내부**: `/app/logs/workhub.log`
+- **호스트 볼륨**: Docker volume `work-hub_app_logs`
+- **CloudWatch**: Log group `/ecs/workhub`, Stream `workhub-app`
 
 ---
 

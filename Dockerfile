@@ -1,0 +1,33 @@
+# Build stage
+FROM gradle:8.5-jdk21-alpine AS build
+WORKDIR /app
+
+# 1. Copy Gradle wrapper files (rarely change)
+COPY gradle ./gradle
+COPY gradlew ./
+COPY gradle.properties* ./
+
+# 2. Copy dependency definition files (change less frequently)
+COPY build.gradle settings.gradle ./
+
+# 3. Download dependencies (cached if dependencies don't change)
+RUN gradle dependencies --no-daemon --refresh-dependencies
+
+# 4. Copy source code (changes most frequently)
+COPY src ./src
+
+# 5. Build application (only reruns if source code changes)
+RUN gradle build -x test --no-daemon --parallel
+
+# Runtime stage
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+
+# Copy built jar from build stage
+COPY --from=build /app/build/libs/*.jar app.jar
+
+# Expose port
+EXPOSE 8080
+
+# Run application
+ENTRYPOINT ["java", "-jar", "app.jar"]

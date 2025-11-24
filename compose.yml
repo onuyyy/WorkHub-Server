@@ -1,19 +1,6 @@
 name: work-hub
 
 services:
-  postgres:
-    image: 'postgres:16'
-    container_name: workhub-postgres
-    environment:
-      POSTGRES_DB: workhub
-      POSTGRES_USER: workhub
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
-    ports:
-      - '5432:5432'
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
-
   redis:
     image: 'redis:7-alpine'
     container_name: workhub-redis
@@ -23,6 +10,33 @@ services:
       - redis_data:/data
     restart: unless-stopped
 
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: workhub-app
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+    ports:
+      - '8080:8080'
+    depends_on:
+      - redis
+    restart: unless-stopped
+    # CloudWatch Logs 설정
+    logging:
+      driver: awslogs
+      options:
+        awslogs-region: ap-northeast-2
+        awslogs-group: /ecs/workhub
+        awslogs-stream: workhub-app
+        awslogs-create-group: "true"
+    # 로그 파일을 위한 볼륨 (백업용)
+    volumes:
+      - app_logs:/app/logs
+
 volumes:
-  postgres_data:
   redis_data:
+  app_logs:
