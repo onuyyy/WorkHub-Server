@@ -1,0 +1,32 @@
+spring:
+  datasource:
+    url: ${TEST_DB_URL:jdbc:postgresql://localhost:5432/workhub}
+    username: ${TEST_DB_USERNAME:workhub}
+    password: ${TEST_DB_PASSWORD:secret}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop  # CI 테스트 전용으로 매 실행마다 스키마 초기화
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        default_batch_fetch_size: 100
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+  data:
+    redis:
+      host: ${TEST_REDIS_HOST:localhost}
+      port: ${TEST_REDIS_PORT:6379}
+      password: ${TEST_REDIS_PASSWORD:}
+
+  flyway:
+    enabled: false
+
+logging:
+  level:
+    root: INFO
+
+server:
+  port: 0
