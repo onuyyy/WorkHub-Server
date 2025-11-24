@@ -1,7 +1,7 @@
 spring:
   # Database Configuration
   datasource:
-    url: jdbc:postgresql://localhost:5432/workhub
+    url: jdbc:postgresql://workhub-postgresql.cdu2uqgagcln.ap-northeast-2.rds.amazonaws.com:5432/workhub
     username: workhub
     driver-class-name: org.postgresql.Driver
 
@@ -32,6 +32,12 @@ logging:
     com.workhub: DEBUG
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n'
+  file:
+    name: /app/logs/workhub.log
+    max-size: 100MB
+    max-history: 30
 
 # Server Configuration
 server:
