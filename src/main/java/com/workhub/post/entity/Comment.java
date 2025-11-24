@@ -30,10 +30,6 @@ public class Comment {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    @ManyToOne(fetch =  FetchType.LAZY)
-    @JoinColumn( name =  "parent_comment_id", nullable = false)
-    private Comment parentComment;
-
     @Column(name = "post_id", nullable = false)
     private Long postId;
 
