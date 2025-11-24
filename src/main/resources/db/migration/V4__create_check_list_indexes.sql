@@ -38,7 +38,7 @@ CREATE INDEX idx_check_list_comment_parent_created
 -- check_list_template indexes
 -- 체크리스트 템플릿 - 해시태그별 조회
 CREATE INDEX idx_check_list_template_hashtag
-    ON check_list_template(hashtag);
+    ON check_list_template(template_hashtag);
 
 -- check_list_item_file indexes
 -- 체크리스트 아이템 첨부파일 (순서대로)

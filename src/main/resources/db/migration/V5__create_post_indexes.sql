@@ -32,10 +32,10 @@ CREATE INDEX idx_post_parent
 CREATE INDEX idx_post_file_storage_order
     ON post_file(post_id, file_order);
 
--- link indexes
+-- post_link indexes
 -- 게시글별 링크 조회
 CREATE INDEX idx_link_post
-    ON link(post_id);
+    ON post_link(post_id);
 
 -- comment indexes
 -- 대댓글 조회
