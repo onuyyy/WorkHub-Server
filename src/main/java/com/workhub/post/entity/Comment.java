@@ -43,4 +43,7 @@ public class Comment {
     @OneToMany(mappedBy = "parentComment")
     private List<Comment> comments;
 
+    @ManyToOne(fetch =  FetchType.LAZY)
+    @JoinColumn( name =  "parent_comment_id", nullable = false)
+    private Comment parentComment;
 }
