@@ -2,18 +2,12 @@ spring:
   application:
     name: workhub
 
-  flyway:
-    enabled: false
-    baseline-on-migrate: false
-    locations: classpath:db/migration
-    baseline-version: 0
-
   profiles:
-    group:
-      dev:
-        - secret
-      prod:
-        - secret
+    active: dev
+    include: secret  # 민감한 정보를 application-secret.yml에서 로드
 
-# dev 프로필을 기본으로 사용하되 필요 시 SPRING_PROFILES_ACTIVE로 덮어쓴다
-spring.profiles.default: dev
+  flyway:
+    enabled: true  # Flyway bean 생성
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+    baseline-version: 1

@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 @Entity
-@Table(name = "usertable")
+@Table(name = "user_table")
 @Getter
 @SuperBuilder
 @NoArgsConstructor

@@ -14,6 +14,10 @@ spring:
       hibernate:
         format_sql: true
         default_batch_fetch_size: 100
+        javax:
+          persistence:
+            schema-generation:
+              create-source: metadata
     database-platform: org.hibernate.dialect.PostgreSQLDialect
 
   # Redis Configuration
