@@ -1,0 +1,30 @@
+
+on:
+  pull_request:
+    branches: [ "dev" ]      # 타깃 브랜치가 dev PR
+    types: [ closed ]         # PR이 닫힐 때(merge 또는 close)
+
+jobs:
+  deploy:
+    if: >
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.base.ref == 'dev'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: SSH to EC2 and deploy
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            set -e
+            cd ${{ secrets.EC2_APP_DIR }}
+            git fetch --all
+            git reset --hard origin/dev
+            docker compose pull
+            docker compose up -d --build
+            docker compose ps
