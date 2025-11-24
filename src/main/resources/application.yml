@@ -9,10 +9,11 @@ spring:
     baseline-version: 0
 
   profiles:
-    # dev 프로필을 기본으로 사용하되 필요 시 SPRING_PROFILES_ACTIVE로 덮어쓴다
-    default: dev
     group:
       dev:
         - secret
       prod:
         - secret
+
+# dev 프로필을 기본으로 사용하되 필요 시 SPRING_PROFILES_ACTIVE로 덮어쓴다
+spring.profiles.default: dev
