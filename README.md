@@ -357,6 +357,53 @@ public User findById(Long userId) {
 - **파일 구조 통일**: BE/FE 각각의 구조 준수
 - **단일 책임 원칙**: 하나의 클래스/함수는 하나의 역할만 수행
 
+### 7-5. DTO/Entity 규칙
+
+#### Record 사용
+- **DTO는 Java Record를 사용**하여 불변 객체로 작성합니다.
+- Record는 간결한 문법과 불변성을 제공하여 안전한 데이터 전달이 가능합니다.
+
+#### Static 메서드 네이밍 규칙
+- **Record**: `from` static 메서드 사용 (Entity → DTO 변환)
+- **Entity**: `of` static 메서드 사용 (DTO → Entity 변환)
+
+```java
+// Record 예시 (DTO)
+public record UserResponse(
+    Long userId,
+    String username,
+    String email
+) {
+    // Entity → DTO 변환
+    public static UserResponse from(User user) {
+        return new UserResponse(
+            user.getId(),
+            user.getUsername(),
+            user.getEmail()
+        );
+    }
+}
+
+// Entity 예시
+@Entity
+public class User {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String username;
+    private String email;
+
+    // DTO → Entity 변환
+    public static User of(UserCreateRequest request) {
+        User user = new User();
+        user.username = request.username();
+        user.email = request.email();
+        return user;
+    }
+}
+```
+
 ---
 
 ## 8. Git 전략
