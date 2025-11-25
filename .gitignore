@@ -44,3 +44,4 @@ out/
 ### Querydsl ###
 /build/generated/
 /WORK_LOG.md
+/src/main/resources/application-local.yml
