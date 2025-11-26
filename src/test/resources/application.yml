@@ -1,0 +1,9 @@
+# src/test/resources/application.yml
+spring:
+  flyway:
+    enabled: false  # ✨ 인덱스 없어도 OK
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop  # 테스트용 테이블 생성
+    show-sql: true
