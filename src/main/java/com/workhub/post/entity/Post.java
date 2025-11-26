@@ -2,6 +2,7 @@ package com.workhub.post.entity;
 
 import com.workhub.global.entity.BaseTimeEntity;
 import com.workhub.post.record.request.PostRequest;
+import com.workhub.post.record.request.PostUpdateRequest;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -61,5 +62,13 @@ public class Post extends BaseTimeEntity {
                 .hashtag(request.hashTag())
                 .parentPostId(parent)
                 .build();
+    }
+
+    public void update(PostUpdateRequest request) {
+        this.title = request.title();
+        this.content = request.content();
+        this.type = request.postType();
+        this.postIp = request.postIp();
+        this.hashtag = request.hashTag();
     }
 }

@@ -24,9 +24,25 @@ spring:
   flyway:
     enabled: false
 
+  cloud:
+    aws:
+      region:
+        static: ap-northeast-2
+      stack:
+        auto: false
+      s3:
+        enabled: false
+        bucket: test-bucket
+      secrets-manager:
+        enabled: false
+
 logging:
   level:
     root: INFO
 
 server:
   port: 0
+
+file:
+  upload:
+    max-size: 10485760

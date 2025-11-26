@@ -2,6 +2,7 @@ package com.workhub.post.api;
 
 import com.workhub.global.response.ApiResponse;
 import com.workhub.post.record.request.PostRequest;
+import com.workhub.post.record.request.PostUpdateRequest;
 import com.workhub.post.record.response.PostResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -13,11 +14,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -98,5 +95,33 @@ public interface PostApi {
             @PathVariable Long projectId,
             @PathVariable Long nodeId,
             @PathVariable Long postId
+    );
+
+    // PATCH 요청으로 제목/내용/분류/해시태그/IP를 수정
+    @Operation(
+            summary = "게시물 수정",
+            description = "게시물 식별자로 내용을 수정합니다.",
+            parameters = {
+                    @Parameter(name = "projectId", description = "프로젝트 식별자", in = ParameterIn.PATH, required = true),
+                    @Parameter(name = "nodeId", description = "프로젝트 단계 식별자", in = ParameterIn.PATH, required = true),
+                    @Parameter(name = "postId", description = "게시물 식별자", in = ParameterIn.PATH, required = true)
+            }
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "게시물 수정 성공",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = PostResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "게시물을 찾을 수 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류 (게시물 수정 실패)")
+    })
+    @PatchMapping(value = "/{postId}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    ApiResponse<PostResponse> updatePost(
+            @PathVariable Long projectId,
+            @PathVariable Long nodeId,
+            @PathVariable Long postId,
+            @Valid @RequestBody PostUpdateRequest request
     );
 }

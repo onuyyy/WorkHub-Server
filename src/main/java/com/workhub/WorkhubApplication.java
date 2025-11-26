@@ -2,8 +2,9 @@ package com.workhub;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.flywaydb.core.Flyway;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.flyway.FlywayMigrationInitializer;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
@@ -20,7 +21,8 @@ public class WorkhubApplication {
 	 * DatabaseInitializationConfig에서 수동으로 제어하기 위함
 	 */
 	@Bean
-	public FlywayMigrationInitializer flywayInitializer(org.flywaydb.core.Flyway flyway) {
+	@ConditionalOnBean(Flyway.class)
+	public FlywayMigrationInitializer flywayInitializer(Flyway flyway) {
 		return new FlywayMigrationInitializer(flyway, (f) -> {
 			// 아무것도 하지 않음 (마이그레이션을 실행하지 않음)
 		});
