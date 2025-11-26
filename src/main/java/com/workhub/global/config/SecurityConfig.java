@@ -25,9 +25,10 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 // CSRF 보호 활성화 (세션 기반 인증에 필수)
-                .csrf(csrf -> csrf
-                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
-                )
+//                .csrf(csrf -> csrf
+//                        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+//                )
+                .csrf(csrf -> csrf.disable())
                 // CORS 설정
                 .cors(Customizer.withDefaults())
                 // 세션 관리 정책

@@ -1,5 +1,6 @@
 package com.workhub.cs.entity;
 
+import com.workhub.cs.dto.CsPostRequest;
 import com.workhub.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -37,4 +38,12 @@ public class CsPost extends BaseTimeEntity {
 
     @Column(name = "user_id")
     private Long userId;
+
+    public static CsPost of(Long projectId, CsPostRequest request) {
+        return CsPost.builder()
+                .projectId(projectId)
+                .title(request.title())
+                .content(request.content())
+                .build();
+    }
 }

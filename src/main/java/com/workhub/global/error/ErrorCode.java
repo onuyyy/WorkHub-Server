@@ -34,7 +34,10 @@ public enum ErrorCode {
     USERNAME_IS_NULL(HttpStatus.BAD_REQUEST, "M-007", "username이 null 입니다."),
     NOT_ADMIN_USER(HttpStatus.BAD_REQUEST, "M-008", "Admin User가 아닙니다."),
     WITHDRAWN_USER(HttpStatus.BAD_REQUEST, "M-009", "탈퇴한 회원입니다."),
-    DORMANT_USER(HttpStatus.BAD_REQUEST, "M-010", "휴면 계정입니다.");
+    DORMANT_USER(HttpStatus.BAD_REQUEST, "M-010", "휴면 계정입니다."),
+
+    // CS 게시판
+    NOT_EXISTS_CS_POST(HttpStatus.BAD_REQUEST, "C-001", "존재하지 않는 CS 게시물입니다.");
 
     private final HttpStatus httpStatus;
     private final String errorCode;
