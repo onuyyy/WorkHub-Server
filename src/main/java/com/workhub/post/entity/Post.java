@@ -1,6 +1,7 @@
 package com.workhub.post.entity;
 
 import com.workhub.global.entity.BaseTimeEntity;
+import com.workhub.post.record.request.PostRequest;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -51,4 +52,14 @@ public class Post extends BaseTimeEntity {
     @OneToMany(mappedBy = "parentPostId")
     private List<Post> posts;
 
+    public static Post of(Post parent, PostRequest request) {
+        return Post.builder()
+                .type(request.postType())
+                .title(request.title())
+                .content(request.content())
+                .postIp(request.postIp())
+                .hashtag(request.hashTag())
+                .parentPostId(parent)
+                .build();
+    }
 }

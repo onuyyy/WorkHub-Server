@@ -36,6 +36,8 @@ public enum ErrorCode {
     WITHDRAWN_USER(HttpStatus.BAD_REQUEST, "M-009", "탈퇴한 회원입니다."),
     DORMANT_USER(HttpStatus.BAD_REQUEST, "M-010", "휴면 계정입니다."),
 
+    // 게시물
+    POST_NOT_FOUND(HttpStatus.NOT_FOUND, "PO-001", "게시물을 찾을 수 없습니다.");
     // CS 게시판
     NOT_EXISTS_CS_POST(HttpStatus.BAD_REQUEST, "C-001", "존재하지 않는 CS 게시물입니다.");
 
