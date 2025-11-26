@@ -63,3 +63,11 @@ jobs:
 
       - name: Run tests
         run: ./gradlew clean test --build-cache
+
+      - name: Upload Test Report (if tests failed)
+        uses: actions/upload-artifact@v4 # 아티팩트 업로드 액션 사용
+        if: always() # 테스트가 실패했더라도 이 단계는 항상 실행되도록 설정
+        with:
+          name: test-reports-${{ github.sha }} # 아티팩트 파일 이름 (고유 ID 포함)
+          path: build/reports/tests/test/ # 업로드할 리포트 파일 디렉토리 경로
+          retention-days: 7 # 아티팩트 보존 기간 (선택 사항)

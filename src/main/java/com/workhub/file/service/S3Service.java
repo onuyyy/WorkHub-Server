@@ -1,5 +1,6 @@
 package com.workhub.file.service;
 
+import com.workhub.file.dto.FileUploadResponse;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
@@ -35,10 +36,48 @@ public class S3Service {
     /**
      * 클라이언트로부터 전달받은 파일을 AWS S3에 저장.
      * 파일명은 UUID를 사용하여 고유하게 생성되며, 원본 파일의 확장자는 유지.
+     * @param files 업로드할 MultipartFile List 객체
+     * @return S3에 저장된 고유 파일명 (UUID + 확장자)
+     */
+    public List<FileUploadResponse> uploadFiles(List<MultipartFile> files) {
+
+        if (files == null || files.isEmpty()) {
+            return List.of();
+        }
+
+        return files.stream()
+                .map(file -> {
+                    if (file.isEmpty()) {
+                        log.error("File upload failed: Empty file found in the list.");
+                        throw new BusinessException(ErrorCode.INVALID_FILE_NAME);
+                    }
+                    return uploadFile(file);
+                })
+                .map(fileName -> FileUploadResponse.from(fileName, ""))
+                .toList();
+    }
+
+    /**
+     * S3에 저장된 파일에 대한 서명된 URL을 생성.
+     * 파일이 존재하지 않으면 예외 발생.
+     * 생성된 URL은 10분간 유효하며, 해당 시간 동안 파일 다운로드가 가능.
+     * @param fileNames S3에 저장된 파일명 리스트
+     * @return 10분간 유효한 사전 서명된 다운로드 URL 리스트
+     */
+    public List<FileUploadResponse> getPresignedUrls(List<String> fileNames) {
+
+        return fileNames.stream()
+                .map(this::getPresignedUrl)
+                .toList();
+    }
+
+    /**
+     * 클라이언트로부터 전달받은 파일을 AWS S3에 저장.
+     * 파일명은 UUID를 사용하여 고유하게 생성되며, 원본 파일의 확장자는 유지.
      * @param file 업로드할 MultipartFile 객체
      * @return S3에 저장된 고유 파일명 (UUID + 확장자)
      */
-    public String uploadFile(MultipartFile file) {
+    private String uploadFile(MultipartFile file) {
 
         String originalFilename = file.getOriginalFilename();
 
@@ -65,15 +104,17 @@ public class S3Service {
      * @param fileName S3에 저장된 파일명
      * @return 10분간 유효한 사전 서명된 다운로드 URL
      */
-    public String getPresignedUrl(String fileName) {
+    private FileUploadResponse getPresignedUrl(String fileName) {
 
         validateFileExists(fileName);
 
         GetObjectPresignRequest presignRequest = createPresignRequest(fileName);
 
-        return s3Presigner.presignGetObject(presignRequest)
+        String presignedUrl = s3Presigner.presignGetObject(presignRequest)
                 .url()
                 .toString();
+
+        return FileUploadResponse.from(fileName, presignedUrl);
     }
 
     /**

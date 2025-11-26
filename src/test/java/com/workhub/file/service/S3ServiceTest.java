@@ -1,5 +1,6 @@
 package com.workhub.file.service;
 
+import com.workhub.file.dto.FileUploadResponse;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,7 +19,8 @@ import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 
-import java.net.URI;
+import java.net.URL;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -27,7 +29,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class S3ServiceTest {
+class S3ServiceTest {
 
     @Mock
     private S3Client s3Client;
@@ -48,8 +50,8 @@ public class S3ServiceTest {
     }
 
     @Test
-    @DisplayName("정상적인 파일 업로드 시 파일명을 반환한다")
-    void uploadFile_success_shouldReturnFileName() {
+    @DisplayName("정상적인 파일 업로드 - 단일 파일")
+    void uploadFiles_singleFile_success() {
         // given
         MockMultipartFile file = new MockMultipartFile(
                 "file",
@@ -62,17 +64,104 @@ public class S3ServiceTest {
                 .willReturn(PutObjectResponse.builder().build());
 
         // when
-        String fileName = s3Service.uploadFile(file);
+        List<FileUploadResponse> responses = s3Service.uploadFiles(List.of(file));
 
         // then
-        assertThat(fileName).isNotNull();
-        assertThat(fileName).endsWith(".jpg");
+        assertThat(responses).hasSize(1);
+        assertThat(responses.get(0).fileName()).endsWith(".jpg");
+        assertThat(responses.get(0).presignedUrl()).isEmpty();
         verify(s3Client, times(1)).putObject(any(PutObjectRequest.class), any(RequestBody.class));
     }
 
     @Test
-    @DisplayName("파일 크기가 최대 크기를 초과하면 예외를 던진다")
-    void uploadFile_fileSizeExceeded_shouldThrow() {
+    @DisplayName("정상적인 파일 업로드 - 여러 파일")
+    void uploadFiles_multipleFiles_success() {
+        // given
+        MockMultipartFile file1 = new MockMultipartFile(
+                "file",
+                "test1.jpg",
+                "image/jpeg",
+                "test content 1".getBytes()
+        );
+        MockMultipartFile file2 = new MockMultipartFile(
+                "file",
+                "test2.pdf",
+                "application/pdf",
+                "test content 2".getBytes()
+        );
+
+        given(s3Client.putObject(any(PutObjectRequest.class), any(RequestBody.class)))
+                .willReturn(PutObjectResponse.builder().build());
+
+        // when
+        List<FileUploadResponse> responses = s3Service.uploadFiles(List.of(file1, file2));
+
+        // then
+        assertThat(responses).hasSize(2);
+        assertThat(responses.get(0).fileName()).endsWith(".jpg");
+        assertThat(responses.get(1).fileName()).endsWith(".pdf");
+        verify(s3Client, times(2)).putObject(any(PutObjectRequest.class), any(RequestBody.class));
+    }
+
+    @Test
+    @DisplayName("빈 파일 리스트 업로드")
+    void uploadFiles_emptyList_returnEmptyList() {
+        // when
+        List<FileUploadResponse> responses = s3Service.uploadFiles(List.of());
+
+        // then
+        assertThat(responses).isEmpty();
+        verify(s3Client, never()).putObject(any(PutObjectRequest.class), any(RequestBody.class));
+    }
+
+    @Test
+    @DisplayName("null 파일 리스트 업로드")
+    void uploadFiles_nullList_returnEmptyList() {
+        // when
+        List<FileUploadResponse> responses = s3Service.uploadFiles(null);
+
+        // then
+        assertThat(responses).isEmpty();
+        verify(s3Client, never()).putObject(any(PutObjectRequest.class), any(RequestBody.class));
+    }
+
+    @Test
+    @DisplayName("빈 파일 업로드 시 예외 발생")
+    void uploadFiles_emptyFile_throwException() {
+        // given
+        MockMultipartFile emptyFile = new MockMultipartFile(
+                "file",
+                "empty.jpg",
+                "image/jpeg",
+                new byte[0]
+        );
+
+        // when & then
+        assertThatThrownBy(() -> s3Service.uploadFiles(List.of(emptyFile)))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_FILE_NAME);
+    }
+
+    @Test
+    @DisplayName("파일명이 없는 파일 업로드 시 예외 발생")
+    void uploadFiles_noFileName_throwException() {
+        // given
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "",
+                "image/jpeg",
+                "test content".getBytes()
+        );
+
+        // when & then
+        assertThatThrownBy(() -> s3Service.uploadFiles(List.of(file)))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_FILE_NAME);
+    }
+
+    @Test
+    @DisplayName("파일 크기 초과 시 예외 발생")
+    void uploadFiles_fileSizeExceeded_throwException() {
         // given
         byte[] largeContent = new byte[(int) (MAX_FILE_SIZE + 1)];
         MockMultipartFile file = new MockMultipartFile(
@@ -83,16 +172,14 @@ public class S3ServiceTest {
         );
 
         // when & then
-        assertThatThrownBy(() -> s3Service.uploadFile(file))
+        assertThatThrownBy(() -> s3Service.uploadFiles(List.of(file)))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FILE_SIZE_EXCEEDED);
-
-        verify(s3Client, never()).putObject(any(PutObjectRequest.class), any(RequestBody.class));
     }
 
     @Test
-    @DisplayName("허용되지 않은 파일 확장자면 예외를 던진다")
-    void uploadFile_invalidExtension_shouldThrow() {
+    @DisplayName("허용되지 않은 파일 확장자 업로드 시 예외 발생")
+    void uploadFiles_invalidExtension_throwException() {
         // given
         MockMultipartFile file = new MockMultipartFile(
                 "file",
@@ -102,16 +189,14 @@ public class S3ServiceTest {
         );
 
         // when & then
-        assertThatThrownBy(() -> s3Service.uploadFile(file))
+        assertThatThrownBy(() -> s3Service.uploadFiles(List.of(file)))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_FILE_TYPE);
-
-        verify(s3Client, never()).putObject(any(PutObjectRequest.class), any(RequestBody.class));
     }
 
     @Test
-    @DisplayName("S3 업로드 실패 시 예외를 던진다")
-    void uploadFile_s3Exception_shouldThrow() {
+    @DisplayName("S3 업로드 실패 시 예외 발생")
+    void uploadFiles_s3Exception_throwException() {
         // given
         MockMultipartFile file = new MockMultipartFile(
                 "file",
@@ -124,70 +209,14 @@ public class S3ServiceTest {
                 .willThrow(S3Exception.builder().message("S3 error").build());
 
         // when & then
-        assertThatThrownBy(() -> s3Service.uploadFile(file))
+        assertThatThrownBy(() -> s3Service.uploadFiles(List.of(file)))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FILE_UPLOAD_FAIL);
     }
 
     @Test
-    @DisplayName("정상적으로 Presigned URL을 생성한다")
-    void getPresignedUrl_success_shouldReturnUrl() throws Exception {
-        // given
-        String fileName = "test-file.jpg";
-        String expectedUrl = "https://test-bucket.s3.amazonaws.com/test-file.jpg?signed=true";
-
-        given(s3Client.headObject(any(HeadObjectRequest.class)))
-                .willReturn(HeadObjectResponse.builder().build());
-
-        PresignedGetObjectRequest presignedRequest = mock(PresignedGetObjectRequest.class);
-        given(presignedRequest.url()).willReturn(URI.create(expectedUrl).toURL());
-        given(s3Presigner.presignGetObject(any(GetObjectPresignRequest.class)))
-                .willReturn(presignedRequest);
-
-        // when
-        String url = s3Service.getPresignedUrl(fileName);
-
-        // then
-        assertThat(url).isEqualTo(expectedUrl);
-        verify(s3Client, times(1)).headObject(any(HeadObjectRequest.class));
-        verify(s3Presigner, times(1)).presignGetObject(any(GetObjectPresignRequest.class));
-    }
-
-    @Test
-    @DisplayName("존재하지 않는 파일의 Presigned URL 요청 시 예외를 던진다")
-    void getPresignedUrl_fileNotFound_shouldThrow() {
-        // given
-        String fileName = "non-existent.jpg";
-
-        given(s3Client.headObject(any(HeadObjectRequest.class)))
-                .willThrow(NoSuchKeyException.builder().message("File not found").build());
-
-        // when & then
-        assertThatThrownBy(() -> s3Service.getPresignedUrl(fileName))
-                .isInstanceOf(BusinessException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FILE_NOT_FOUND);
-
-        verify(s3Presigner, never()).presignGetObject(any(GetObjectPresignRequest.class));
-    }
-
-    @Test
-    @DisplayName("S3 접근 실패 시 예외를 던진다")
-    void getPresignedUrl_s3AccessFail_shouldThrow() {
-        // given
-        String fileName = "test.jpg";
-
-        given(s3Client.headObject(any(HeadObjectRequest.class)))
-                .willThrow(S3Exception.builder().message("Access denied").build());
-
-        // when & then
-        assertThatThrownBy(() -> s3Service.getPresignedUrl(fileName))
-                .isInstanceOf(BusinessException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FILE_ACCESS_FAIL);
-    }
-
-    @Test
-    @DisplayName("허용된 모든 확장자의 파일을 업로드할 수 있다")
-    void uploadFile_allAllowedExtensions_shouldSuccess() {
+    @DisplayName("허용된 모든 파일 확장자 업로드 성공")
+    void uploadFiles_allAllowedExtensions_success() {
         // given
         String[] allowedExtensions = {".jpg", ".jpeg", ".png", ".pdf", ".gif",
                 ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".hwp", ".hwpx"};
@@ -204,51 +233,138 @@ public class S3ServiceTest {
                     "test content".getBytes()
             );
 
-            String fileName = s3Service.uploadFile(file);
+            List<FileUploadResponse> responses = s3Service.uploadFiles(List.of(file));
 
-            assertThat(fileName).endsWith(extension);
+            assertThat(responses).hasSize(1);
+            assertThat(responses.get(0).fileName()).endsWith(extension);
         }
     }
 
     @Test
-    @DisplayName("파일명이 없는 파일은 업로드 시 예외를 던진다")
-    void uploadFile_noFileName_shouldThrowException() {
+    @DisplayName("정상적으로 단일 파일의 Presigned URL 생성")
+    void getPresignedUrls_singleFile_success() throws Exception {
         // given
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "", // 파일명이 빈 문자열
-                "image/jpeg",
-                "test content".getBytes()
-        );
+        String fileName = "test.jpg";
+        String expectedUrl = "https://test-bucket.s3.amazonaws.com/test.jpg?signed=true";
 
-        // when & then
-        assertThatThrownBy(() -> s3Service.uploadFile(file))
-                .isInstanceOf(BusinessException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_FILE_TYPE);
+        given(s3Client.headObject(any(HeadObjectRequest.class)))
+                .willReturn(HeadObjectResponse.builder().build());
 
-        // S3 클라이언트는 호출되지 않아야 함
-        verify(s3Client, never()).putObject(any(PutObjectRequest.class), any(RequestBody.class));
+        PresignedGetObjectRequest presignedRequest = mock(PresignedGetObjectRequest.class);
+        given(presignedRequest.url()).willReturn(new URL(expectedUrl));
+        given(s3Presigner.presignGetObject(any(GetObjectPresignRequest.class)))
+                .willReturn(presignedRequest);
+
+        // when
+        List<FileUploadResponse> responses = s3Service.getPresignedUrls(List.of(fileName));
+
+        // then
+        assertThat(responses).hasSize(1);
+        assertThat(responses.get(0).fileName()).isEqualTo(fileName);
+        assertThat(responses.get(0).presignedUrl()).isEqualTo(expectedUrl);
+        verify(s3Client, times(1)).headObject(any(HeadObjectRequest.class));
+        verify(s3Presigner, times(1)).presignGetObject(any(GetObjectPresignRequest.class));
     }
 
     @Test
-    @DisplayName("대소문자가 섞인 확장자도 정상적으로 처리한다")
-    void uploadFile_mixedCaseExtension_shouldSuccess() {
+    @DisplayName("정상적으로 여러 파일의 Presigned URL 생성")
+    void getPresignedUrls_multipleFiles_success() throws Exception {
         // given
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "test.JPG",
-                "image/jpeg",
-                "test content".getBytes()
-        );
+        List<String> fileNames = List.of("file1.jpg", "file2.pdf", "file3.png");
 
-        given(s3Client.putObject(any(PutObjectRequest.class), any(RequestBody.class)))
-                .willReturn(PutObjectResponse.builder().build());
+        given(s3Client.headObject(any(HeadObjectRequest.class)))
+                .willReturn(HeadObjectResponse.builder().build());
+
+        PresignedGetObjectRequest presignedRequest1 = mock(PresignedGetObjectRequest.class);
+        PresignedGetObjectRequest presignedRequest2 = mock(PresignedGetObjectRequest.class);
+        PresignedGetObjectRequest presignedRequest3 = mock(PresignedGetObjectRequest.class);
+
+        given(presignedRequest1.url()).willReturn(new URL("https://test-bucket.s3.amazonaws.com/file1.jpg?signed=true"));
+        given(presignedRequest2.url()).willReturn(new URL("https://test-bucket.s3.amazonaws.com/file2.pdf?signed=true"));
+        given(presignedRequest3.url()).willReturn(new URL("https://test-bucket.s3.amazonaws.com/file3.png?signed=true"));
+
+        given(s3Presigner.presignGetObject(any(GetObjectPresignRequest.class)))
+                .willReturn(presignedRequest1, presignedRequest2, presignedRequest3);
 
         // when
-        String fileName = s3Service.uploadFile(file);
+        List<FileUploadResponse> responses = s3Service.getPresignedUrls(fileNames);
 
         // then
-        assertThat(fileName).isNotNull();
-        assertThat(fileName.toLowerCase()).endsWith(".jpg");
+        assertThat(responses).hasSize(3);
+        assertThat(responses.get(0).fileName()).isEqualTo("file1.jpg");
+        assertThat(responses.get(0).presignedUrl()).contains("file1.jpg");
+        assertThat(responses.get(1).fileName()).isEqualTo("file2.pdf");
+        assertThat(responses.get(1).presignedUrl()).contains("file2.pdf");
+        assertThat(responses.get(2).fileName()).isEqualTo("file3.png");
+        assertThat(responses.get(2).presignedUrl()).contains("file3.png");
+        verify(s3Client, times(3)).headObject(any(HeadObjectRequest.class));
+        verify(s3Presigner, times(3)).presignGetObject(any(GetObjectPresignRequest.class));
+    }
+
+    @Test
+    @DisplayName("빈 파일명 리스트로 Presigned URL 요청 시 빈 리스트 반환")
+    void getPresignedUrls_emptyList_returnEmptyList() {
+        // when
+        List<FileUploadResponse> responses = s3Service.getPresignedUrls(List.of());
+
+        // then
+        assertThat(responses).isEmpty();
+        verify(s3Client, never()).headObject(any(HeadObjectRequest.class));
+        verify(s3Presigner, never()).presignGetObject(any(GetObjectPresignRequest.class));
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 파일의 Presigned URL 요청 시 예외 발생")
+    void getPresignedUrls_fileNotFound_throwException() {
+        // given
+        String fileName = "non-existent.jpg";
+
+        given(s3Client.headObject(any(HeadObjectRequest.class)))
+                .willThrow(NoSuchKeyException.builder().message("File not found").build());
+
+        // when & then
+        assertThatThrownBy(() -> s3Service.getPresignedUrls(List.of(fileName)))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FILE_NOT_FOUND);
+
+        verify(s3Presigner, never()).presignGetObject(any(GetObjectPresignRequest.class));
+    }
+
+    @Test
+    @DisplayName("S3 접근 실패 시 예외 발생")
+    void getPresignedUrls_s3AccessFail_throwException() {
+        // given
+        String fileName = "test.jpg";
+
+        given(s3Client.headObject(any(HeadObjectRequest.class)))
+                .willThrow(S3Exception.builder().message("Access denied").build());
+
+        // when & then
+        assertThatThrownBy(() -> s3Service.getPresignedUrls(List.of(fileName)))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FILE_ACCESS_FAIL);
+
+        verify(s3Presigner, never()).presignGetObject(any(GetObjectPresignRequest.class));
+    }
+
+    @Test
+    @DisplayName("여러 파일 중 하나가 존재하지 않으면 예외 발생")
+    void getPresignedUrls_oneFileNotFound_throwException() throws Exception {
+        // given
+        List<String> fileNames = List.of("file1.jpg", "non-existent.pdf");
+
+        given(s3Client.headObject(any(HeadObjectRequest.class)))
+                .willReturn(HeadObjectResponse.builder().build())
+                .willThrow(NoSuchKeyException.builder().message("File not found").build());
+
+        PresignedGetObjectRequest presignedRequest = mock(PresignedGetObjectRequest.class);
+        given(presignedRequest.url()).willReturn(new URL("https://test-bucket.s3.amazonaws.com/file1.jpg"));
+        given(s3Presigner.presignGetObject(any(GetObjectPresignRequest.class)))
+                .willReturn(presignedRequest);
+
+        // when & then
+        assertThatThrownBy(() -> s3Service.getPresignedUrls(fileNames))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FILE_NOT_FOUND);
     }
 }
