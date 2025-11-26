@@ -38,6 +38,8 @@ public enum ErrorCode {
 
     // 게시물
     POST_NOT_FOUND(HttpStatus.NOT_FOUND, "PO-001", "게시물을 찾을 수 없습니다.");
+    // CS 게시판
+    NOT_EXISTS_CS_POST(HttpStatus.BAD_REQUEST, "C-001", "존재하지 않는 CS 게시물입니다.");
 
     private final HttpStatus httpStatus;
     private final String errorCode;
