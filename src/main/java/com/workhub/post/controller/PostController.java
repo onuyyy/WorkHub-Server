@@ -1,7 +1,7 @@
 package com.workhub.post.controller;
 
 import com.workhub.global.response.ApiResponse;
-import com.workhub.post.record.request.PostCreateRequest;
+import com.workhub.post.record.request.PostRequest;
 import com.workhub.post.record.response.PostResponse;
 import com.workhub.post.entity.Post;
 import com.workhub.post.service.PostService;
@@ -29,7 +29,7 @@ public class PostController {
     public ApiResponse<PostResponse> create(
             @PathVariable Long projectId,
             @PathVariable Long nodeId,
-            @Valid @RequestBody PostCreateRequest request) {
+            @Valid @RequestBody PostRequest request) {
         Post created = postService.create(request);
         return ApiResponse.created(PostResponse.from(created), "게시글이 생성되었습니다.");
     }

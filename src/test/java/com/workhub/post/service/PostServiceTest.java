@@ -5,7 +5,7 @@ import com.workhub.global.error.exception.BusinessException;
 import com.workhub.post.entity.HashTag;
 import com.workhub.post.entity.Post;
 import com.workhub.post.entity.PostType;
-import com.workhub.post.record.request.PostCreateRequest;
+import com.workhub.post.record.request.PostRequest;
 import com.workhub.post.repository.PostRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,7 +31,7 @@ public class PostServiceTest {
     @Test
     @DisplayName("부모 게시물이 없으면 예외를 던진다.")
     void create_withParentNotFound_shouldThrow() {
-        PostCreateRequest request = new PostCreateRequest(
+        PostRequest request = new PostRequest(
                 "title", PostType.NOTICE, "content", "11.1.1",1L, HashTag.DESIGN
         );
         given(postRepository.findById(1L)).willReturn(Optional.empty());
@@ -54,7 +54,7 @@ public class PostServiceTest {
                 .build();
         given(postRepository.save(any(Post.class))).willReturn(saved);
 
-        PostCreateRequest request = new PostCreateRequest(
+        PostRequest request = new PostRequest(
                 "title", PostType.NOTICE, "content", "127.0.0.1", null, HashTag.DESIGN
         );
 
