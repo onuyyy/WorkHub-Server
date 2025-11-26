@@ -9,6 +9,9 @@ public enum ErrorCode {
     // test
     TEST(HttpStatus.BAD_REQUEST, "001", "test error"),
 
+    // server Error
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "002", "서버에러, 에러가 계속될경우 담당자에게 문의 바랍니다."),
+
     // 인증 && 인가 (세션 기반)
     SESSION_EXPIRED(HttpStatus.UNAUTHORIZED, "A-001", "세션이 만료되었습니다."),
     INVALID_SESSION(HttpStatus.UNAUTHORIZED, "A-002", "유효하지 않은 세션입니다."),
@@ -39,7 +42,17 @@ public enum ErrorCode {
     // 게시물
     POST_NOT_FOUND(HttpStatus.NOT_FOUND, "PO-001", "게시물을 찾을 수 없습니다."),
     // CS 게시판
-    NOT_EXISTS_CS_POST(HttpStatus.BAD_REQUEST, "C-001", "존재하지 않는 CS 게시물입니다.");
+    NOT_EXISTS_CS_POST(HttpStatus.BAD_REQUEST, "C-001", "존재하지 않는 CS 게시물입니다."),
+
+    // AWS S3
+    // 파일 관련 에러
+    FILE_UPLOAD_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "F-001", "파일 업로드에 실패했습니다."),
+    FILE_DELETE_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "F-002", "파일 삭제에 실패했습니다."),
+    FILE_NOT_FOUND(HttpStatus.NOT_FOUND, "F-003", "파일을 찾을 수 없습니다."),
+    INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "F-004", "지원하지 않는 파일 형식입니다."),
+    INVALID_FILE_NAME(HttpStatus.BAD_REQUEST, "F-005", "파일 이름이 누락되었습니다."),
+    FILE_SIZE_EXCEEDED(HttpStatus.BAD_REQUEST, "F-006", "파일 크기가 제한을 초과했습니다."),
+    FILE_ACCESS_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "F-007", "파일 접근에 실패했습니다."),;
 
     private final HttpStatus httpStatus;
     private final String errorCode;
