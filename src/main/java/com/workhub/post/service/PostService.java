@@ -33,10 +33,12 @@ public class PostService {
         return postRepository.save(Post.of(parent, request));
     }
 
+    @Transactional(readOnly = true)
     public List<Post> findAll(){
         return postRepository.findAll();
     }
 
+    @Transactional(readOnly = true)
     public Post findById(Long id) {
         return postRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
