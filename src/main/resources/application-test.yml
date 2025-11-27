@@ -21,9 +21,6 @@ spring:
       port: ${TEST_REDIS_PORT:6379}
       password: ${TEST_REDIS_PASSWORD:}
 
-  flyway:
-    enabled: false
-
   cloud:
     aws:
       region:
