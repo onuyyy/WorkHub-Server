@@ -38,8 +38,8 @@ public class CsPostService {
     public CsPostResponse create(Long projectId, CsPostRequest request) {
 
         // todo : userId 검증 필요 + 추후 시큐리티 연동 후 구현 예정
-        projectValidator.validateExistsProject(projectId);
-        projectValidator.validateContractEndDate(projectId);
+        /*projectValidator.validateExistsProject(projectId);
+        projectValidator.validateContractEndDate(projectId);*/
 
         CsPost csPost = csPostRepository.save(CsPost.of(projectId, request));
 
@@ -67,8 +67,8 @@ public class CsPostService {
     public CsPostResponse update(Long projectId, Long csPostId, CsPostUpdateRequest request) {
         // todo : 게시글을 등록한 사용자가 맞는지 확인 필요 + 추후 시큐리티 연동 후 구현 예정
 
-        projectValidator.validateExistsProject(projectId);
-        projectValidator.validateContractEndDate(projectId);
+        /*projectValidator.validateExistsProject(projectId);
+        projectValidator.validateContractEndDate(projectId);*/
 
         CsPost csPost = getAndValidatePost(projectId, csPostId);
 

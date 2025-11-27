@@ -1,21 +1,11 @@
 spring:
-  # AWS S3 Configuration
-  cloud:
-    aws:
-      region:
-        static: ap-northeast-2
-      credentials:
-        instance-profile: true
-      s3:
-        bucket: bucket-workhub
-
   # Database Configuration
   datasource:
     url: jdbc:postgresql://workhub-rds-dev.che6yu200xcs.ap-northeast-2.rds.amazonaws.com:5432/workhub
     username: workhub
     driver-class-name: org.postgresql.Driver
-  # JPA Configuration
 
+  # JPA Configuration
   jpa:
     hibernate:
       ddl-auto: update
@@ -48,7 +38,6 @@ logging:
     name: /app/logs/workhub.log
     max-size: 100MB
     max-history: 30
-
 
 # Server Configuration
 server:
