@@ -41,8 +41,6 @@ public class CsPostFile extends BaseTimeEntity {
     @Column(name = "cs_post_id")
     private Long csPostId;
 
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
 
     public static CsPostFile of(Long csPostId, CsPostFileRequest request) {
         return CsPostFile.builder()
