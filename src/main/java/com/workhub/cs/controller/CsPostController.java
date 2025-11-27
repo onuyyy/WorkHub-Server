@@ -2,6 +2,7 @@ package com.workhub.cs.controller;
 
 import com.workhub.cs.dto.CsPostRequest;
 import com.workhub.cs.dto.CsPostResponse;
+import com.workhub.cs.dto.CsPostUpdateRequest;
 import com.workhub.cs.service.CsPostService;
 import com.workhub.global.response.ApiResponse;
 import jakarta.validation.Valid;
@@ -35,5 +36,24 @@ public class CsPostController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.created(response, "CS 게시글이 작성되었습니다."));
+    }
+
+    /**
+     * 프로젝트의 CS 게시글을 수정한다.
+     * @param projectId
+     * @param csPostUpdateRequest
+     * @return
+     */
+    @PatchMapping("/{projectId}/csPosts/{csPostId}")
+    public ResponseEntity<ApiResponse<CsPostResponse>> updateCsPost(
+            @PathVariable Long projectId,
+            @PathVariable Long csPostId,
+            @Valid @RequestBody CsPostUpdateRequest csPostUpdateRequest
+    ) {
+        // todo : security 기능 구현시 userId security에서 꺼내서 넘겨야 함
+        CsPostResponse response = csPostService.update(projectId, csPostId, csPostUpdateRequest);
+
+        return ResponseEntity
+                .ok(ApiResponse.success(response, "CS 게시글이 수정되었습니다."));
     }
 }

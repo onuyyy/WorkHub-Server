@@ -1,7 +1,10 @@
 package com.workhub.cs.entity;
 
 import com.workhub.cs.dto.CsPostFileRequest;
+import com.workhub.cs.dto.CsPostFileUpdateRequest;
 import com.workhub.global.entity.BaseTimeEntity;
+import com.workhub.global.error.ErrorCode;
+import com.workhub.global.error.exception.BusinessException;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -38,6 +41,9 @@ public class CsPostFile extends BaseTimeEntity {
     @Column(name = "cs_post_id")
     private Long csPostId;
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     public static CsPostFile of(Long csPostId, CsPostFileRequest request) {
         return CsPostFile.builder()
                 .csPostId(csPostId)
@@ -45,5 +51,38 @@ public class CsPostFile extends BaseTimeEntity {
                 .fileName(request.fileName())
                 .fileOrder(request.fileOrder())
                 .build();
+    }
+
+    public static CsPostFile of(Long csPostId, CsPostFileUpdateRequest request) {
+        return CsPostFile.builder()
+                .csPostId(csPostId)
+                .fileUrl(request.fileUrl())
+                .fileName(request.fileName())
+                .fileOrder(request.fileOrder())
+                .build();
+    }
+
+    /**
+     * 파일 삭제
+     */
+    public void markDeleted() {
+        this.deletedAt = (LocalDateTime.now());
+    }
+
+    /**
+     * 파일 순서 변경
+     */
+    public void updateOrder(Integer newOrder) {
+        this.fileOrder = validateOrder(newOrder);
+    }
+
+    /**
+     * 순서 검증
+     */
+    private static Integer validateOrder(Integer order) {
+        if (order == null || order < 0) {
+            throw new BusinessException(ErrorCode.INVALID_CS_POST_FILE_ORDER);
+        }
+        return order;
     }
 }

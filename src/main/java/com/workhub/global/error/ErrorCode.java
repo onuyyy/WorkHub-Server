@@ -41,8 +41,16 @@ public enum ErrorCode {
 
     // 게시물
     POST_NOT_FOUND(HttpStatus.NOT_FOUND, "PO-001", "게시물을 찾을 수 없습니다."),
+
     // CS 게시판
     NOT_EXISTS_CS_POST(HttpStatus.BAD_REQUEST, "C-001", "존재하지 않는 CS 게시물입니다."),
+    NOT_MATCHED_PROJECT_CS_POST(HttpStatus.BAD_REQUEST, "C-002", "잘못된 프로젝트의 게시글입니다."),
+    INVALID_CS_POST_TITLE(HttpStatus.BAD_REQUEST, "C-003", "Title이 없습니다."),
+    INVALID_CS_POST_CONTENT(HttpStatus.BAD_REQUEST, "C-004", "Content가 없습니다."),
+    NOT_EXISTS_CS_POST_FILE(HttpStatus.BAD_REQUEST, "C-005", "존재하지 않는 CS 파일입니다."),
+    INVALID_CS_POST_FILE_UPDATE(HttpStatus.BAD_REQUEST, "C-006", "잘못된 파일 업데이트 요청입니다."),
+    INVALID_CS_POST_FILE_ORDER(HttpStatus.BAD_REQUEST, "C-007", "파일 순서(fileOrder)는 0 이상의 값이어야 합니다."),
+    INVALID_FILE_UPDATE(HttpStatus.BAD_REQUEST, "C-008", "잘못된 파일 수정 요청입니다."),
 
     // AWS S3
     // 파일 관련 에러
@@ -52,7 +60,7 @@ public enum ErrorCode {
     INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "F-004", "지원하지 않는 파일 형식입니다."),
     INVALID_FILE_NAME(HttpStatus.BAD_REQUEST, "F-005", "파일 이름이 누락되었습니다."),
     FILE_SIZE_EXCEEDED(HttpStatus.BAD_REQUEST, "F-006", "파일 크기가 제한을 초과했습니다."),
-    FILE_ACCESS_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "F-007", "파일 접근에 실패했습니다."),;
+    FILE_ACCESS_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "F-007", "파일 접근에 실패했습니다.");
 
     private final HttpStatus httpStatus;
     private final String errorCode;

@@ -3,6 +3,7 @@ package com.workhub.cs.service;
 import com.workhub.cs.dto.CsPostFileRequest;
 import com.workhub.cs.dto.CsPostRequest;
 import com.workhub.cs.dto.CsPostResponse;
+import com.workhub.cs.dto.CsPostUpdateRequest;
 import com.workhub.cs.entity.CsPost;
 import com.workhub.cs.repository.CsPostFileRepository;
 import com.workhub.cs.repository.CsPostRepository;
@@ -10,12 +11,16 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -61,9 +66,9 @@ public class CsPostServiceTest {
         CsPostResponse result = csPostService.create(projectId, request);
 
         // then
-        assertThat(result.getCsPostId()).isEqualTo(1L);
-        assertThat(result.getTitle()).isEqualTo("문의 제목");
-        assertThat(result.getContent()).isEqualTo("문의 내용");
+        assertThat(result.csPostId()).isEqualTo(1L);
+        assertThat(result.title()).isEqualTo("문의 제목");
+        assertThat(result.content()).isEqualTo("문의 내용");
 
         verify(csPostRepository).save(any(CsPost.class));
         verify(csPostFileRepository, never()).saveAll(anyList());
@@ -122,5 +127,57 @@ public class CsPostServiceTest {
                         post.getTitle().equals("문의 제목") &&
                         post.getContent().equals("문의 내용")
         ));
+    }
+
+    @Test
+    @DisplayName("CS 게시글 수정 시 정상 저장되는지 검증한다.")
+    void givenCsPostUpdateRequest_whenUpdate_thenSuccess() {
+
+        // given
+        Long projectId = 1L;
+        Long csPostId = 2L; // 수정된 글 번호
+
+        CsPost original = CsPost.builder()
+                .csPostId(csPostId)
+                .projectId(projectId)
+                .title("원래 제목")
+                .content("원래 내용")
+                .build();
+
+        LocalDateTime originalUpdatedAt = LocalDateTime.now().minusMinutes(1);
+        ReflectionTestUtils.setField(original, "updatedAt", originalUpdatedAt);
+
+        CsPostUpdateRequest request =
+                new CsPostUpdateRequest("수정 제목", "수정 완료", List.of());
+
+        CsPost updated = CsPost.builder()
+                .csPostId(csPostId)
+                .projectId(projectId)
+                .title("수정 제목")
+                .content("수정 완료")
+                .build();
+
+        when(csPostRepository.findById(csPostId))
+                .thenReturn(Optional.of(original));
+
+        when(csPostRepository.save(any(CsPost.class)))
+                .thenReturn(updated);
+
+        ArgumentCaptor<CsPost> captor = ArgumentCaptor.forClass(CsPost.class);
+
+        // when
+        CsPostResponse result = csPostService.update(projectId, csPostId, request);
+
+        // then
+        assertThat(result.title()).isEqualTo("수정 제목");
+        assertThat(result.content()).isEqualTo("수정 완료");
+
+        verify(csPostRepository).save(captor.capture());
+        CsPost savedEntity = captor.getValue();
+
+        assertThat(savedEntity.getTitle()).isEqualTo("수정 제목");
+        assertThat(savedEntity.getContent()).isEqualTo("수정 완료");
+
+        verify(csPostRepository).findById(csPostId);
     }
 }
