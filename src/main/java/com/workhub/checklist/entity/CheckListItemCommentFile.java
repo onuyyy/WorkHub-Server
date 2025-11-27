@@ -10,19 +10,19 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "check_list_comment_file")
+@Table(name = "check_list_item_comment_file")
 @Entity
-public class CheckListCommentFile {
+public class CheckListItemCommentFile {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "comment_file_id")
-    private Long checkListCommentFileId;
+    @Column(name = "coment_file_id")
+    private Long commentFileId;
 
-    @Column(name = "file_url", length = 255, nullable = false)
+    @Column(name = "file_url", length = 255)
     private String fileUrl;
 
-    @Column(name = "file_name", length = 255, nullable = false)
+    @Column(name = "file_name", length = 255)
     private String fileName;
 
     @Column(name = "file_order")

@@ -7,7 +7,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-
 @Entity
 @Table(name = "company")
 @Getter
@@ -18,7 +17,8 @@ public class Company extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer companyid;
+    @Column(name = "company_id")
+    private Long companyId;
 
     @Column(name = "company_name", nullable = false, length = 50)
     private String companyName;

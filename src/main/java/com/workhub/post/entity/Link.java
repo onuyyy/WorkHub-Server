@@ -7,23 +7,24 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "post_link")
+@Table(name = "link")
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PostLink {
+public class Link {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "link_id")
     private Long linkId;
 
-    @Column(name = "reference_link", nullable = false, length = 255)
+    @Column(name = "reference_link", length = 255)
     private String referenceLink;
 
-    @Column(name = "link_description", nullable = true, length = 255)
+    @Column(name = "link_description", length = 255)
     private String linkDescription;
 
-    @Column(name = "post_id", nullable = false)
-    private String post;
+    @Column(name = "post_id")
+    private Long postId;
 }

@@ -1,4 +1,4 @@
-package com.workhub.projectNode;
+package com.workhub.checklist.entity;
 
 import com.workhub.global.entity.BaseHistoryEntity;
 import jakarta.persistence.Entity;
@@ -10,7 +10,7 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @SuperBuilder
 @NoArgsConstructor
+@Table(name = "check_list_item_history")
 @Entity
-@Table(name = "project_node_history")
-public class ProjectNodeHistory extends BaseHistoryEntity {
+public class CheckListItemHistory extends BaseHistoryEntity {
 }

@@ -33,8 +33,7 @@ public class ProjectDevMember {
     @Column(name = "user_id")
     private Long userId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "project_id")
-    private Project projectId;
+    @Column(name = "project_id")
+    private Long projectId;
 
 }

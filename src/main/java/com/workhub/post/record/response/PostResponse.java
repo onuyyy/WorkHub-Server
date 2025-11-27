@@ -4,7 +4,7 @@ import com.workhub.post.entity.Post;
 import com.workhub.post.entity.PostType;
 
 public record PostResponse (
-        Long id,
+        Long postId,
         PostType postType,
         String title,
         String content,
@@ -13,12 +13,12 @@ public record PostResponse (
 ){
     public static PostResponse from(Post post) {
         return new PostResponse(
-                post.getId(),
+                post.getPostId(),
                 post.getType(),
                 post.getTitle(),
                 post.getContent(),
                 post.getPostIp(),
-                post.getParentPostId() != null ? post.getParentPostId().getId() : null
+                post.getParentPostId() != null ? post.getParentPostId() : null
         );
     }
 }

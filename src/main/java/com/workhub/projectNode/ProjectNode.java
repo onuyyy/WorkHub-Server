@@ -2,7 +2,9 @@ package com.workhub.projectNode;
 
 import com.workhub.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
@@ -17,13 +19,13 @@ public class ProjectNode extends BaseTimeEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "project_node_id")
-    private Long ProjectNodeId;
+    private Long projectNodeId;
 
     @Column(name = "title", length = 50)
-    private String Title;
+    private String title;
 
     @Column(name = "description", columnDefinition = "TEXT")
-    private String Description;
+    private String description;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "node_status")
@@ -33,7 +35,7 @@ public class ProjectNode extends BaseTimeEntity {
     @Column(name = "confirm_status")
     private ConfirmStatus confirmStatus;
 
-    @Column(name = "reject_text")
+    @Column(name = "reject_text", length = 255)
     private String rejectText;
 
     @Column(name = "confirmed_at")
@@ -50,4 +52,5 @@ public class ProjectNode extends BaseTimeEntity {
 
     @Column(name = "user_id")
     private Long userId;
+
 }

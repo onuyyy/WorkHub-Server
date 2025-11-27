@@ -32,7 +32,7 @@ public class ProjectNotification extends BaseTimeEntity {
     @Column(name = "notification_content", length = 100)
     private String notificationContent;
 
-    @Column(name = "related_url", length = 100)
+    @Column(name = "related_url", length = 50)
     private String relatedUrl;
 
     @Column(name = "read_at")

@@ -1,4 +1,4 @@
-package com.workhub.projectNode;
+package com.workhub.project.entity;
 
 import com.workhub.global.entity.BaseHistoryEntity;
 import jakarta.persistence.Entity;
@@ -11,6 +11,6 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @NoArgsConstructor
 @Entity
-@Table(name = "project_node_history")
-public class ProjectNodeHistory extends BaseHistoryEntity {
+@Table(name = "project_client_member_history")
+public class ProjectClientMemberHistory extends BaseHistoryEntity {
 }

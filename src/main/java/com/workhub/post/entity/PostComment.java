@@ -7,33 +7,28 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-import java.util.List;
-
 @Entity
-@Table(name = "comment")
+@Table(name = "post_comment")
 @Getter
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Comment extends BaseTimeEntity {
+public class PostComment extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "comment_id")
     private Long commentId;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(name = "content", columnDefinition = "TEXT")
     private String content;
 
-    @Column(name = "post_id", nullable = false)
+    @Column(name = "post_id")
     private Long postId;
 
-    @Column(name = "user_id", nullable = false)
+    @Column(name = "user_id")
     private Long userId;
 
-    @OneToMany(mappedBy = "parentComment")
-    private List<Comment> comments;
-
-    @ManyToOne(fetch =  FetchType.LAZY)
-    @JoinColumn( name =  "parent_comment_id", nullable = false)
-    private Comment parentComment;
+    @Column(name = "parent_comment_id")
+    private Long parentCommentId;
 }

@@ -2,8 +2,8 @@ package com.workhub.post.service;
 
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
-import com.workhub.post.record.request.PostRequest;
 import com.workhub.post.entity.Post;
+import com.workhub.post.record.request.PostRequest;
 import com.workhub.post.record.request.PostUpdateRequest;
 import com.workhub.post.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,12 +26,12 @@ public class PostService {
      */
     @Transactional
     public Post create(PostRequest request){
-        Post parent = request.parentPostId() == null
-                ? null
-                : postRepository.findById(request.parentPostId())
-                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
+        Long parentPostId = request.parentPostId();
+        if (parentPostId != null && !postRepository.existsById(parentPostId)) {
+            throw new BusinessException(ErrorCode.POST_NOT_FOUND);
+        }
 
-        return postRepository.save(Post.of(parent, request));
+        return postRepository.save(Post.of(parentPostId, request));
     }
 
     @Transactional(readOnly = true)

@@ -46,7 +46,7 @@ public class PostServiceTest {
     @DisplayName("정상적으로 게시글을 생성하면 저장된 엔티티를 반환한다")
     void create_success_shouldReturnSavedPost() {
         Post saved = Post.builder()
-                .id(10L)
+                .postId(10L)
                 .title("title")
                 .content("content")
                 .type(PostType.NOTICE)
@@ -61,7 +61,7 @@ public class PostServiceTest {
 
         Post result = postService.create(request);
 
-        assertThat(result.getId()).isEqualTo(10L);
+        assertThat(result.getPostId()).isEqualTo(10L);
         assertThat(result.getTitle()).isEqualTo("title");
     }
 
@@ -83,7 +83,7 @@ public class PostServiceTest {
     @DisplayName("게시글을 수정하면 필드가 갱신된다")
     void update_success_shouldChangeFields() {
         Post origin = Post.builder()
-                .id(1L)
+                .postId(1L)
                 .title("old")
                 .content("old")
                 .type(PostType.GENERAL)

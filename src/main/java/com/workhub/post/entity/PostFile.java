@@ -17,17 +17,18 @@ public class PostFile extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "post_file_id")
     private Long postFileId;
 
-    @Column(name = "file_url", nullable = false)
+    @Column(name = "file_url", length = 255)
     private String fileUrl;
 
-    @Column(name = "file_name", nullable = false)
-    private String fileName; // 파일 이름
+    @Column(name = "file_name", length = 255)
+    private String fileName;
 
-    @Column(name = "post_id", nullable = false)
-    private Long post; // 게시글
+    @Column(name = "post_id")
+    private Long postId;
 
     @Column(name = "file_order")
-    private Integer fileOrder; // 파일 순서
+    private Integer fileOrder;
 }

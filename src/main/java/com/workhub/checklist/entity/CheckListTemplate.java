@@ -26,6 +26,7 @@ public class CheckListTemplate {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "template_hashtag")
     private HashTag hashTag;
 

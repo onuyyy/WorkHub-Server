@@ -8,6 +8,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import java.time.LocalDateTime;
+
 @Getter
 @SuperBuilder
 @NoArgsConstructor
@@ -29,6 +31,9 @@ public class CsPostFile extends BaseTimeEntity {
 
     @Column(name = "file_order")
     private Integer fileOrder;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 
     @Column(name = "cs_post_id")
     private Long csPostId;
