@@ -24,8 +24,8 @@ public class PostController implements PostApi {
      * 프로젝트/노드별 게시글을 생성한다.
      *
      * @param projectId 프로젝트 식별자
-     * @param nodeId 프로젝트 단계 식별자
-     * @param request 게시글 생성 요청
+     * @param nodeId    프로젝트 단계 식별자
+     * @param request   게시글 생성 요청
      * @return ApiResponse 래퍼로 감싼 생성 결과
      */
     @Override
@@ -38,12 +38,13 @@ public class PostController implements PostApi {
         Post created = postService.create(request);
         return ApiResponse.created(PostResponse.from(created), "게시글이 생성되었습니다.");
     }
+
     /**
      * 프로젝트/노드별 게시글 목록을 조회한다.
      *
      * @param projectId 프로젝트 식별자 (추후 검증 로직에 사용 예정)
      * @param nodeId    프로젝트 단계 식별자 (추후 검증 로직에 사용 예정)
-     * @return ApiResponse<List<PostResponse>>
+     * @return ApiResponse<List < PostResponse>>
      */
     @Override
     @GetMapping
@@ -77,5 +78,23 @@ public class PostController implements PostApi {
                                                 @Valid @RequestBody PostUpdateRequest request) {
         Post updated = postService.update(postId, request);
         return ApiResponse.success(PostResponse.from(updated), "게시물 수정에 성공했습니다.");
+    }
+
+    /**
+     * 게시글을 삭제한다. 프로젝트/노드 검증은 추후 추가된다.
+     *
+     * @param projectId 프로젝트 식별자
+     * @param nodeId    프로젝트 단계 식별자
+     * @param postId    게시글 식별자
+     * @return 삭제 결과 메시지
+     */
+    @Override
+    @DeleteMapping("/{postId}")
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResponse<Void> deletePost(@PathVariable Long projectId,
+                                        @PathVariable Long nodeId,
+                                        @PathVariable Long postId) {
+        postService.delete(postId);
+        return ApiResponse.success(null, "게시물 삭제에 성공했습니다.");
     }
 }

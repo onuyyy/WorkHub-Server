@@ -21,6 +21,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(SpringExtension.class)
 public class PostServiceTest {
@@ -101,6 +102,34 @@ public class PostServiceTest {
         assertThat(result.getTitle()).isEqualTo("new");
         assertThat(result.getPostIp()).isEqualTo("2.2.2.2");
     }
+
+    @Test
+    @DisplayName("삭제 대상 게시글이 없으면 예외를 던진다")
+    void delete_withPostNotFound_shouldThrow() {
+        given(postRepository.findById(99L)).willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> postService.delete(99L))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.POST_NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("게시글 삭제 성공 시 repository.delete가 호출된다")
+    void delete_success_shouldInvokeDelete() {
+        Post existing = Post.builder()
+                .postId(1L)
+                .title("title")
+                .content("content")
+                .type(PostType.NOTICE)
+                .build();
+        given(postRepository.findById(1L)).willReturn(Optional.of(existing));
+
+        postService.delete(1L);
+
+        // 삭제 로직이 repository.delete 호출까지 수행했는지 검증한다.
+        verify(postRepository).delete(existing);
+    }
+
 
 
 }

@@ -117,6 +117,7 @@ public interface PostApi {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "게시물을 찾을 수 없음"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류 (게시물 수정 실패)")
     })
+
     @PatchMapping(value = "/{postId}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     ApiResponse<PostResponse> updatePost(
             @PathVariable Long projectId,
@@ -124,4 +125,31 @@ public interface PostApi {
             @PathVariable Long postId,
             @Valid @RequestBody PostUpdateRequest request
     );
+
+    @Operation(
+            summary = "게시물 삭제",
+            description = "게시물 식별자로 게시물을 삭제합니다.",
+            parameters = {
+                    @Parameter(name = "projectId", in = ParameterIn.PATH, required = true, description = "프로젝트 식별자"),
+                    @Parameter(name = "nodeId", in = ParameterIn.PATH, required = true, description = "프로젝트 단계 식별자"),
+                    @Parameter(name = "postId", in = ParameterIn.PATH, required = true, description = "게시물 식별자")
+            }
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "게시물 삭제 성공",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ApiResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "게시물을 찾을 수 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류 (게시물 삭제 실패)")
+    })
+    @DeleteMapping(value = "/{postId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    ApiResponse<Void> deletePost(
+            @PathVariable Long projectId,
+            @PathVariable Long nodeId,
+            @PathVariable Long postId
+    );
+
 }
