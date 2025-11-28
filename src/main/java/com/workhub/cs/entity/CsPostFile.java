@@ -45,7 +45,6 @@ public class CsPostFile extends BaseTimeEntity {
     public static CsPostFile of(Long csPostId, CsPostFileRequest request) {
         return CsPostFile.builder()
                 .csPostId(csPostId)
-                .fileUrl(request.fileUrl())
                 .fileName(request.fileName())
                 .fileOrder(request.fileOrder())
                 .build();
@@ -54,7 +53,6 @@ public class CsPostFile extends BaseTimeEntity {
     public static CsPostFile of(Long csPostId, CsPostFileUpdateRequest request) {
         return CsPostFile.builder()
                 .csPostId(csPostId)
-                .fileUrl(request.fileUrl())
                 .fileName(request.fileName())
                 .fileOrder(request.fileOrder())
                 .build();
