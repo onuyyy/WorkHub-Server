@@ -51,8 +51,8 @@ CREATE TABLE project (
     project_title VARCHAR(50) NOT NULL,
     project_description TEXT NOT NULL,
     status VARCHAR(20) NOT NULL,
-    contract_start_date TIMESTAMP NULL,
-    contract_end_date TIMESTAMP NULL,
+    contract_start_date DATE NULL,
+    contract_end_date DATE NULL,
     client_company_id BIGINT NOT NULL,
     created_at TIMESTAMP NULL,
     updated_at TIMESTAMP NULL
@@ -72,8 +72,8 @@ CREATE TABLE project_history (
 
 CREATE TABLE project_dev_member (
     project_dev_member_id BIGSERIAL PRIMARY KEY,
-    assigned_at TIMESTAMP NULL,
-    removed_at TIMESTAMP NULL,
+    assigned_at DATE NULL,
+    removed_at DATE NULL,
     dev_part VARCHAR(10) NOT NULL,
     user_id BIGINT NOT NULL,
     project_id BIGINT NOT NULL
@@ -93,8 +93,8 @@ CREATE TABLE project_dev_member_history (
 
 CREATE TABLE project_client_member (
     project_client_member_id BIGSERIAL PRIMARY KEY,
-    assigned_at TIMESTAMP NULL,
-    removed_at TIMESTAMP NULL,
+    assigned_at DATE NULL,
+    removed_at DATE NULL,
     role VARCHAR(20) NOT NULL,
     user_id BIGINT NOT NULL,
     project_id BIGINT NOT NULL
