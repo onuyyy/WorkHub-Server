@@ -8,7 +8,7 @@
 -- user_table indexes
 -- 회사 기준 사용자 리스트 조회 + 상태, 역할 필터 + 최근순 (삭제되지 않은 사용자만)
 CREATE INDEX idx_user_company_status_role_created
-    ON user_table(company_id, status, user_role, created_at DESC)
+    ON user_table(company_id, status, created_at DESC)
     WHERE deleted_at IS NULL;
 
 -- 역할 기준 사용자 리스트 조회 (삭제되지 않은 사용자만)
@@ -37,21 +37,9 @@ CREATE INDEX idx_company_name
     ON company(company_name);
 
 -- user_history indexes
--- 사용자별 변경 이력 조회 (최신순)
-CREATE INDEX idx_user_history_target_action_updated
-    ON user_history(target_id, action_type, updated_at DESC);
-
 -- 변경자별 이력 조회
 CREATE INDEX idx_user_history_updated_by
     ON user_history(updated_by, updated_at DESC);
-
--- 생성자별 이력 조회
-CREATE INDEX idx_user_history_created_by
-    ON user_history(created_by, updated_at DESC);
-
--- 시간순 전체 조회
-CREATE INDEX idx_user_history_updated_at
-    ON user_history(updated_at DESC);
 
 -- ============================================
 -- Project Tables Indexes
@@ -66,10 +54,6 @@ CREATE INDEX idx_project_client_company_created
 CREATE INDEX idx_project_status_created
     ON project(status, created_at DESC);
 
--- 계약 기간 검색 (특정 기간 내 계약)
-CREATE INDEX idx_project_contract_dates
-    ON project(contract_start_date, contract_end_date);
-
 -- 전체 프로젝트 최신순 조회
 CREATE INDEX idx_project_created
     ON project(created_at DESC);
@@ -82,14 +66,6 @@ CREATE INDEX idx_project_history_target_action_updated
 -- 변경자별 이력 조회
 CREATE INDEX idx_project_history_updated_by
     ON project_history(updated_by, updated_at DESC);
-
--- 생성자별 이력 조회
-CREATE INDEX idx_project_history_created_by
-    ON project_history(created_by, updated_at DESC);
-
--- 시간순 전체 조회
-CREATE INDEX idx_project_history_updated_at
-    ON project_history(updated_at DESC);
 
 -- project_dev_member indexes
 -- user_id와 project_id를 복합 UNIQUE로 설정
@@ -107,27 +83,14 @@ CREATE INDEX idx_project_dev_member_user_assigned
     ON project_dev_member(user_id, assigned_at DESC)
     WHERE removed_at IS NULL;
 
--- 개발 파트별 멤버 조회
-CREATE INDEX idx_project_dev_member_dev_part_assigned
-    ON project_dev_member(dev_part, assigned_at DESC)
-    WHERE removed_at IS NULL;
-
 -- project_dev_member_history indexes
--- 개발팀 멤버별 변경 이력 조회 (최신순)
+-- project_dev_member 변경 이력 조회 (최신순)
 CREATE INDEX idx_project_dev_member_history_target_action_updated
     ON project_dev_member_history(target_id, action_type, updated_at DESC);
 
 -- 변경자별 이력 조회
 CREATE INDEX idx_project_dev_member_history_updated_by
     ON project_dev_member_history(updated_by, updated_at DESC);
-
--- 생성자별 이력 조회
-CREATE INDEX idx_project_dev_member_history_created_by
-    ON project_dev_member_history(created_by, updated_at DESC);
-
--- 시간순 전체 조회
-CREATE INDEX idx_project_dev_member_history_updated_at
-    ON project_dev_member_history(updated_at DESC);
 
 -- project_client_member indexes
 -- 프로젝트별 고객사 멤버 조회 (권한별, 배정일순)
@@ -146,21 +109,13 @@ CREATE INDEX idx_project_client_member_project_role
     WHERE removed_at IS NULL;
 
 -- project_client_member_history indexes
--- 클라이언트 멤버별 변경 이력 조회 (최신순)
+--  project_client_member 변경 이력 조회 (최신순)
 CREATE INDEX idx_project_client_member_history_target_action_updated
     ON project_client_member_history(target_id, action_type, updated_at DESC);
 
 -- 변경자별 이력 조회
 CREATE INDEX idx_project_client_member_history_updated_by
     ON project_client_member_history(updated_by, updated_at DESC);
-
--- 생성자별 이력 조회
-CREATE INDEX idx_project_client_member_history_created_by
-    ON project_client_member_history(created_by, updated_at DESC);
-
--- 시간순 전체 조회
-CREATE INDEX idx_project_client_member_history_updated_at
-    ON project_client_member_history(updated_at DESC);
 
 -- ============================================
 -- Project Node Tables Indexes
@@ -176,11 +131,6 @@ CREATE INDEX idx_project_node_active
 CREATE INDEX idx_project_node_pending
     ON project_node(project_id, confirm_status, node_order)
     WHERE deleted_at IS NULL AND confirm_status = 'PENDING';
-
--- 담당자별 단계 조회
-CREATE INDEX idx_project_node_user
-    ON project_node(user_id, created_at DESC)
-    WHERE deleted_at IS NULL;
 
 -- 유저가 담당한 프로젝트 노드 조회
 CREATE INDEX idx_project_node_user_project_created
@@ -201,14 +151,6 @@ CREATE INDEX idx_project_node_history_target_action_updated
 CREATE INDEX idx_project_node_history_updated_by
     ON project_node_history(updated_by, updated_at DESC);
 
--- 생성자별 이력 조회
-CREATE INDEX idx_project_node_history_created_by
-    ON project_node_history(created_by, updated_at DESC);
-
--- 시간순 전체 조회
-CREATE INDEX idx_project_node_history_updated_at
-    ON project_node_history(updated_at DESC);
-
 -- ============================================
 -- Post Tables Indexes
 -- ============================================
@@ -225,10 +167,6 @@ CREATE INDEX idx_post_project_node
 -- 최신 게시글 조회 (생성일 기준)
 CREATE INDEX idx_post_created
     ON post(created_at DESC);
-
--- 프로젝트 단계 + 생성일 복합 인덱스
-CREATE INDEX idx_post_project_node_created
-    ON post(project_node_id, created_at DESC);
 
 -- 게시글 타입별 조회
 CREATE INDEX idx_post_type
@@ -251,14 +189,6 @@ CREATE INDEX idx_post_history_target_action_updated
 CREATE INDEX idx_post_history_updated_by
     ON post_history(updated_by, updated_at DESC);
 
--- 생성자별 이력 조회
-CREATE INDEX idx_post_history_created_by
-    ON post_history(created_by, updated_at DESC);
-
--- 시간순 전체 조회
-CREATE INDEX idx_post_history_updated_at
-    ON post_history(updated_at DESC);
-
 -- post_comment indexes
 -- 게시글별 댓글 최신순 조회
 CREATE INDEX idx_post_comment_post_created
@@ -267,10 +197,6 @@ CREATE INDEX idx_post_comment_post_created
 -- 대댓글 조회
 CREATE INDEX idx_post_comment_parent
     ON post_comment(parent_comment_id);
-
--- 댓글 생성일 조회
-CREATE INDEX idx_post_comment_created
-    ON post_comment(created_at DESC);
 
 -- 사용자별 작성 댓글 조회
 CREATE INDEX idx_post_comment_user
@@ -284,14 +210,6 @@ CREATE INDEX idx_comment_history_target_action_updated
 -- 변경자별 이력 조회
 CREATE INDEX idx_comment_history_updated_by
     ON comment_history(updated_by, updated_at DESC);
-
--- 생성자별 이력 조회
-CREATE INDEX idx_comment_history_created_by
-    ON comment_history(created_by, updated_at DESC);
-
--- 시간순 전체 조회
-CREATE INDEX idx_comment_history_updated_at
-    ON comment_history(updated_at DESC);
 
 -- post_file indexes
 -- 게시글 파일 조회 (순서대로, 삭제되지 않은 파일만)
@@ -337,14 +255,6 @@ CREATE INDEX idx_cs_post_history_target_action_updated
 -- 변경자별 이력 조회
 CREATE INDEX idx_cs_post_history_updated_by
     ON cs_post_history(updated_by, updated_at DESC);
-
--- 생성자별 이력 조회
-CREATE INDEX idx_cs_post_history_created_by
-    ON cs_post_history(created_by, updated_at DESC);
-
--- 시간순 전체 조회
-CREATE INDEX idx_cs_post_history_updated_at
-    ON cs_post_history(updated_at DESC);
 
 -- cs_post_file indexes
 -- CS 게시글 파일 조회 (순서대로, 삭제되지 않은 파일만)
@@ -392,14 +302,6 @@ CREATE INDEX idx_cs_qna_history_target_action_updated
 CREATE INDEX idx_cs_qna_history_updated_by
     ON cs_qna_history(updated_by, updated_at DESC);
 
--- 생성자별 이력 조회
-CREATE INDEX idx_cs_qna_history_created_by
-    ON cs_qna_history(created_by, updated_at DESC);
-
--- 시간순 전체 조회
-CREATE INDEX idx_cs_qna_history_updated_at
-    ON cs_qna_history(updated_at DESC);
-
 -- ============================================
 -- CheckList Tables Indexes
 -- ============================================
@@ -419,17 +321,9 @@ CREATE INDEX idx_check_list_template_hashtag
 CREATE INDEX idx_check_list_item_list_order
     ON check_list_item(check_list_id, item_order);
 
--- 담당자별 체크리스트 아이템 조회
-CREATE INDEX idx_check_list_item_user
-    ON check_list_item(user_id, confirmed_at DESC);
-
 -- 템플릿별 아이템 조회
 CREATE INDEX idx_check_list_item_template
     ON check_list_item(template_id);
-
--- 동의 여부별 필터링
-CREATE INDEX idx_check_list_item_confirm
-    ON check_list_item(check_list_id, confirm, item_order);
 
 -- check_list_item_history indexes
 -- 체크리스트 아이템별 변경 이력 조회 (최신순)
@@ -439,19 +333,6 @@ CREATE INDEX idx_check_list_item_history_target_action_updated
 -- 변경자별 이력 조회
 CREATE INDEX idx_check_list_item_history_updated_by
     ON check_list_item_history(updated_by, updated_at DESC);
-
--- 생성자별 이력 조회
-CREATE INDEX idx_check_list_item_history_created_by
-    ON check_list_item_history(created_by, updated_at DESC);
-
--- 시간순 전체 조회
-CREATE INDEX idx_check_list_item_history_updated_at
-    ON check_list_item_history(updated_at DESC);
-
--- check_list_item_file indexes
--- 체크리스트 아이템 첨부파일 (순서대로)
-CREATE INDEX idx_check_list_item_file_item_order
-    ON check_list_item_file(check_list_item_id, file_order);
 
 -- check_list_item_comment indexes
 -- 체크리스트 아이템별 댓글 조회 (최신순, 삭제되지 않은 것만)
@@ -464,11 +345,6 @@ CREATE INDEX idx_check_list_item_comment_parent_created
     ON check_list_item_comment(parent_cl_comment_id, created_at DESC)
     WHERE parent_cl_comment_id IS NOT NULL AND deleted_at IS NULL;
 
--- 삭제된 댓글 조회
-CREATE INDEX idx_check_list_item_comment_deleted
-    ON check_list_item_comment(deleted_at DESC)
-    WHERE deleted_at IS NOT NULL;
-
 -- check_list_item_comment_history indexes
 -- 체크리스트 댓글별 변경 이력 조회 (최신순)
 CREATE INDEX idx_check_list_item_comment_history_target_action_updated
@@ -478,32 +354,9 @@ CREATE INDEX idx_check_list_item_comment_history_target_action_updated
 CREATE INDEX idx_check_list_item_comment_history_updated_by
     ON check_list_item_comment_history(updated_by, updated_at DESC);
 
--- 생성자별 이력 조회
-CREATE INDEX idx_check_list_item_comment_history_created_by
-    ON check_list_item_comment_history(created_by, updated_at DESC);
-
--- 시간순 전체 조회
-CREATE INDEX idx_check_list_item_comment_history_updated_at
-    ON check_list_item_comment_history(updated_at DESC);
-
--- check_list_item_comment_file indexes
--- 체크리스트 댓글 파일 (순서대로)
-CREATE INDEX idx_check_list_item_comment_file_comment_order
-    ON check_list_item_comment_file(cl_comment_id, file_order);
-
 -- ============================================
 -- Notification Tables Indexes
 -- ============================================
-
--- project_notification constraint
--- 정확히 하나의 FK만 NOT NULL이어야 함
-ALTER TABLE project_notification
-    ADD CONSTRAINT chk_notification_exactly_one_related CHECK (
-        (CASE WHEN project_node_id IS NOT NULL THEN 1 ELSE 0 END +
-         CASE WHEN cs_qna_id IS NOT NULL THEN 1 ELSE 0 END +
-         CASE WHEN post_id IS NOT NULL THEN 1 ELSE 0 END +
-         CASE WHEN comment_id IS NOT NULL THEN 1 ELSE 0 END) = 1
-        );
 
 -- project_notification indexes
 -- 사용자별 알림 조회 (최신순)
