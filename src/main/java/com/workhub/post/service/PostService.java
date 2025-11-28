@@ -57,4 +57,17 @@ public class PostService {
         target.update(request);
         return target;
     }
+
+    /**
+     * 게시글을 삭제한다.
+     *
+     * @param postId 삭제할 게시글 식별자
+     * @throws BusinessException 게시글이 존재하지 않을 때
+     */
+    @Transactional
+    public void delete(Long postId){
+        Post target = postRepository.findById(postId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
+        postRepository.delete(target);
+    }
 }

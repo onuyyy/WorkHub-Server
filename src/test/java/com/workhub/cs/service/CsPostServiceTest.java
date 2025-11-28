@@ -81,8 +81,8 @@ public class CsPostServiceTest {
         Long projectId = 1L;
 
         List<CsPostFileRequest> fileRequests = Arrays.asList(
-                new CsPostFileRequest("url1", "file1", 1),
-                new CsPostFileRequest("url2", "file2", 2)
+                new CsPostFileRequest("url1",  1),
+                new CsPostFileRequest("url2",  2)
         );
 
         CsPostRequest request =

@@ -1,5 +1,6 @@
 package com.workhub.cs.controller;
 
+import com.workhub.cs.api.CsPostApi;
 import com.workhub.cs.dto.CsPostRequest;
 import com.workhub.cs.dto.CsPostResponse;
 import com.workhub.cs.dto.CsPostUpdateRequest;
@@ -8,13 +9,12 @@ import com.workhub.global.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/projects")
-public class CsPostController {
+@RequestMapping("/api/v1/projects/{projectId}/csPosts")
+public class CsPostController implements CsPostApi {
 
     private final CsPostService csPostService;
 
@@ -24,8 +24,10 @@ public class CsPostController {
      * @param csPostRequest 게시글 생성 요청
      * @return CsPostResponse
      */
-    @PostMapping("/{projectId}/csPosts")
-    public ResponseEntity<ApiResponse<CsPostResponse>> createCsPost(
+    @Override
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApiResponse<CsPostResponse> createCsPost(
             @PathVariable Long projectId,
             @Valid @RequestBody CsPostRequest csPostRequest
     ) {
@@ -33,9 +35,7 @@ public class CsPostController {
         // todo : security 기능 구현시 userId security에서 꺼내서 넘겨야 함
         CsPostResponse response = csPostService.create(projectId, csPostRequest);
 
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(ApiResponse.created(response, "CS 게시글이 작성되었습니다."));
+        return ApiResponse.created(response, "CS 게시글이 작성되었습니다.");
     }
 
     /**
@@ -44,8 +44,10 @@ public class CsPostController {
      * @param csPostUpdateRequest
      * @return
      */
-    @PatchMapping("/{projectId}/csPosts/{csPostId}")
-    public ResponseEntity<ApiResponse<CsPostResponse>> updateCsPost(
+    @Override
+    @PatchMapping("/{csPostId}")
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResponse<CsPostResponse> updateCsPost(
             @PathVariable Long projectId,
             @PathVariable Long csPostId,
             @Valid @RequestBody CsPostUpdateRequest csPostUpdateRequest
@@ -53,7 +55,6 @@ public class CsPostController {
         // todo : security 기능 구현시 userId security에서 꺼내서 넘겨야 함
         CsPostResponse response = csPostService.update(projectId, csPostId, csPostUpdateRequest);
 
-        return ResponseEntity
-                .ok(ApiResponse.success(response, "CS 게시글이 수정되었습니다."));
+        return ApiResponse.success(response, "CS 게시글이 수정되었습니다.");
     }
 }
