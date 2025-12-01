@@ -36,10 +36,25 @@ public class PostServiceTest {
                 "title", PostType.NOTICE, "content", "11.1.1",1L, HashTag.DESIGN
         );
         given(postRepository.existsByPostIdAndDeletedAtIsNull(1L)).willReturn(false);
+        given(postRepository.existsByPostIdIncludingDeleted(1L)).willReturn(false);
 
         assertThatThrownBy(() -> postService.create(request))
                 .isInstanceOf(BusinessException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.POST_NOT_FOUND);
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PARENT_POST_NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("부모 게시글이 이미 삭제된 경우 예외를 던진다")
+    void create_withDeletedParent_shouldThrowAlreadyDeleted() {
+        PostRequest request = new PostRequest(
+                "title", PostType.NOTICE, "content", "11.1.1",1L, HashTag.DESIGN
+        );
+        given(postRepository.existsByPostIdAndDeletedAtIsNull(1L)).willReturn(false);
+        given(postRepository.existsByPostIdIncludingDeleted(1L)).willReturn(true);
+
+        assertThatThrownBy(() -> postService.create(request))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PARENT_POST_NOT_FOUND);
     }
 
     @Test
@@ -103,6 +118,16 @@ public class PostServiceTest {
         given(postRepository.findByPostIdAndDeletedAtIsNull(99L)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> postService.delete(99L))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.POST_NOT_FOUND);
+    }
+
+    @Test
+    @DisplayName("이미 삭제된 게시글을 삭제하려 하면 예외를 던진다")
+    void delete_withAlreadyDeletedPost_shouldThrow() {
+        given(postRepository.findByPostIdAndDeletedAtIsNull(1L)).willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> postService.delete(1L))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.POST_NOT_FOUND);
     }

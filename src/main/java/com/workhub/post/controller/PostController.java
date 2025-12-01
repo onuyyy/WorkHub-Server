@@ -2,15 +2,23 @@ package com.workhub.post.controller;
 
 import com.workhub.global.response.ApiResponse;
 import com.workhub.post.api.PostApi;
+import com.workhub.post.entity.HashTag;
+import com.workhub.post.entity.Post;
+import com.workhub.post.entity.PostType;
 import com.workhub.post.record.request.PostRequest;
 import com.workhub.post.record.request.PostUpdateRequest;
+import com.workhub.post.record.response.PostPageResponse;
 import com.workhub.post.record.response.PostResponse;
-import com.workhub.post.entity.Post;
+import com.workhub.post.record.response.PostSummaryResponse;
 import com.workhub.post.service.PostService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -45,19 +53,34 @@ public class PostController implements PostApi {
      *
      * @param projectId 프로젝트 식별자 (추후 검증 로직에 사용 예정)
      * @param nodeId    프로젝트 단계 식별자 (추후 검증 로직에 사용 예정)
-     * @return ApiResponse<List < PostResponse>>
+     * @return ApiResponse<PostPageResponse>
      */
     @Override
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<ApiResponse<List<PostResponse>>> getPosts(
+    public ResponseEntity<ApiResponse<PostPageResponse>> getPosts(
             @PathVariable Long projectId,
-            @PathVariable Long nodeId) {
-        List<PostResponse> responses = postService.findAll()
+            @PathVariable Long nodeId,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) PostType postType,
+            @RequestParam(required = false) HashTag hashTag,
+            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+
+        /**
+         * 검색 조건과 Pageable 정보를 기반으로 게시글 목록을 조회한다.
+         */
+        Page<Post> page = postService.search(nodeId, keyword, postType, hashTag, pageable);
+        List<PostSummaryResponse> posts = page.getContent()
                 .stream()
-                .map(PostResponse::from)
+                .map(PostSummaryResponse::from)
                 .toList();
-        return ApiResponse.success(responses, "게시글 목록 조회에 성공했습니다.");
+
+        /**
+         * 조회 결과를 응답 DTO로 변환한다.
+         */
+        PostPageResponse response = PostPageResponse.of(posts, page);
+
+        return ApiResponse.success(response, "게시글 목록 조회에 성공했습니다.");
     }
 
     @Override

@@ -41,7 +41,8 @@ public enum ErrorCode {
 
     // 게시물
     POST_NOT_FOUND(HttpStatus.NOT_FOUND, "PO-001", "게시물을 찾을 수 없습니다."),
-    ALREADY_DELETED_POST(HttpStatus.BAD_REQUEST, "PO-002", "이미 삭재된 게시글입니다."),
+    PARENT_POST_NOT_FOUND(HttpStatus.BAD_REQUEST, "PO-002", "부모 게시글을 찾을 수 없습니다."),
+    ALREADY_DELETED_POST(HttpStatus.BAD_REQUEST, "PO-003", "이미 삭제된 게시글입니다."),
 
 
     // CS 게시판

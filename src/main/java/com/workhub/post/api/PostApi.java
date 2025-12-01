@@ -1,23 +1,27 @@
 package com.workhub.post.api;
 
 import com.workhub.global.response.ApiResponse;
+import com.workhub.post.entity.HashTag;
+import com.workhub.post.entity.PostType;
 import com.workhub.post.record.request.PostRequest;
 import com.workhub.post.record.request.PostUpdateRequest;
+import com.workhub.post.record.response.PostPageResponse;
 import com.workhub.post.record.response.PostResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @Tag(name = "게시물 관리", description = "프로젝트 단계별 게시물 CRUD API")
 @RequestMapping("/api/v1/projects/{projectId}/nodes/{nodeId}/posts")
@@ -53,7 +57,10 @@ public interface PostApi {
             description = "특정 프로젝트 단계의 모든 게시물을 조회합니다.",
             parameters = {
                     @Parameter(name = "projectId", description = "프로젝트 식별자", in = ParameterIn.PATH, required = true),
-                    @Parameter(name = "nodeId", description = "프로젝트 단계 식별자", in = ParameterIn.PATH, required = true)
+                    @Parameter(name = "nodeId", description = "프로젝트 단계 식별자", in = ParameterIn.PATH, required = true),
+                    @Parameter(name = "keyword", description = "제목/내용 검색 키워드", in = ParameterIn.QUERY, required = false),
+                    @Parameter(name = "postType", description = "게시글 타입 필터", in = ParameterIn.QUERY, required = false),
+                    @Parameter(name = "hashTag", description = "해시태그 필터", in = ParameterIn.QUERY, required = false)
             }
     )
     @ApiResponses({
@@ -61,15 +68,19 @@ public interface PostApi {
                     responseCode = "200",
                     description = "게시물 목록 조회 성공",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            array = @ArraySchema(schema = @Schema(implementation = PostResponse.class)))
+                            schema = @Schema(implementation = PostPageResponse.class))
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "게시물이 존재하지 않음"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류 (게시물 조회 실패)")
     })
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    ResponseEntity<ApiResponse<List<PostResponse>>> getPosts(
+    ResponseEntity<ApiResponse<PostPageResponse>> getPosts(
             @PathVariable Long projectId,
-            @PathVariable Long nodeId
+            @PathVariable Long nodeId,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) PostType postType,
+            @RequestParam(required = false) HashTag hashTag,
+            @ParameterObject @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
     );
 
     @Operation(
