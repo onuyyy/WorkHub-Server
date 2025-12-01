@@ -141,4 +141,39 @@ public interface ProjectApi {
             @Parameter(hidden = true)
             @AuthenticationPrincipal CustomUserDetails userDetails
     );
+
+    @Operation(
+            summary = "프로젝트 삭제",
+            description = "프로젝트를 삭제합니다. 실제 삭제가 아닌 소프트 삭제(soft delete)로 처리되며, 상태가 DELETED로 변경됩니다. 삭제 이력도 함께 저장됩니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "프로젝트 삭제 성공"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "403",
+                    description = "권한 오류 (Role Admin만 프로젝트 삭제 가능)"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "프로젝트를 찾을 수 없음"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "500",
+                    description = "서버 오류 (프로젝트 삭제 실패)"
+            )
+    })
+    @DeleteMapping("/{projectId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    ResponseEntity<ApiResponse<String>> deleteProject(
+            @Parameter(description = "삭제할 프로젝트 ID", required = true)
+            @PathVariable("projectId") Long projectId,
+
+            @Parameter(hidden = true)
+            @ClientInfo ClientInfoDto clientInfoDto,
+
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    );
 }

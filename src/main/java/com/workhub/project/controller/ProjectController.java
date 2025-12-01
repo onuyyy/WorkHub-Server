@@ -8,6 +8,7 @@ import com.workhub.project.dto.CreateProjectRequest;
 import com.workhub.project.dto.ProjectResponse;
 import com.workhub.project.dto.UpdateStatusRequest;
 import com.workhub.project.service.CreateProjectService;
+import com.workhub.project.service.DeleteProjectService;
 import com.workhub.project.service.UpdateProjectService;
 import com.workhub.userTable.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -26,6 +27,7 @@ public class ProjectController implements ProjectApi {
 
     private final CreateProjectService createProjectService;
     private final UpdateProjectService updateProjectService;
+    private final DeleteProjectService deleteProjectService;
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
@@ -69,6 +71,20 @@ public class ProjectController implements ProjectApi {
                 clientInfoDto.getIpAddress(), clientInfoDto.getUserAgent(), userDetails.getUserId());
 
         return ApiResponse.success(projectResponse, "프로젝트 수정에 성공했습니다.");
+    }
+
+    @DeleteMapping("{projectId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<String>> deleteProject(@PathVariable("projectId") Long projectId,
+                                                             @Parameter(hidden = true) @ClientInfo ClientInfoDto clientInfoDto,
+                                                             @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        log.info("deleteProject : {}, requestIp : {}", projectId, clientInfoDto.getIpAddress());
+
+        deleteProjectService.deleteProject(projectId, userDetails.getUserId(),
+                clientInfoDto.getIpAddress(), clientInfoDto.getUserAgent());
+
+        return ApiResponse.success("프로젝트가 삭제되었습니다.");
     }
 
 }

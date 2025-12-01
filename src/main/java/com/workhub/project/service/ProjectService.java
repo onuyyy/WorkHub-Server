@@ -61,7 +61,22 @@ public class ProjectService {
 
     }
 
-    public void updateProjectHistory(ProjectHistory projectHistory){
-        projectHistoryRepository.save(projectHistory);
+    /**
+     * 프로젝트 상태 변경 이력을 저장.
+     * @param projectId 프로젝트 ID
+     * @param actionType 변경 액션
+     * @param beforeStatus 변경 전 상태
+     * @param userIp 요청자 IP 주소
+     * @param userAgent 요청자 User-Agent
+     * @param userId 요청자 사용자 ID
+     */
+    public void updateProjectHistory(Long projectId, ActionType actionType, String beforeStatus,
+                                     String userIp, String userAgent, Long userId) {
+
+        Long originalCreator = getProjectOriginalCreator(projectId);
+
+        projectHistoryRepository.save(ProjectHistory.of(projectId,
+                actionType, beforeStatus, originalCreator,
+                userId, userIp, userAgent));
     }
 }

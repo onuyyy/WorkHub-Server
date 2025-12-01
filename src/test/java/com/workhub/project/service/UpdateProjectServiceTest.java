@@ -49,18 +49,21 @@ public class UpdateProjectServiceTest {
                 .status(Status.CONTRACT)
                 .build();
 
-        Long originalCreator = 50L;
-
         given(projectService.findProjectById(projectId)).willReturn(project);
-        given(projectService.getProjectOriginalCreator(projectId)).willReturn(originalCreator);
 
         // when
         updateProjectService.updateProjectStatus(projectId, statusRequest, userIp, userAgent, userId);
 
         // then
         verify(projectService).findProjectById(projectId);
-        verify(projectService).getProjectOriginalCreator(projectId);
-        verify(projectService).updateProjectHistory(any(ProjectHistory.class));
+        verify(projectService).updateProjectHistory(
+                eq(projectId),
+                eq(ActionType.UPDATE),
+                eq("CONTRACT"),
+                eq(userIp),
+                eq(userAgent),
+                eq(userId)
+        );
     }
 
     @Test
@@ -80,7 +83,6 @@ public class UpdateProjectServiceTest {
                 .build();
 
         given(projectService.findProjectById(projectId)).willReturn(project);
-        given(projectService.getProjectOriginalCreator(projectId)).willReturn(1L);
 
         // when
         updateProjectService.updateProjectStatus(projectId, statusRequest, userIp, userAgent, userId);
@@ -88,7 +90,14 @@ public class UpdateProjectServiceTest {
         // then
         // 프로젝트 엔티티의 updateProjectStatus 메서드가 호출되어 상태가 변경됨
         verify(projectService).findProjectById(projectId);
-        verify(projectService).updateProjectHistory(any(ProjectHistory.class));
+        verify(projectService).updateProjectHistory(
+                eq(projectId),
+                eq(ActionType.UPDATE),
+                eq("DELIVERY"),
+                eq(userIp),
+                eq(userAgent),
+                eq(userId)
+        );
     }
 
     @Test
@@ -107,24 +116,20 @@ public class UpdateProjectServiceTest {
                 .status(Status.DELIVERY)
                 .build();
 
-        Long originalCreator = 50L;
-
         given(projectService.findProjectById(projectId)).willReturn(project);
-        given(projectService.getProjectOriginalCreator(projectId)).willReturn(originalCreator);
 
         // when
         updateProjectService.updateProjectStatus(projectId, statusRequest, userIp, userAgent, userId);
 
         // then
-        verify(projectService).updateProjectHistory(argThat(history ->
-                history != null &&
-                history.getActionType() == ActionType.UPDATE &&
-                history.getTargetId().equals(projectId) &&
-                history.getCreatedBy().equals(originalCreator) &&
-                history.getUpdatedBy().equals(userId) &&
-                history.getIpAddress().equals(userIp) &&
-                history.getUserAgent().equals(userAgent)
-        ));
+        verify(projectService).updateProjectHistory(
+                eq(projectId),
+                eq(ActionType.UPDATE),
+                eq("DELIVERY"),
+                eq(userIp),
+                eq(userAgent),
+                eq(userId)
+        );
     }
 
     @Test
@@ -143,7 +148,6 @@ public class UpdateProjectServiceTest {
                 .build();
 
         given(projectService.findProjectById(projectId)).willReturn(project);
-        given(projectService.getProjectOriginalCreator(projectId)).willReturn(1L);
 
         // when & then - 각 상태로 변경 테스트
         for (Status status : Status.values()) {
@@ -152,7 +156,9 @@ public class UpdateProjectServiceTest {
         }
 
         // 모든 상태에 대해 히스토리가 저장되었는지 확인
-        verify(projectService, times(Status.values().length)).updateProjectHistory(any(ProjectHistory.class));
+        verify(projectService, times(Status.values().length)).updateProjectHistory(
+                anyLong(), any(ActionType.class), anyString(), anyString(), anyString(), anyLong()
+        );
     }
 
     // ========== 실패 케이스 ==========
@@ -178,8 +184,9 @@ public class UpdateProjectServiceTest {
 
         // 프로젝트 조회 실패 시 이후 메서드는 호출되지 않아야 함
         verify(projectService).findProjectById(nonExistentProjectId);
-        verify(projectService, never()).getProjectOriginalCreator(anyLong());
-        verify(projectService, never()).updateProjectHistory(any(ProjectHistory.class));
+        verify(projectService, never()).updateProjectHistory(
+                anyLong(), any(ActionType.class), anyString(), anyString(), anyString(), anyLong()
+        );
     }
 
     @Test
@@ -199,8 +206,12 @@ public class UpdateProjectServiceTest {
                 .build();
 
         given(projectService.findProjectById(projectId)).willReturn(project);
-        given(projectService.getProjectOriginalCreator(projectId))
-                .willThrow(new BusinessException(ErrorCode.PROJECT_HISTORY_NOT_FOUND));
+
+        // updateProjectHistory 내부에서 getProjectOriginalCreator가 호출되고 예외 발생
+        doThrow(new BusinessException(ErrorCode.PROJECT_HISTORY_NOT_FOUND))
+                .when(projectService).updateProjectHistory(
+                        anyLong(), any(ActionType.class), anyString(), anyString(), anyString(), anyLong()
+                );
 
         // when & then
         assertThatThrownBy(() -> updateProjectService.updateProjectStatus(
@@ -208,10 +219,10 @@ public class UpdateProjectServiceTest {
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PROJECT_HISTORY_NOT_FOUND);
 
-        // 원본 생성자 조회 실패 시 히스토리 저장은 실행되지 않아야 함
         verify(projectService).findProjectById(projectId);
-        verify(projectService).getProjectOriginalCreator(projectId);
-        verify(projectService, never()).updateProjectHistory(any(ProjectHistory.class));
+        verify(projectService).updateProjectHistory(
+                anyLong(), any(ActionType.class), anyString(), anyString(), anyString(), anyLong()
+        );
     }
 
     @Test
@@ -230,14 +241,13 @@ public class UpdateProjectServiceTest {
                 .status(Status.CONTRACT)
                 .build();
 
-        Long originalCreator = 50L;
-
         given(projectService.findProjectById(projectId)).willReturn(project);
-        given(projectService.getProjectOriginalCreator(projectId)).willReturn(originalCreator);
 
         // void 메서드에 예외 설정
         doThrow(new BusinessException(ErrorCode.PROJECT_HISTORY_SAVE_FAILED))
-                .when(projectService).updateProjectHistory(any(ProjectHistory.class));
+                .when(projectService).updateProjectHistory(
+                        anyLong(), any(ActionType.class), anyString(), anyString(), anyString(), anyLong()
+                );
 
         // when & then
         assertThatThrownBy(() -> updateProjectService.updateProjectStatus(
@@ -246,8 +256,9 @@ public class UpdateProjectServiceTest {
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PROJECT_HISTORY_SAVE_FAILED);
 
         verify(projectService).findProjectById(projectId);
-        verify(projectService).getProjectOriginalCreator(projectId);
-        verify(projectService).updateProjectHistory(any(ProjectHistory.class));
+        verify(projectService).updateProjectHistory(
+                anyLong(), any(ActionType.class), anyString(), anyString(), anyString(), anyLong()
+        );
     }
 
     // ========== updateProject 테스트 ==========
@@ -291,7 +302,7 @@ public class UpdateProjectServiceTest {
         // then
         verify(projectService).findProjectById(projectId);
         verify(projectService).getProjectOriginalCreator(projectId);
-        verify(projectService, times(1)).updateProjectHistory(any(ProjectHistory.class));
+        verify(projectService, times(1)).saveProjectHistory(any(ProjectHistory.class));
     }
 
     @Test
@@ -333,7 +344,7 @@ public class UpdateProjectServiceTest {
         // then
         verify(projectService).findProjectById(projectId);
         verify(projectService).getProjectOriginalCreator(projectId);
-        verify(projectService, times(3)).updateProjectHistory(any(ProjectHistory.class));
+        verify(projectService, times(3)).saveProjectHistory(any(ProjectHistory.class));
     }
 
     @Test
@@ -376,7 +387,7 @@ public class UpdateProjectServiceTest {
         verify(projectService).findProjectById(projectId);
         verify(projectService).getProjectOriginalCreator(projectId);
         // 5개 필드: projectTitle, projectDescription, contractStartDate, contractEndDate, clientCompanyId
-        verify(projectService, times(5)).updateProjectHistory(any(ProjectHistory.class));
+        verify(projectService, times(5)).saveProjectHistory(any(ProjectHistory.class));
     }
 
     @Test
@@ -418,7 +429,7 @@ public class UpdateProjectServiceTest {
         // then
         verify(projectService).findProjectById(projectId);
         verify(projectService).getProjectOriginalCreator(projectId);
-        verify(projectService, never()).updateProjectHistory(any(ProjectHistory.class));
+        verify(projectService, never()).saveProjectHistory(any(ProjectHistory.class));
     }
 
     @Test
@@ -457,7 +468,7 @@ public class UpdateProjectServiceTest {
         updateProjectService.updateProject(projectId, request, userIp, userAgent, userId);
 
         // then
-        verify(projectService).updateProjectHistory(argThat(history ->
+        verify(projectService).saveProjectHistory(argThat(history ->
                 history != null &&
                 history.getBeforeData().equals("Original Title") &&
                 history.getActionType() == ActionType.UPDATE
@@ -494,7 +505,7 @@ public class UpdateProjectServiceTest {
 
         verify(projectService).findProjectById(nonExistentProjectId);
         verify(projectService, never()).getProjectOriginalCreator(anyLong());
-        verify(projectService, never()).updateProjectHistory(any(ProjectHistory.class));
+        verify(projectService, never()).saveProjectHistory(any(ProjectHistory.class));
     }
 
     @Test
@@ -534,6 +545,6 @@ public class UpdateProjectServiceTest {
 
         verify(projectService).findProjectById(projectId);
         verify(projectService).getProjectOriginalCreator(projectId);
-        verify(projectService, never()).updateProjectHistory(any(ProjectHistory.class));
+        verify(projectService, never()).saveProjectHistory(any(ProjectHistory.class));
     }
 }

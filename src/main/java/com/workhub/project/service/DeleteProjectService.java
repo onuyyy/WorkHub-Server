@@ -1,0 +1,28 @@
+package com.workhub.project.service;
+
+import com.workhub.global.entity.ActionType;
+import com.workhub.project.entity.Project;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class DeleteProjectService {
+
+    private final ProjectService projectService;
+
+    public void deleteProject(Long projectId, Long loginUser, String userIp, String userAgent) {
+
+        Project project = projectService.findProjectById(projectId);
+        String beforeStatus = project.getStatus().toString();
+
+        project.markDeleted();
+        projectService.updateProjectHistory(projectId, ActionType.DELETE, beforeStatus,
+                userIp, userAgent, loginUser);
+    }
+
+}

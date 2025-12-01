@@ -64,6 +64,11 @@ public class Project extends BaseTimeEntity {
         }
     }
 
+    public void markDeleted() {
+        this.status = Status.DELETED;
+        markDeletedNow();
+    }
+
     public static Project of (CreateProjectRequest request) {
         return Project.builder()
                 .projectTitle(request.projectName())

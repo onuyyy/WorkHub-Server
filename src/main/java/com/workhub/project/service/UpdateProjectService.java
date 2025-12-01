@@ -38,8 +38,8 @@ public class UpdateProjectService {
         String beforeStatus = original.getStatus().toString();
 
         original.updateProjectStatus(statusRequest.status());
-        updateProjectHistory(projectId, beforeStatus, userIp, userAgent, userId);
-
+        projectService.updateProjectHistory(projectId, ActionType.UPDATE, beforeStatus,
+                userIp, userAgent, userId);
     }
 
     /**
@@ -62,7 +62,7 @@ public class UpdateProjectService {
 
         List<ProjectHistory> histories = detectAndCreateHistories(original, request, originalCreator, userId, userIp, userAgent);
 
-        histories.forEach(projectService::updateProjectHistory);
+        histories.forEach(projectService::saveProjectHistory);
         original.update(request);
 
         return ProjectResponse.from(original);
@@ -133,21 +133,4 @@ public class UpdateProjectService {
         return histories;
     }
 
-    /**
-     * 프로젝트 상태 변경 이력을 저장.
-     * @param projectId 프로젝트 ID
-     * @param beforeStatus 변경 전 상태
-     * @param userIp 요청자 IP 주소
-     * @param userAgent 요청자 User-Agent
-     * @param userId 요청자 사용자 ID
-     */
-    private void updateProjectHistory(Long projectId, String beforeStatus,
-                                      String userIp, String userAgent, Long userId) {
-
-        Long originalCreator = projectService.getProjectOriginalCreator(projectId);
-
-        projectService.updateProjectHistory(ProjectHistory.of(projectId,
-                ActionType.UPDATE, beforeStatus, originalCreator,
-                userId, userIp, userAgent));
-    }
 }
