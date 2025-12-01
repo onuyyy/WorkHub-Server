@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 @Getter
 @SuperBuilder
@@ -64,10 +65,24 @@ public class CsPost extends BaseTimeEntity {
         this.title = newTitle;
     }
 
+    public void markDeleted() {
+        this.deletedAt = LocalDateTime.now();
+    }
+
     public void updateContent(String newContent) {
         if (newContent == null && newContent.isBlank()) {
             throw new BusinessException(ErrorCode.INVALID_CS_POST_CONTENT);
         }
         this.content = newContent;
+    }
+
+    public void validateProject(Long requestProjectId) {
+        if (!Objects.equals(this.projectId, requestProjectId)) {
+            throw new BusinessException(ErrorCode.NOT_MATCHED_PROJECT_CS_POST);
+        }
+    }
+
+    public boolean isDeleted() {
+        return this.deletedAt != null;
     }
 }

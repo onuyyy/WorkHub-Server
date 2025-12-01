@@ -57,4 +57,21 @@ public class CsPostController implements CsPostApi {
 
         return ApiResponse.success(response, "CS 게시글이 수정되었습니다.");
     }
+
+    /**
+     *  프로젝트의 CS 게시물을 삭제한다.
+     * @param projectId
+     * @param csPostId
+     * @return
+     */
+    @Override
+    @DeleteMapping("/{csPostId}")
+    @ResponseStatus(HttpStatus.OK)
+    public ApiResponse<Long> deleteCsPost(
+            @PathVariable Long projectId,
+            @PathVariable Long csPostId
+    ) {
+        // todo : security 기능 구현시 userId security에서 꺼내서 넘겨야 함
+        return ApiResponse.success(csPostService.delete(projectId, csPostId));
+    }
 }

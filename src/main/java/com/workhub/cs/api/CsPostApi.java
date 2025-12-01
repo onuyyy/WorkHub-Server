@@ -13,11 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "CS 게시글 관리", description = "프로젝트 CS 게시물 API")
 @RequestMapping("/api/v1/projects/{projectId}/csPosts")
@@ -70,4 +66,34 @@ public interface CsPostApi {
             @PathVariable Long csPostId,
             @Valid @RequestBody CsPostUpdateRequest csPostUpdateRequest
     );
+
+    @Operation(
+            summary = "CS 게시글 삭제",
+            description = "CS 게시글을 Soft Delete 방식으로 삭제합니다. (deletedAt 설정)",
+            parameters = {
+                    @Parameter(name = "projectId", description = "프로젝트 식별자", in = ParameterIn.PATH, required = true),
+                    @Parameter(name = "csPostId", description = "CS 게시글 식별자", in = ParameterIn.PATH, required = true)
+            }
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "CS 게시글 삭제 성공",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = Long.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "CS 게시글을 찾을 수 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 부족(추후 Security 적용 시)"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류")
+    })
+    @DeleteMapping(
+            value = "/{csPostId}",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    ApiResponse<Long> deleteCsPost(
+            @PathVariable Long projectId,
+            @PathVariable Long csPostId
+    );
+
+
 }
