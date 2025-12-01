@@ -69,7 +69,9 @@ public enum ErrorCode {
     CLIENT_MEMBER_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PR-003", "고객사 멤버 저장에 실패했습니다."),
     DEV_MEMBER_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PR-004", "개발사 멤버 저장에 실패했습니다."),
     CLIENT_MEMBER_HISTORY_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PR-005", "고객사 멤버 히스토리 저장에 실패했습니다."),
-    DEV_MEMBER_HISTORY_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PR-006", "개발사 멤버 히스토리 저장에 실패했습니다.");
+    DEV_MEMBER_HISTORY_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PR-006", "개발사 멤버 히스토리 저장에 실패했습니다."),
+    PROJECT_NOT_FOUND(HttpStatus.BAD_REQUEST, "PR-007", "프로젝트를 찾을 수 없습니다."),
+    PROJECT_HISTORY_NOT_FOUND(HttpStatus.BAD_REQUEST, "PR-008", "프로젝트 히스토리를 찾을 수 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String errorCode;

@@ -29,4 +29,17 @@ public class ProjectHistory extends BaseHistoryEntity {
                 .userAgent(userAgent)
                 .build();
     }
+
+    public static ProjectHistory of(Project project, ActionType actionType, Long origianlCreator, Long loginUser, String userIp, String userAgent) {
+        return ProjectHistory.builder()
+                .targetId(project.getProjectId())
+                .actionType(actionType)
+                .beforeData(project.getProjectDescription())  // todo : 아떤 데이터가 들어가야 할 지 상의해봐야 합니다.
+                .createdBy(origianlCreator)
+                .updatedBy(loginUser)
+                .updatedAt(LocalDateTime.now())
+                .ipAddress(userIp)
+                .userAgent(userAgent)
+                .build();
+    }
 }

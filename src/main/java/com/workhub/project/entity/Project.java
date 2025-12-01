@@ -42,6 +42,10 @@ public class Project extends BaseTimeEntity {
     @Column(name = "client_company_id")
     private Long clientCompanyId;
 
+    public void updateProjectStatus(Status status){
+        this.status = status;
+    }
+
     public static Project of (CreateProjectRequest request) {
         return Project.builder()
                 .projectTitle(request.projectName())
