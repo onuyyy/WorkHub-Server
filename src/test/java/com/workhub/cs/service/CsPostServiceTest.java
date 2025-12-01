@@ -7,6 +7,8 @@ import com.workhub.cs.dto.CsPostUpdateRequest;
 import com.workhub.cs.entity.CsPost;
 import com.workhub.cs.repository.CsPostFileRepository;
 import com.workhub.cs.repository.CsPostRepository;
+import com.workhub.global.error.ErrorCode;
+import com.workhub.global.error.exception.BusinessException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -23,6 +25,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
@@ -57,13 +60,14 @@ public class CsPostServiceTest {
     void givenCsPostCreateRequest_whenCreateCsPost_thenSuccess() {
         // given
         Long projectId = 1L;
+        Long userId = 2L;
         CsPostRequest request = new CsPostRequest("문의 제목", "문의 내용", null);
 
         when(csPostRepository.save(any(CsPost.class)))
                 .thenReturn(mockSaved);
 
         // when
-        CsPostResponse result = csPostService.create(projectId, request);
+        CsPostResponse result = csPostService.create(projectId, userId, request);
 
         // then
         assertThat(result.csPostId()).isEqualTo(1L);
@@ -79,6 +83,7 @@ public class CsPostServiceTest {
     void givenRequestWithFiles_whenCreate_thenFilesAreSaved() {
         // given
         Long projectId = 1L;
+        Long userId = 2L;
 
         List<CsPostFileRequest> fileRequests = Arrays.asList(
                 new CsPostFileRequest("url1",  1),
@@ -92,7 +97,7 @@ public class CsPostServiceTest {
                 .thenReturn(mockSaved);
 
         // when
-        csPostService.create(projectId, request);
+        csPostService.create(projectId, userId, request);
 
         // then
         verify(csPostRepository).save(any(CsPost.class));
@@ -118,12 +123,12 @@ public class CsPostServiceTest {
                 .thenReturn(mockSaved);
 
         // when
-        csPostService.create(projectId, request);
+        csPostService.create(projectId, userId, request);
 
         // then
         verify(csPostRepository).save(argThat(post ->
                 post.getProjectId().equals(projectId) &&
-                        // post.getUserId().equals(userId) && // todo : security 적용 전이라 주석
+                        post.getUserId().equals(userId) &&
                         post.getTitle().equals("문의 제목") &&
                         post.getContent().equals("문의 내용")
         ));
@@ -135,11 +140,13 @@ public class CsPostServiceTest {
 
         // given
         Long projectId = 1L;
-        Long csPostId = 2L; // 수정된 글 번호
+        Long csPostId = 2L;
+        Long userId = 2L;
 
         CsPost original = CsPost.builder()
                 .csPostId(csPostId)
                 .projectId(projectId)
+                .userId(userId)
                 .title("원래 제목")
                 .content("원래 내용")
                 .build();
@@ -153,6 +160,7 @@ public class CsPostServiceTest {
         CsPost updated = CsPost.builder()
                 .csPostId(csPostId)
                 .projectId(projectId)
+                .userId(userId)
                 .title("수정 제목")
                 .content("수정 완료")
                 .build();
@@ -166,7 +174,7 @@ public class CsPostServiceTest {
         ArgumentCaptor<CsPost> captor = ArgumentCaptor.forClass(CsPost.class);
 
         // when
-        CsPostResponse result = csPostService.update(projectId, csPostId, request);
+        CsPostResponse result = csPostService.update(projectId, csPostId, userId, request);
 
         // then
         assertThat(result.title()).isEqualTo("수정 제목");
@@ -179,5 +187,37 @@ public class CsPostServiceTest {
         assertThat(savedEntity.getContent()).isEqualTo("수정 완료");
 
         verify(csPostRepository).findById(csPostId);
+    }
+
+    @Test
+    @DisplayName("게시글 작성자가 아닌 사용자가 수정하려고 하면 FORBIDDEN_CS_POST_UPDATE 예외가 발생한다.")
+    void givenDifferentUser_whenUpdate_thenThrowForbidden() {
+        // given
+        Long projectId = 1L;
+        Long csPostId = 2L;
+        Long authorId = 2L;
+        Long requesterId = 3L; // 다른 사용자
+
+        CsPost original = CsPost.builder()
+                .csPostId(csPostId)
+                .projectId(projectId)
+                .userId(authorId)
+                .title("원래 제목")
+                .content("원래 내용")
+                .build();
+
+        CsPostUpdateRequest request =
+                new CsPostUpdateRequest("수정 제목", "수정 완료", List.of());
+
+        when(csPostRepository.findById(csPostId))
+                .thenReturn(Optional.of(original));
+
+        // when & then
+        assertThatThrownBy(() -> csPostService.update(projectId, csPostId, requesterId, request))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN_CS_POST_UPDATE);
+
+        verify(csPostRepository).findById(csPostId);
+        verify(csPostRepository, never()).save(any(CsPost.class));
     }
 }

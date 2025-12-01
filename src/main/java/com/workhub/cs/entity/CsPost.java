@@ -43,9 +43,10 @@ public class CsPost extends BaseTimeEntity {
     @Column(name = "user_id")
     private Long userId;
 
-    public static CsPost of(Long projectId, CsPostRequest request) {
+    public static CsPost of(Long projectId, Long userId, CsPostRequest request) {
         return CsPost.builder()
                 .projectId(projectId)
+                .userId(userId)
                 .title(request.title())
                 .content(request.content())
                 .build();

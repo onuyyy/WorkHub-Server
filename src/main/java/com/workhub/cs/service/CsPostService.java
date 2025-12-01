@@ -10,7 +10,6 @@ import com.workhub.cs.repository.CsPostFileRepository;
 import com.workhub.cs.repository.CsPostRepository;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
-import com.workhub.project.validator.ProjectValidator;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,22 +26,16 @@ public class CsPostService {
     private final CsPostRepository csPostRepository;
     private final CsPostFileRepository csPostFileRepository;
 
-    private final ProjectValidator projectValidator;
-//    private final UserValidator userValidator;
-
     /**
      * CS 게시글을 작성합니다.
-     * @param projectId
-     * @param request
-     * @return
+     * @param projectId 프로젝트 식별자
+     * @param userId 작성자 ID
+     * @param request 게시글 생성 요청
+     * @return CsPostResponse
      */
-    public CsPostResponse create(Long projectId, CsPostRequest request) {
+    public CsPostResponse create(Long projectId, Long userId, CsPostRequest request) {
 
-        // todo : userId 검증 필요 + 추후 시큐리티 연동 후 구현 예정
-        /*projectValidator.validateExistsProject(projectId);
-        projectValidator.validateContractEndDate(projectId);*/
-
-        CsPost csPost = csPostRepository.save(CsPost.of(projectId, request));
+        CsPost csPost = csPostRepository.save(CsPost.of(projectId, userId, request));
 
         List<CsPostFile> files = List.of();
 
@@ -60,18 +53,20 @@ public class CsPostService {
 
     /**
      * 게시글을 업데이트합니다.
-     * @param projectId
-     * @param csPostId
-     * @param request
-     * @return
+     * @param projectId 프로젝트 식별자
+     * @param csPostId 게시글 식별자
+     * @param userId 요청자 ID
+     * @param request 게시글 수정 요청
+     * @return CsPostResponse
      */
-    public CsPostResponse update(Long projectId, Long csPostId, CsPostUpdateRequest request) {
-        // todo : 게시글을 등록한 사용자가 맞는지 확인 필요 + 추후 시큐리티 연동 후 구현 예정
-
-        /*projectValidator.validateExistsProject(projectId);
-        projectValidator.validateContractEndDate(projectId);*/
+    public CsPostResponse update(Long projectId, Long csPostId, Long userId, CsPostUpdateRequest request) {
 
         CsPost csPost = getAndValidatePost(projectId, csPostId);
+
+        // 작성자 검증
+        if (!csPost.getUserId().equals(userId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN_CS_POST_UPDATE);
+        }
 
         updatePost(csPost, request);
 
