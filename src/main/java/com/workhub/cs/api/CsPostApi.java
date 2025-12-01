@@ -29,6 +29,30 @@ import org.springframework.web.bind.annotation.*;
 public interface CsPostApi {
 
     @Operation(
+            summary = "CS 게시글 단건 조회",
+            description = "프로젝트와 게시글 식별자를 사용해 단일 CS 게시글을 조회합니다.",
+            parameters = {
+                    @Parameter(name = "projectId", description = "프로젝트 식별자", in = ParameterIn.PATH, required = true),
+                    @Parameter(name = "csPostId", description = "CS 게시글 식별자", in = ParameterIn.PATH, required = true)
+            }
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "CS 게시글 조회 성공",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = CsPostResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "CS 게시글을 찾을 수 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류")
+    })
+    @GetMapping(value = "/{csPostId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    ResponseEntity<ApiResponse<CsPostResponse>> findCsPost(
+            @PathVariable Long projectId,
+            @PathVariable Long csPostId
+    );
+
+    @Operation(
             summary = "CS 게시글 작성",
             description = "프로젝트에 속한 CS 게시글을 생성합니다.",
             parameters = {

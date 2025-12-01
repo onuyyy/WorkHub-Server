@@ -5,12 +5,14 @@ import com.workhub.cs.dto.CsPostRequest;
 import com.workhub.cs.dto.CsPostResponse;
 import com.workhub.cs.dto.CsPostUpdateRequest;
 import com.workhub.cs.entity.CsPostStatus;
-import com.workhub.cs.service.CsPostService;
+import com.workhub.cs.service.CreateCsPostService;
+import com.workhub.cs.service.DeleteCsPostService;
+import com.workhub.cs.service.ReadCsPostService;
+import com.workhub.cs.service.UpdateCsPostService;
 import com.workhub.global.response.ApiResponse;
 import com.workhub.userTable.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -21,7 +23,27 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/projects/{projectId}/csPosts")
 public class CsPostController implements CsPostApi {
 
-    private final CsPostService csPostService;
+    private final CreateCsPostService createCsPostService;
+    private final UpdateCsPostService updateCsPostService;
+    private final ReadCsPostService readCsPostService;
+    private final DeleteCsPostService deleteCsPostService;
+
+    /**
+     * 프로젝트의 CS 게시글을 단건 조회한다.
+     *
+     * @param projectId 프로젝트 식별자
+     * @param csPostId 게시글 식별자
+     * @return CsPostResponse
+     */
+    @Override
+    @GetMapping("/{csPostId}")
+    public ResponseEntity<ApiResponse<CsPostResponse>> findCsPost(
+            @PathVariable Long projectId,
+            @PathVariable Long csPostId
+    ) {
+        CsPostResponse response = readCsPostService.findCsPost(projectId, csPostId);
+        return ApiResponse.success(response, "CS 게시글이 조회되었습니다.");
+    }
 
     /**
      * 프로젝트의 CS 게시글을 작성한다.
@@ -33,13 +55,12 @@ public class CsPostController implements CsPostApi {
      */
     @Override
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<ApiResponse<CsPostResponse>> createCsPost(
             @PathVariable Long projectId,
             @Valid @RequestBody CsPostRequest csPostRequest,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        CsPostResponse response = csPostService.create(projectId, userDetails.getUserId(), csPostRequest);
+        CsPostResponse response = createCsPostService.create(projectId, userDetails.getUserId(), csPostRequest);
 
         return ApiResponse.created(response, "CS 게시글이 작성되었습니다.");
     }
@@ -55,14 +76,13 @@ public class CsPostController implements CsPostApi {
      */
     @Override
     @PatchMapping("/{csPostId}")
-    @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<ApiResponse<CsPostResponse>> updateCsPost(
             @PathVariable Long projectId,
             @PathVariable Long csPostId,
             @Valid @RequestBody CsPostUpdateRequest csPostUpdateRequest,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        CsPostResponse response = csPostService.update(projectId, csPostId, userDetails.getUserId(), csPostUpdateRequest);
+        CsPostResponse response = updateCsPostService.update(projectId, csPostId, userDetails.getUserId(), csPostUpdateRequest);
 
         return ApiResponse.success(response, "CS 게시글이 수정되었습니다.");
     }
@@ -70,27 +90,26 @@ public class CsPostController implements CsPostApi {
     /**
      * 프로젝트의 CS 게시물을 삭제한다.
      *
-     * @param projectId
-     * @param csPostId
-     * @return
+     * @param projectId 프로젝트 식별자
+     * @param csPostId 게시글 식별자
+     * @return 삭제된 게시글 ID
      */
     @Override
     @DeleteMapping("/{csPostId}")
-    @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<ApiResponse<Long>> deleteCsPost(
             @PathVariable Long projectId,
             @PathVariable Long csPostId
     ) {
         // todo : security 기능 구현시 userId security에서 꺼내서 넘겨야 함
-        return ApiResponse.success(csPostService.delete(projectId, csPostId));
+        return ApiResponse.success(deleteCsPostService.delete(projectId, csPostId));
     }
 
     /**
      * 프로젝트 CS POST 상태 값을 변경한다.
-     * @param projectId
-     * @param csPostId
-     * @param status
-     * @return
+     * @param projectId 프로젝트 식별자
+     * @param csPostId 게시글 식별자
+     * @param status 게시글 상태 값
+     * @return CsPostStatus 변경된 상태 값
      */
     @Override
     @PreAuthorize("hasAnyRole('DEVELOPER', 'ADMIN')")
@@ -100,7 +119,7 @@ public class CsPostController implements CsPostApi {
             @PathVariable Long csPostId,
             @RequestParam CsPostStatus status
     ) {
-        CsPostStatus changed = csPostService.changeStatus(projectId, csPostId, status);
+        CsPostStatus changed = updateCsPostService.changeStatus(projectId, csPostId, status);
         return ApiResponse.success(changed, "CS 게시글 상태가 변경되었습니다.");
     }
 }

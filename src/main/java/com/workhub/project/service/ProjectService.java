@@ -79,4 +79,12 @@ public class ProjectService {
                 actionType, beforeStatus, originalCreator,
                 userId, userIp, userAgent));
     }
+
+    public Project validateCompletedProject(Long projectId) {
+        Project project = findProjectById(projectId);
+        if (!Status.COMPLETED.equals(project.getStatus())) {
+            throw new BusinessException(ErrorCode.INVALID_PROJECT_STATUS_FOR_CS_POST);
+        }
+        return project;
+    }
 }

@@ -56,6 +56,7 @@ public enum ErrorCode {
     INVALID_FILE_UPDATE(HttpStatus.BAD_REQUEST, "C-008", "잘못된 파일 수정 요청입니다."),
     FORBIDDEN_CS_POST_UPDATE(HttpStatus.FORBIDDEN, "C-009", "CS 게시글 수정 권한이 없습니다."),
     ALREADY_DELETED_CS_POST(HttpStatus.BAD_REQUEST, "C-0010", "이미 삭재된 CS 게시글입니다."),
+    INVALID_PROJECT_STATUS_FOR_CS_POST(HttpStatus.BAD_REQUEST, "C-0011", "완료된 프로젝트에서만 CS 게시글을 처리할 수 있습니다."),
 
     // AWS S3
     // 파일 관련 에러
