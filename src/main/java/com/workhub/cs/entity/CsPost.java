@@ -33,6 +33,10 @@ public class CsPost extends BaseTimeEntity {
     @Column(name = "content", columnDefinition = "TEXT")
     private String content;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "cs_post_status")
+    private CsPostStatus csPostStatus;
+
     @Column(name = "project_id")
     private Long projectId;
 
@@ -77,6 +81,10 @@ public class CsPost extends BaseTimeEntity {
         if (!Objects.equals(this.projectId, requestProjectId)) {
             throw new BusinessException(ErrorCode.NOT_MATCHED_PROJECT_CS_POST);
         }
+    }
+
+    public void changeStatus(CsPostStatus newStatus) {
+        this.csPostStatus = newStatus;
     }
 
 }

@@ -4,6 +4,7 @@ import com.workhub.cs.api.CsPostApi;
 import com.workhub.cs.dto.CsPostRequest;
 import com.workhub.cs.dto.CsPostResponse;
 import com.workhub.cs.dto.CsPostUpdateRequest;
+import com.workhub.cs.entity.CsPostStatus;
 import com.workhub.cs.service.CsPostService;
 import com.workhub.global.response.ApiResponse;
 import com.workhub.userTable.security.CustomUserDetails;
@@ -11,6 +12,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -81,5 +83,24 @@ public class CsPostController implements CsPostApi {
     ) {
         // todo : security 기능 구현시 userId security에서 꺼내서 넘겨야 함
         return ApiResponse.success(csPostService.delete(projectId, csPostId));
+    }
+
+    /**
+     * 프로젝트 CS POST 상태 값을 변경한다.
+     * @param projectId
+     * @param csPostId
+     * @param status
+     * @return
+     */
+    @Override
+    @PreAuthorize("hasAnyRole('DEVELOPER', 'ADMIN')")
+    @PatchMapping("/{csPostId}/status")
+    public ResponseEntity<ApiResponse<CsPostStatus>> changeStatus(
+            @PathVariable Long projectId,
+            @PathVariable Long csPostId,
+            @RequestParam CsPostStatus status
+    ) {
+        CsPostStatus changed = csPostService.changeStatus(projectId, csPostId, status);
+        return ApiResponse.success(changed, "CS 게시글 상태가 변경되었습니다.");
     }
 }

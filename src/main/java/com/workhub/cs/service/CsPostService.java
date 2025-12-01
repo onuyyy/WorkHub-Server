@@ -6,6 +6,7 @@ import com.workhub.cs.dto.CsPostResponse;
 import com.workhub.cs.dto.CsPostUpdateRequest;
 import com.workhub.cs.entity.CsPost;
 import com.workhub.cs.entity.CsPostFile;
+import com.workhub.cs.entity.CsPostStatus;
 import com.workhub.cs.repository.CsPostFileRepository;
 import com.workhub.cs.repository.CsPostRepository;
 import com.workhub.global.error.ErrorCode;
@@ -14,7 +15,6 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -81,9 +81,9 @@ public class CsPostService {
 
     /**
      * 게시글을 삭제합니다.
-     * @param projectId
-     * @param csPostId
-     * @return csPostId
+     * @param projectId 프로젝트 식별자
+     * @param csPostId 게시글 식별자
+     * @return csPostId 삭제된 게시글 식별자
      */
     public Long delete(Long projectId, Long csPostId) {
 
@@ -98,6 +98,21 @@ public class CsPostService {
         csPost.markDeleted();
 
         return csPost.getCsPostId();
+    }
+
+    /**
+     *
+     * @param projectId 프로젝트 식별자
+     * @param csPostId 게시글 식별자
+     * @param status 게시글 상태 값
+     * @return status 변경된 게시글 상태 값
+     */
+    public CsPostStatus changeStatus(Long projectId, Long csPostId, CsPostStatus status) {
+        CsPost csPost = getAndValidatePost(projectId, csPostId);
+
+        csPost.changeStatus(status);
+
+        return csPost.getCsPostStatus();
     }
 
     /**
