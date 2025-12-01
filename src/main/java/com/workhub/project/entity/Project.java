@@ -2,13 +2,14 @@ package com.workhub.project.entity;
 
 
 import com.workhub.global.entity.BaseTimeEntity;
+import com.workhub.project.dto.CreateProjectRequest;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Getter
 @SuperBuilder
@@ -33,12 +34,22 @@ public class Project extends BaseTimeEntity {
     private Status status;
 
     @Column(name = "contract_start_date")
-    private LocalDateTime contractStartDate;
+    private LocalDate contractStartDate;
 
     @Column(name = "contract_end_date")
-    private LocalDateTime contractEndDate;
+    private LocalDate contractEndDate;
 
     @Column(name = "client_company_id")
     private Long clientCompanyId;
 
+    public static Project of (CreateProjectRequest request) {
+        return Project.builder()
+                .projectTitle(request.projectName())
+                .projectDescription(request.projectDescription())
+                .status(Status.CONTRACT)
+                .contractStartDate(request.starDate())
+                .contractEndDate(request.endDate())
+                .clientCompanyId(request.company())
+                .build();
+    }
 }

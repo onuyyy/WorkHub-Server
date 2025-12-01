@@ -1,9 +1,11 @@
 package com.workhub.global.error.exception;
 
+import com.workhub.global.error.ErrorCode;
 import com.workhub.global.response.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -25,6 +27,14 @@ public class ExceptionAdvice {
         log.error("Controller Exception - Code: {}, Message: {}", e.getErrorCode().getErrorCode(), e.getMessage());
         ApiResponse response = ApiResponse.error(e.getErrorCode().getErrorCode(), e.getMessage());
         return ResponseEntity.status(e.getErrorCode().getHttpStatus()).body(response);
+    }
+
+    // Authorization Denied Exception 예외처리
+    @ExceptionHandler(AuthorizationDeniedException.class)
+    public ResponseEntity<ApiResponse> handleAuthorizationDeniedException(AuthorizationDeniedException e) {
+        log.error("Authorization Denied - Message: {}", e.getMessage());
+        ApiResponse response = ApiResponse.error(ErrorCode.FORBIDDEN_ADMIN.getErrorCode(),  ErrorCode.FORBIDDEN_ADMIN.getMessage());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
     }
 
     // Runtime Exception 예외처리

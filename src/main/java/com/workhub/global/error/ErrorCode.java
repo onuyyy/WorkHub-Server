@@ -61,7 +61,15 @@ public enum ErrorCode {
     INVALID_FILE_TYPE(HttpStatus.BAD_REQUEST, "F-004", "지원하지 않는 파일 형식입니다."),
     INVALID_FILE_NAME(HttpStatus.BAD_REQUEST, "F-005", "파일 이름이 누락되었습니다."),
     FILE_SIZE_EXCEEDED(HttpStatus.BAD_REQUEST, "F-006", "파일 크기가 제한을 초과했습니다."),
-    FILE_ACCESS_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "F-007", "파일 접근에 실패했습니다.");
+    FILE_ACCESS_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "F-007", "파일 접근에 실패했습니다."),
+
+    // 프로젝트
+    PROJECT_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PR-001", "프로젝트 저장에 실패했습니다."),
+    PROJECT_HISTORY_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PR-002", "프로젝트 히스토리 저장에 실패했습니다."),
+    CLIENT_MEMBER_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PR-003", "고객사 멤버 저장에 실패했습니다."),
+    DEV_MEMBER_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PR-004", "개발사 멤버 저장에 실패했습니다."),
+    CLIENT_MEMBER_HISTORY_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PR-005", "고객사 멤버 히스토리 저장에 실패했습니다."),
+    DEV_MEMBER_HISTORY_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PR-006", "개발사 멤버 히스토리 저장에 실패했습니다.");
 
     private final HttpStatus httpStatus;
     private final String errorCode;

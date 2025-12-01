@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Getter
 @Builder
@@ -21,10 +21,10 @@ public class ProjectDevMember {
     private Long projectMemberId;
 
     @Column(name = "assigned_at")
-    private LocalDateTime assignedAt;
+    private LocalDate assignedAt;
 
     @Column(name = "removed_at")
-    private LocalDateTime removedAt;
+    private LocalDate removedAt;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "dev_part")
@@ -35,5 +35,14 @@ public class ProjectDevMember {
 
     @Column(name = "project_id")
     private Long projectId;
+
+    public static ProjectDevMember of(Long userId, Long projectId) {
+        return ProjectDevMember.builder()
+                .assignedAt(LocalDate.now())
+                .devPart(DevPart.BE)   // todo : 추후 FE에서 어떻게 값을 전달할지 결정해야 합니다.
+                .userId(userId)
+                .projectId(projectId)
+                .build();
+    }
 
 }

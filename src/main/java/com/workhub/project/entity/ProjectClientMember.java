@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Getter
 @Builder
@@ -21,10 +21,10 @@ public class ProjectClientMember {
     private Long projectClientMemberId;
 
     @Column(name = "assigned_at")
-    private LocalDateTime assignedAt;
+    private LocalDate assignedAt;
 
     @Column(name = "removed_at")
-    private LocalDateTime removedAt;
+    private LocalDate removedAt;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role")
@@ -35,5 +35,14 @@ public class ProjectClientMember {
 
     @Column(name = "project_id")
     private Long projectId;
+
+    public static ProjectClientMember of(Long userId, Long projectId) {
+        return ProjectClientMember.builder()
+                .assignedAt(LocalDate.now())
+                .role(Role.READ) // todo : 추후 FE에서 어떻게 넘겨줄 것인지 정해야 합니다.
+                .userId(userId)
+                .projectId(projectId)
+                .build();
+    }
 
 }
