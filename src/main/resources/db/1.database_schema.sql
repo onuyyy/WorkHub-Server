@@ -12,7 +12,8 @@ CREATE TABLE company (
     tel VARCHAR(20) NOT NULL,
     address VARCHAR(100) NOT NULL,
     created_at TIMESTAMP NULL,
-    updated_at TIMESTAMP NULL
+    updated_at TIMESTAMP NULL,
+    deleted_at TIMESTAMP NULL
 );
 
 CREATE TABLE user_table (
@@ -55,7 +56,8 @@ CREATE TABLE project (
     contract_end_date DATE NULL,
     client_company_id BIGINT NOT NULL,
     created_at TIMESTAMP NULL,
-    updated_at TIMESTAMP NULL
+    updated_at TIMESTAMP NULL,
+    deleted_at TIMESTAMP NULL
 );
 
 CREATE TABLE project_history (
@@ -159,7 +161,8 @@ CREATE TABLE post (
     project_node_id BIGINT NOT NULL,
     parent_post_id BIGINT NULL,
     created_at TIMESTAMP NULL,
-    updated_at TIMESTAMP NULL
+    updated_at TIMESTAMP NULL,
+    deleted_at TIMESTAMP NULL
 );
 
 CREATE TABLE post_history (
@@ -181,7 +184,8 @@ CREATE TABLE post_comment (
     user_id BIGINT NOT NULL,
     parent_comment_id BIGINT NULL,
     created_at TIMESTAMP NULL,
-    updated_at TIMESTAMP NULL
+    updated_at TIMESTAMP NULL,
+    deleted_at TIMESTAMP NULL
 );
 
 CREATE TABLE comment_history (
@@ -211,7 +215,10 @@ CREATE TABLE post_link (
     link_id BIGSERIAL PRIMARY KEY,
     reference_link VARCHAR(255) NOT NULL,
     link_description VARCHAR(255) NULL,
-    post_id BIGINT NOT NULL
+    post_id BIGINT NOT NULL,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL,
+    deleted_at TIMESTAMP NULL
 );
 
 -- ============================================
@@ -301,7 +308,10 @@ CREATE TABLE check_list_item (
     confirmed_at TIMESTAMP NULL,
     check_list_id BIGINT NOT NULL,
     template_id BIGINT NULL,
-    user_id BIGINT NOT NULL
+    user_id BIGINT NOT NULL,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL,
+    deleted_at TIMESTAMP NULL
 );
 
 CREATE TABLE check_list_item_history (
@@ -321,7 +331,10 @@ CREATE TABLE check_list_item_file (
     file_url VARCHAR(255) NOT NULL,
     file_name VARCHAR(255) NOT NULL,
     file_order INTEGER NOT NULL,
-    check_list_item_id BIGINT NOT NULL
+    check_list_item_id BIGINT NOT NULL,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL,
+    deleted_at TIMESTAMP NULL
 );
 
 CREATE TABLE check_list_item_comment (
@@ -351,7 +364,10 @@ CREATE TABLE check_list_item_comment_file (
     file_url VARCHAR(255) NOT NULL,
     file_name VARCHAR(255) NOT NULL,
     file_order INTEGER NOT NULL,
-    cl_comment_id BIGINT NOT NULL
+    cl_comment_id BIGINT NOT NULL,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL,
+    deleted_at TIMESTAMP NULL
 );
 
 -- ============================================
@@ -371,7 +387,8 @@ CREATE TABLE project_notification (
     post_id BIGINT NULL,
     comment_id BIGINT NULL,
     created_at TIMESTAMP NULL,
-    updated_at TIMESTAMP NULL
+    updated_at TIMESTAMP NULL,
+    deleted_at TIMESTAMP NULL
 );
 
 -- project_notification constraint
