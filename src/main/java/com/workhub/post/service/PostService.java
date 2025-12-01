@@ -27,12 +27,13 @@ public class PostService {
     @Transactional
     public Post create(PostRequest request){
         Long parentPostId = request.parentPostId();
-        if (parentPostId != null && !postRepository.existsById(parentPostId)) {
+        if (parentPostId != null && !postRepository.existsByPostIdAndDeletedAtIsNull(parentPostId)) {
             throw new BusinessException(ErrorCode.POST_NOT_FOUND);
         }
 
         return postRepository.save(Post.of(parentPostId, request));
     }
+
 
     @Transactional(readOnly = true)
     public List<Post> findAll(){
@@ -41,7 +42,7 @@ public class PostService {
 
     @Transactional(readOnly = true)
     public Post findById(Long id) {
-        return postRepository.findById(id)
+        return postRepository.findByPostIdAndDeletedAtIsNull(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
     }
 
@@ -51,9 +52,7 @@ public class PostService {
      * @throws BusinessException 게시글이 존재하지 않을 때
      */
     @Transactional
-    public Post update(Long postId, PostUpdateRequest request){
-        Post target = postRepository.findById(postId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
+    public Post update(Post target, PostUpdateRequest request){
         target.update(request);
         return target;
     }
@@ -66,8 +65,7 @@ public class PostService {
      */
     @Transactional
     public void delete(Long postId){
-        Post target = postRepository.findById(postId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.POST_NOT_FOUND));
-        postRepository.delete(target);
+        Post target = findById(postId);
+        target.markDeleted();
     }
 }

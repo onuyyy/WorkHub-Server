@@ -21,7 +21,6 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.verify;
 
 @ExtendWith(SpringExtension.class)
 public class PostServiceTest {
@@ -36,7 +35,7 @@ public class PostServiceTest {
         PostRequest request = new PostRequest(
                 "title", PostType.NOTICE, "content", "11.1.1",1L, HashTag.DESIGN
         );
-        given(postRepository.findById(1L)).willReturn(Optional.empty());
+        given(postRepository.existsByPostIdAndDeletedAtIsNull(1L)).willReturn(false);
 
         assertThatThrownBy(() -> postService.create(request))
                 .isInstanceOf(BusinessException.class)
@@ -67,20 +66,6 @@ public class PostServiceTest {
     }
 
     @Test
-    @DisplayName("수정 대상 게시글이 없으면 예외를 던진다")
-    void update_withPostNotFound_shouldThrow() {
-        given(postRepository.findById(99L)).willReturn(Optional.empty());
-
-        PostUpdateRequest request = new PostUpdateRequest(
-                "edited title", PostType.NOTICE, "edited content", "10.0.0.1", HashTag.DESIGN
-        );
-
-        assertThatThrownBy(() -> postService.update(99L, request))
-                .isInstanceOf(BusinessException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.POST_NOT_FOUND);
-    }
-
-    @Test
     @DisplayName("게시글을 수정하면 필드가 갱신된다")
     void update_success_shouldChangeFields() {
         Post origin = Post.builder()
@@ -91,22 +76,31 @@ public class PostServiceTest {
                 .postIp("1.1.1.1")
                 .hashtag(HashTag.REQ_DEF)
                 .build();
-        given(postRepository.findById(1L)).willReturn(Optional.of(origin));
 
         PostUpdateRequest request = new PostUpdateRequest(
                 "new", PostType.NOTICE, "new content", "2.2.2.2", HashTag.DESIGN
         );
 
-        Post result = postService.update(1L, request);
+        Post result = postService.update(origin, request);
 
         assertThat(result.getTitle()).isEqualTo("new");
         assertThat(result.getPostIp()).isEqualTo("2.2.2.2");
     }
 
     @Test
+    @DisplayName("게시글 조회 시 존재하지 않으면 예외를 던진다")
+    void findById_withPostNotFound_shouldThrow() {
+        given(postRepository.findByPostIdAndDeletedAtIsNull(99L)).willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> postService.findById(99L))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.POST_NOT_FOUND);
+    }
+
+    @Test
     @DisplayName("삭제 대상 게시글이 없으면 예외를 던진다")
     void delete_withPostNotFound_shouldThrow() {
-        given(postRepository.findById(99L)).willReturn(Optional.empty());
+        given(postRepository.findByPostIdAndDeletedAtIsNull(99L)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> postService.delete(99L))
                 .isInstanceOf(BusinessException.class)
@@ -122,12 +116,11 @@ public class PostServiceTest {
                 .content("content")
                 .type(PostType.NOTICE)
                 .build();
-        given(postRepository.findById(1L)).willReturn(Optional.of(existing));
+        given(postRepository.findByPostIdAndDeletedAtIsNull(1L)).willReturn(Optional.of(existing));
 
         postService.delete(1L);
 
-        // 삭제 로직이 repository.delete 호출까지 수행했는지 검증한다.
-        verify(postRepository).delete(existing);
+        assertThat(existing.isDeleted()).isTrue();
     }
 
 

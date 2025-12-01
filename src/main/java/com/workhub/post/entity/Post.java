@@ -8,6 +8,10 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "post")
@@ -15,6 +19,8 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
+@SQLDelete(sql = "UPDATE post SET deleted_at  = CURRENT_TIMESTAMP WHERE post_id = ?")
+@SQLRestriction("deleted_at is NULL")
 public class Post extends BaseTimeEntity {
 
     @Id
@@ -48,6 +54,9 @@ public class Post extends BaseTimeEntity {
     @Column(name = "parent_post_id")
     private Long parentPostId;
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     public static Post of(Long parentPostId, PostRequest request) {
         return Post.builder()
                 .type(request.postType())
@@ -65,5 +74,13 @@ public class Post extends BaseTimeEntity {
         this.type = request.postType();
         this.postIp = request.postIp();
         this.hashtag = request.hashTag();
+    }
+
+    public boolean isDeleted() {
+        return this.deletedAt != null;
+    }
+
+    public void markDeleted() {
+        this.deletedAt = LocalDateTime.now();
     }
 }
