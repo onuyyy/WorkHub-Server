@@ -190,6 +190,37 @@ public class CsPostServiceTest {
     }
 
     @Test
+    @DisplayName("CS POST 게시글이 정상적으로 삭제된다.")
+    void givenDeleteCsPost_whenDelete_thenSuccess() {
+        // given
+        Long projectId = 1L;
+        Long csPostId = 1L;
+
+        when(csPostRepository.findById(csPostId)).thenReturn(Optional.of(mockSaved));
+
+        // when
+        csPostService.delete(projectId, csPostId);
+
+        // then
+        assertThat(mockSaved.getDeletedAt()).isNotNull();
+        verify(csPostRepository).findById(csPostId);
+
+    }
+
+    @Test
+    @DisplayName("CS POST 게시글 삭제시 예외 처리")
+    void givenNotExistsCsPost_whenDelete_thenThrowNotFound() {
+        // given
+        Long projectId = 1L;
+        Long csPostId = 1L;
+
+        when(csPostRepository.findById(csPostId)).thenReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> csPostService.delete(projectId, csPostId))
+                .isInstanceOf(BusinessException.class);
+    }
+
     @DisplayName("게시글 작성자가 아닌 사용자가 수정하려고 하면 FORBIDDEN_CS_POST_UPDATE 예외가 발생한다.")
     void givenDifferentUser_whenUpdate_thenThrowForbidden() {
         // given
@@ -219,5 +250,6 @@ public class CsPostServiceTest {
 
         verify(csPostRepository).findById(csPostId);
         verify(csPostRepository, never()).save(any(CsPost.class));
+
     }
 }
