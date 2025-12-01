@@ -8,7 +8,7 @@ import com.workhub.project.dto.CreateProjectRequest;
 import com.workhub.project.dto.ProjectResponse;
 import com.workhub.project.dto.UpdateStatusRequest;
 import com.workhub.project.service.CreateProjectService;
-import com.workhub.project.service.UpdateProjectStatusService;
+import com.workhub.project.service.UpdateProjectService;
 import com.workhub.userTable.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.*;
 public class ProjectController implements ProjectApi {
 
     private final CreateProjectService createProjectService;
-    private final UpdateProjectStatusService updateProjectStatusService;
+    private final UpdateProjectService updateProjectService;
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
@@ -50,9 +50,25 @@ public class ProjectController implements ProjectApi {
 
         log.info("updateStatus : {}, userName : {}. requestIp : {}", request.status(), userDetails.getUsername(), clientInfoDto.getIpAddress());
 
-        updateProjectStatusService.updateProjectStatus(projectId, request,
+        updateProjectService.updateProjectStatus(projectId, request,
                 clientInfoDto.getIpAddress(), clientInfoDto.getUserAgent(), userDetails.getUserId());
 
         return ApiResponse.success("상태 변경 성공");
     }
+
+    @PutMapping("{projectId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<ProjectResponse>> updateProject(@PathVariable("projectId") Long projectId,
+                                                                      @RequestBody CreateProjectRequest request,
+                                                                      @Parameter(hidden = true) @ClientInfo ClientInfoDto clientInfoDto,
+                                                                      @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        log.info("updateProject : {}, requestIp : {}", projectId, clientInfoDto.getIpAddress());
+
+        ProjectResponse projectResponse = updateProjectService.updateProject(projectId, request,
+                clientInfoDto.getIpAddress(), clientInfoDto.getUserAgent(), userDetails.getUserId());
+
+        return ApiResponse.success(projectResponse, "프로젝트 수정에 성공했습니다.");
+    }
+
 }

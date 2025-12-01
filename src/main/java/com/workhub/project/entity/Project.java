@@ -46,6 +46,24 @@ public class Project extends BaseTimeEntity {
         this.status = status;
     }
 
+    public void update(CreateProjectRequest request) {
+        if (request.projectName() != null) {
+            this.projectTitle = request.projectName();
+        }
+        if (request.projectDescription() != null) {
+            this.projectDescription = request.projectDescription();
+        }
+        if (request.starDate() != null) {
+            this.contractStartDate = request.starDate();
+        }
+        if (request.endDate() != null) {
+            this.contractEndDate = request.endDate();
+        }
+        if (request.company() != null) {
+            this.clientCompanyId = request.company();
+        }
+    }
+
     public static Project of (CreateProjectRequest request) {
         return Project.builder()
                 .projectTitle(request.projectName())

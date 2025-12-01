@@ -16,10 +16,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Project", description = "프로젝트 관리 API")
 public interface ProjectApi {
@@ -94,6 +91,49 @@ public interface ProjectApi {
 
             @Parameter(description = "변경할 상태 정보", required = true)
             @RequestBody UpdateStatusRequest request,
+
+            @Parameter(hidden = true)
+            @ClientInfo ClientInfoDto clientInfoDto,
+
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    );
+
+    @Operation(
+            summary = "프로젝트 정보 수정",
+            description = "기존 프로젝트의 정보를 수정합니다. 변경된 필드만 감지하여 각 필드별로 변경 이력을 저장합니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "프로젝트 수정 성공",
+                    content = @Content(schema = @Schema(implementation = ProjectResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "잘못된 요청 (필수 항목 누락 또는 유효하지 않은 데이터)"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "403",
+                    description = "권한 오류 (Role Admin만 프로젝트 수정 가능)"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "프로젝트를 찾을 수 없음"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "500",
+                    description = "서버 오류 (프로젝트 수정 실패)"
+            )
+    })
+    @PutMapping("/{projectId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    ResponseEntity<ApiResponse<ProjectResponse>> updateProject(
+            @Parameter(description = "프로젝트 ID", required = true)
+            @PathVariable("projectId") Long projectId,
+
+            @Parameter(description = "프로젝트 수정 요청 정보", required = true)
+            @RequestBody CreateProjectRequest request,
 
             @Parameter(hidden = true)
             @ClientInfo ClientInfoDto clientInfoDto,
