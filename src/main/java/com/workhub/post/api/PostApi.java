@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -41,7 +42,7 @@ public interface PostApi {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류 (게시물 저장 실패)")
     })
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    ApiResponse<PostResponse> createPost(
+    ResponseEntity<ApiResponse<PostResponse>> createPost(
             @PathVariable Long projectId,
             @PathVariable Long nodeId,
             @Valid @RequestBody PostRequest request
@@ -66,7 +67,7 @@ public interface PostApi {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류 (게시물 조회 실패)")
     })
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    ApiResponse<List<PostResponse>> getPosts(
+    ResponseEntity<ApiResponse<List<PostResponse>>> getPosts(
             @PathVariable Long projectId,
             @PathVariable Long nodeId
     );
@@ -91,7 +92,7 @@ public interface PostApi {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류 (게시물 조회 실패)")
     })
     @GetMapping(value = "/{postId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    ApiResponse<PostResponse> getPost(
+    ResponseEntity<ApiResponse<PostResponse>> getPost(
             @PathVariable Long projectId,
             @PathVariable Long nodeId,
             @PathVariable Long postId
@@ -119,7 +120,7 @@ public interface PostApi {
     })
 
     @PatchMapping(value = "/{postId}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    ApiResponse<PostResponse> updatePost(
+    ResponseEntity<ApiResponse<PostResponse>> updatePost(
             @PathVariable Long projectId,
             @PathVariable Long nodeId,
             @PathVariable Long postId,
@@ -146,7 +147,7 @@ public interface PostApi {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류 (게시물 삭제 실패)")
     })
     @DeleteMapping(value = "/{postId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    ApiResponse<Void> deletePost(
+    ResponseEntity<ApiResponse<Object>> deletePost(
             @PathVariable Long projectId,
             @PathVariable Long nodeId,
             @PathVariable Long postId

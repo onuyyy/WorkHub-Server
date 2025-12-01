@@ -10,6 +10,7 @@ import com.workhub.post.service.PostService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,7 +32,7 @@ public class PostController implements PostApi {
     @Override
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponse<PostResponse> createPost(
+    public ResponseEntity<ApiResponse<PostResponse>> createPost(
             @PathVariable Long projectId,
             @PathVariable Long nodeId,
             @Valid @RequestBody PostRequest request) {
@@ -49,7 +50,7 @@ public class PostController implements PostApi {
     @Override
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public ApiResponse<List<PostResponse>> getPosts(@PathVariable Long projectId, @PathVariable Long nodeId) {
+    public ResponseEntity<ApiResponse<List<PostResponse>>> getPosts(@PathVariable Long projectId, @PathVariable Long nodeId) {
         List<PostResponse> responses = postService.findAll()
                 .stream()
                 .map(PostResponse::from)
@@ -59,9 +60,9 @@ public class PostController implements PostApi {
 
     @Override
     @GetMapping("/{postId}")
-    public ApiResponse<PostResponse> getPost(@PathVariable Long projectId,
-                                             @PathVariable Long nodeId,
-                                             @PathVariable Long postId) {
+    public ResponseEntity<ApiResponse<PostResponse>> getPost(@PathVariable Long projectId,
+                                                             @PathVariable Long nodeId,
+                                                             @PathVariable Long postId) {
         PostResponse response = PostResponse.from(postService.findById(postId));
         return ApiResponse.success(response, "게시글 조회에 성공했습니다.");
     }
@@ -72,10 +73,10 @@ public class PostController implements PostApi {
     @Override
     @PatchMapping("/{postId}")
     @ResponseStatus(HttpStatus.OK)
-    public ApiResponse<PostResponse> updatePost(@PathVariable Long projectId,
-                                                @PathVariable Long nodeId,
-                                                @PathVariable Long postId,
-                                                @Valid @RequestBody PostUpdateRequest request) {
+    public ResponseEntity<ApiResponse<PostResponse>> updatePost(@PathVariable Long projectId,
+                                                                @PathVariable Long nodeId,
+                                                                @PathVariable Long postId,
+                                                                @Valid @RequestBody PostUpdateRequest request) {
         Post updated = postService.update(postId, request);
         return ApiResponse.success(PostResponse.from(updated), "게시물 수정에 성공했습니다.");
     }
@@ -91,9 +92,9 @@ public class PostController implements PostApi {
     @Override
     @DeleteMapping("/{postId}")
     @ResponseStatus(HttpStatus.OK)
-    public ApiResponse<Void> deletePost(@PathVariable Long projectId,
-                                        @PathVariable Long nodeId,
-                                        @PathVariable Long postId) {
+    public ResponseEntity<ApiResponse<Object>> deletePost(@PathVariable Long projectId,
+                                                          @PathVariable Long nodeId,
+                                                          @PathVariable Long postId) {
         postService.delete(postId);
         return ApiResponse.success(null, "게시물 삭제에 성공했습니다.");
     }

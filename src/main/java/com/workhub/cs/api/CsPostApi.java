@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -44,7 +45,7 @@ public interface CsPostApi {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류 (CS 게시글 저장 실패)")
     })
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    ApiResponse<CsPostResponse> createCsPost(
+    ResponseEntity<ApiResponse<CsPostResponse>> createCsPost(
             @PathVariable Long projectId,
             @Valid @RequestBody CsPostRequest csPostRequest,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails
@@ -69,7 +70,7 @@ public interface CsPostApi {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류 (CS 게시글 수정 실패)")
     })
     @PatchMapping(value = "/{csPostId}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    ApiResponse<CsPostResponse> updateCsPost(
+    ResponseEntity<ApiResponse<CsPostResponse>> updateCsPost(
             @PathVariable Long projectId,
             @PathVariable Long csPostId,
             @Valid @RequestBody CsPostUpdateRequest csPostUpdateRequest,
@@ -99,7 +100,7 @@ public interface CsPostApi {
             value = "/{csPostId}",
             produces = MediaType.APPLICATION_JSON_VALUE
     )
-    ApiResponse<Long> deleteCsPost(
+    ResponseEntity<ApiResponse<Long>> deleteCsPost(
             @PathVariable Long projectId,
             @PathVariable Long csPostId
     );

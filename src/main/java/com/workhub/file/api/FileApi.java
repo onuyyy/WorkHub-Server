@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -40,7 +41,7 @@ public interface FileApi {
             )
     })
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ApiResponse<List<FileUploadResponse>> uploadFile(
+    public ResponseEntity<ApiResponse<List<FileUploadResponse>>> uploadFile(
             @Parameter(description = "업로드할 파일", required = true)
             @RequestPart("file") List<MultipartFile> files
     );
@@ -65,7 +66,7 @@ public interface FileApi {
             )
     })
     @GetMapping("/get-files")
-    public ApiResponse<List<FileUploadResponse>> getFileUrl(
+    public ResponseEntity<ApiResponse<List<FileUploadResponse>>> getFileUrl(
             @Parameter(description = "S3에 저장된 파일명 리스트", required = true, example = "87bf751a-bbf0-4670-a49e-1950ec7f8be9.pdf")
             @RequestParam("fileNames") List<String> fileNames
     );

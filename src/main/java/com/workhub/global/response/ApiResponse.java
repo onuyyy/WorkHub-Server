@@ -29,9 +29,8 @@ public class ApiResponse<T> {
                 .body(new ApiResponse<>(true, "CREATED", message, data));
     }
 
-    public static ResponseEntity<ApiResponse<Object>> error(String code, String message) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ApiResponse<>(false, code, message, null));
+    public static ApiResponse<Object> error(String code, String message) {
+        return new ApiResponse<>(false, code, message, null);
     }
 
 }
