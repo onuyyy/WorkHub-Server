@@ -1,22 +1,23 @@
 package com.workhub.checklist.entity;
 
+import com.workhub.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 @Getter
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "check_list_item_comment_file")
 @Entity
-public class CheckListItemCommentFile {
+public class CheckListItemCommentFile extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "coment_file_id")
+    @Column(name = "comment_file_id")
     private Long commentFileId;
 
     @Column(name = "file_url", length = 255)

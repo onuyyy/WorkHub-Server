@@ -44,9 +44,6 @@ public class ProjectNode extends BaseTimeEntity {
     @Column(name = "node_order")
     private Integer nodeOrder;
 
-    @Column(name = "deleted_at")
-    private LocalDateTime deletedAt;
-
     @Column(name = "project_id")
     private Long projectId;
 

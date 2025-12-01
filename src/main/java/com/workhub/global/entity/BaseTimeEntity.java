@@ -29,4 +29,19 @@ public abstract class BaseTimeEntity {
     @LastModifiedDate
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    protected void markDeletedAt(LocalDateTime deletedAt) {
+        this.deletedAt = deletedAt;
+    }
+
+    protected void markDeletedNow() {
+        markDeletedAt(LocalDateTime.now());
+    }
+
+    public boolean isDeleted() {
+        return this.deletedAt != null;
+    }
 }
