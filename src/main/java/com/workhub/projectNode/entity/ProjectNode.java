@@ -1,6 +1,7 @@
-package com.workhub.projectNode;
+package com.workhub.projectNode.entity;
 
 import com.workhub.global.entity.BaseTimeEntity;
+import com.workhub.projectNode.dto.CreateNodeRequest;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -32,6 +33,10 @@ public class ProjectNode extends BaseTimeEntity {
     private NodeStatus nodeStatus;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "priority")
+    private Priority priority;
+
+    @Enumerated(EnumType.STRING)
     @Column(name = "confirm_status")
     private ConfirmStatus confirmStatus;
 
@@ -50,4 +55,18 @@ public class ProjectNode extends BaseTimeEntity {
     @Column(name = "user_id")
     private Long userId;
 
+    public void incrementNodeOrder() {
+        this.nodeOrder++;
+    }
+
+    public static ProjectNode of(Long projectId, CreateNodeRequest request) {
+        return ProjectNode.builder()
+                .title(request.title())
+                .description(request.description())
+                .nodeStatus(NodeStatus.NOT_STARTED)
+                .priority(Priority.valueOf(request.priority()))
+                .nodeOrder(request.nodeOrder())
+                .projectId(projectId)
+                .build();
+    }
 }

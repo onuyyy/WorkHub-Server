@@ -76,7 +76,12 @@ public enum ErrorCode {
     CLIENT_MEMBER_HISTORY_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PR-005", "고객사 멤버 히스토리 저장에 실패했습니다."),
     DEV_MEMBER_HISTORY_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PR-006", "개발사 멤버 히스토리 저장에 실패했습니다."),
     PROJECT_NOT_FOUND(HttpStatus.BAD_REQUEST, "PR-007", "프로젝트를 찾을 수 없습니다."),
-    PROJECT_HISTORY_NOT_FOUND(HttpStatus.BAD_REQUEST, "PR-008", "프로젝트 히스토리를 찾을 수 없습니다.");
+    PROJECT_HISTORY_NOT_FOUND(HttpStatus.BAD_REQUEST, "PR-008", "프로젝트 히스토리를 찾을 수 없습니다."),
+
+    // 프로젝트 노드
+    PROJECT_NODE_NOT_FOUND(HttpStatus.NOT_FOUND, "PN-001", "프로젝트 노드를 찾을 수 없습니다."),
+    PROJECT_NODE_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PN-002", "프로젝트 노드 저장에 실패했습니다."),
+    PROJECT_NODE_HISTORY_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PN-003", "프로젝트 노드 히스토리 저장에 실패했습니다.");
 
     private final HttpStatus httpStatus;
     private final String errorCode;
