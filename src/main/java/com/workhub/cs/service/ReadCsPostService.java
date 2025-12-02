@@ -1,12 +1,15 @@
 package com.workhub.cs.service;
 
 import com.workhub.cs.dto.CsPostResponse;
+import com.workhub.cs.dto.CsPostSearchRequest;
 import com.workhub.cs.entity.CsPost;
 import com.workhub.cs.entity.CsPostFile;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import com.workhub.project.service.ProjectService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,5 +43,20 @@ public class ReadCsPostService {
                 .toList();
 
         return CsPostResponse.from(csPost, files);
+    }
+
+    /**
+     * CS POST 게시글 리스트를 조회한다.
+     * @param projectId 프로젝트 식별자
+     * @param searchType 검색 옵션
+     * @param pageable 페이징 정보
+     * @return Page<CsPostResponse>
+     */
+    public Page<CsPostResponse> findCsPosts(Long projectId, CsPostSearchRequest searchType, Pageable pageable) {
+
+        projectService.validateCompletedProject(projectId);
+        Page<CsPost> csPosts = csPostService.findCsPosts(searchType, pageable);
+
+        return csPosts.map(CsPostResponse::from);
     }
 }

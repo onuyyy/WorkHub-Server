@@ -1,5 +1,6 @@
 package com.workhub.cs.service;
 
+import com.workhub.cs.dto.CsPostSearchRequest;
 import com.workhub.cs.entity.CsPost;
 import com.workhub.cs.entity.CsPostFile;
 import com.workhub.cs.repository.CsPostFileRepository;
@@ -8,6 +9,8 @@ import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -54,5 +57,9 @@ public class CsPostService {
      */
     public List<CsPostFile> findFilesByCsPostId(Long csPostId) {
         return csPostFileRepository.findByCsPostId(csPostId);
+    }
+
+    public Page<CsPost> findCsPosts(CsPostSearchRequest searchType, Pageable pageable) {
+        return csPostRepository.findCsPosts(searchType, pageable);
     }
 }

@@ -1,6 +1,7 @@
 package com.workhub.cs.service;
 
 import com.workhub.cs.dto.CsPostResponse;
+import com.workhub.cs.dto.CsPostSearchRequest;
 import com.workhub.cs.entity.CsPost;
 import com.workhub.cs.entity.CsPostStatus;
 import com.workhub.global.error.ErrorCode;
@@ -15,11 +16,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.*;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -103,5 +104,48 @@ class ReadCsPostServiceTest {
         verify(projectService).validateCompletedProject(projectId);
         verify(csPostService).findById(csPostId);
         verify(csPostService, never()).findFilesByCsPostId(csPostId);
+    }
+
+    @Test
+    @DisplayName("CS POST 리스트를 조회한다.")
+    void givenProjectIdAndSearchRequest_whenFindCsPosts_thenReturnsPagedResult() {
+        // given
+        Long projectId = 1L;
+        CsPostSearchRequest request = CsPostSearchRequest.builder().csPostStatus(CsPostStatus.RECEIVED).build();
+        Pageable pageable = PageRequest.of(0, 10, Sort.by("createdAt").descending());
+
+        List<CsPost> content = List.of(
+                CsPost.builder().csPostId(1L).title("t1").projectId(1L).build(),
+                CsPost.builder().csPostId(2L).title("t2").projectId(1L).build()
+        );
+
+        Page<CsPost> mockPage =
+                new PageImpl<>(content, pageable, 2);
+
+        when(projectService.validateCompletedProject(projectId)).thenReturn(
+                Project.builder()
+                        .projectId(projectId)
+                        .projectTitle("project")
+                        .status(Status.COMPLETED)
+                        .build()
+        );
+        when(csPostService.findCsPosts(request, pageable)).thenReturn(mockPage);
+
+        // when
+        Page<CsPostResponse> result = readCsPostService.findCsPosts(projectId, request, pageable);
+
+        // then
+        verify(projectService).validateCompletedProject(projectId);
+        verify(csPostService).findCsPosts(request, pageable);
+
+        assertThat(result.getContent()).hasSize(2);
+        assertThat(result.getTotalElements()).isEqualTo(2);
+        assertThat(result.getTotalPages()).isEqualTo(1);
+        assertThat(result.getNumber()).isEqualTo(0);
+        assertThat(result.getSize()).isEqualTo(10);
+
+        // DTO 매핑 검증
+        assertThat(result.getContent().get(0).title()).isEqualTo("t1");
+
     }
 }

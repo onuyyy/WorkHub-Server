@@ -3,6 +3,7 @@ package com.workhub.cs.controller;
 import com.workhub.cs.api.CsPostApi;
 import com.workhub.cs.dto.CsPostRequest;
 import com.workhub.cs.dto.CsPostResponse;
+import com.workhub.cs.dto.CsPostSearchRequest;
 import com.workhub.cs.dto.CsPostUpdateRequest;
 import com.workhub.cs.entity.CsPostStatus;
 import com.workhub.cs.service.CreateCsPostService;
@@ -13,6 +14,10 @@ import com.workhub.global.response.ApiResponse;
 import com.workhub.userTable.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -42,7 +47,27 @@ public class CsPostController implements CsPostApi {
             @PathVariable Long csPostId
     ) {
         CsPostResponse response = readCsPostService.findCsPost(projectId, csPostId);
+
         return ApiResponse.success(response, "CS 게시글이 조회되었습니다.");
+    }
+
+    /**
+     * 프로젝트의 CS 게시글 리스트를 조회한다.
+     *
+     * @param projectId 프로젝트 식별자
+     * @param pageable 페이징 정보
+     * @return CsPostResponse
+     */
+    @Override
+    @GetMapping
+    public ResponseEntity<ApiResponse<Page<CsPostResponse>>> findCsPosts(
+            @PathVariable Long projectId,
+            CsPostSearchRequest csPostSearchRequest,
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        Page<CsPostResponse> csPosts = readCsPostService.findCsPosts(projectId, csPostSearchRequest, pageable);
+
+        return ApiResponse.success(csPosts ,"CS 게시글 목록이 조회되었습니다.");
     }
 
     /**
@@ -120,6 +145,7 @@ public class CsPostController implements CsPostApi {
             @RequestParam CsPostStatus status
     ) {
         CsPostStatus changed = updateCsPostService.changeStatus(projectId, csPostId, status);
+
         return ApiResponse.success(changed, "CS 게시글 상태가 변경되었습니다.");
     }
 }
