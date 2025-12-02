@@ -1,33 +1,38 @@
 package com.workhub.post.controller;
 
+import com.workhub.global.error.ErrorCode;
+import com.workhub.global.error.exception.BusinessException;
 import com.workhub.global.response.ApiResponse;
 import com.workhub.post.api.PostApi;
 import com.workhub.post.entity.HashTag;
-import com.workhub.post.entity.Post;
 import com.workhub.post.entity.PostType;
 import com.workhub.post.record.request.PostRequest;
 import com.workhub.post.record.request.PostUpdateRequest;
 import com.workhub.post.record.response.PostPageResponse;
 import com.workhub.post.record.response.PostResponse;
-import com.workhub.post.record.response.PostSummaryResponse;
-import com.workhub.post.service.PostService;
+import com.workhub.post.service.CreatePostService;
+import com.workhub.post.service.DeletePostService;
+import com.workhub.post.service.ReadPostService;
+import com.workhub.post.service.UpdatePostService;
+import com.workhub.userTable.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/v1/projects/{projectId}/nodes/{nodeId}/posts")
 public class PostController implements PostApi {
-    private final PostService postService;
+    private final CreatePostService createPostService;
+    private final ReadPostService readPostService;
+    private final UpdatePostService updatePostService;
+    private final DeletePostService deletePostService;
 
     /**
      * 프로젝트/노드별 게시글을 생성한다.
@@ -43,9 +48,10 @@ public class PostController implements PostApi {
     public ResponseEntity<ApiResponse<PostResponse>> createPost(
             @PathVariable Long projectId,
             @PathVariable Long nodeId,
-            @Valid @RequestBody PostRequest request) {
-        Post created = postService.create(request);
-        return ApiResponse.created(PostResponse.from(created), "게시글이 생성되었습니다.");
+            @Valid @RequestBody PostRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        PostResponse created = createPostService.create(projectId, nodeId, getUserId(userDetails), request);
+        return ApiResponse.created(created, "게시글이 생성되었습니다.");
     }
 
     /**
@@ -64,21 +70,13 @@ public class PostController implements PostApi {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) PostType postType,
             @RequestParam(required = false) HashTag hashTag,
-            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+            @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         /**
          * 검색 조건과 Pageable 정보를 기반으로 게시글 목록을 조회한다.
          */
-        Page<Post> page = postService.search(nodeId, keyword, postType, hashTag, pageable);
-        List<PostSummaryResponse> posts = page.getContent()
-                .stream()
-                .map(PostSummaryResponse::from)
-                .toList();
-
-        /**
-         * 조회 결과를 응답 DTO로 변환한다.
-         */
-        PostPageResponse response = PostPageResponse.of(posts, page);
+        PostPageResponse response = readPostService.search(projectId, nodeId, getUserId(userDetails), keyword, postType, hashTag, pageable);
 
         return ApiResponse.success(response, "게시글 목록 조회에 성공했습니다.");
     }
@@ -87,8 +85,9 @@ public class PostController implements PostApi {
     @GetMapping("/{postId}")
     public ResponseEntity<ApiResponse<PostResponse>> getPost(@PathVariable Long projectId,
                                                              @PathVariable Long nodeId,
-                                                             @PathVariable Long postId) {
-        PostResponse response = PostResponse.from(postService.findById(postId));
+                                                             @PathVariable Long postId,
+                                                             @AuthenticationPrincipal CustomUserDetails userDetails) {
+        PostResponse response = readPostService.findById(projectId, nodeId, getUserId(userDetails), postId);
         return ApiResponse.success(response, "게시글 조회에 성공했습니다.");
     }
 
@@ -101,10 +100,10 @@ public class PostController implements PostApi {
     public ResponseEntity<ApiResponse<PostResponse>> updatePost(@PathVariable Long projectId,
                                                                 @PathVariable Long nodeId,
                                                                 @PathVariable Long postId,
-                                                                @Valid @RequestBody PostUpdateRequest request) {
-        Post target = postService.findById(postId);
-        Post updated = postService.update(target, request);
-        return ApiResponse.success(PostResponse.from(updated), "게시물 수정에 성공했습니다.");
+                                                                @Valid @RequestBody PostUpdateRequest request,
+                                                                @AuthenticationPrincipal CustomUserDetails userDetails) {
+        PostResponse updated = updatePostService.update(projectId, nodeId, postId, getUserId(userDetails), request);
+        return ApiResponse.success(updated, "게시물 수정에 성공했습니다.");
     }
 
     /**
@@ -120,8 +119,22 @@ public class PostController implements PostApi {
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<ApiResponse<Object>> deletePost(@PathVariable Long projectId,
                                                           @PathVariable Long nodeId,
-                                                          @PathVariable Long postId) {
-        postService.delete(postId);
+                                                          @PathVariable Long postId,
+                                                          @AuthenticationPrincipal CustomUserDetails userDetails) {
+        deletePostService.delete(projectId, nodeId, postId, getUserId(userDetails));
         return ApiResponse.success(null, "게시물 삭제에 성공했습니다.");
+    }
+
+    /**
+     * 인증 객체의 사용자 ID를 추출하며, 비로그인 상태는 즉시 차단한다.
+     *
+     * @param userDetails 인증 정보
+     * @return 사용자 ID
+     */
+    private Long getUserId(CustomUserDetails userDetails) {
+        if (userDetails == null) {
+            throw new BusinessException(ErrorCode.NOT_LOGGED_IN);
+        }
+        return userDetails.getUserId();
     }
 }

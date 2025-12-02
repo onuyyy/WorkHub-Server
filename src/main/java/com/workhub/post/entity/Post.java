@@ -57,13 +57,15 @@ public class Post extends BaseTimeEntity {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
-    public static Post of(Long parentPostId, PostRequest request) {
+    public static Post of(Long projectNodeId, Long userId, Long parentPostId, PostRequest request) {
         return Post.builder()
                 .type(request.postType())
                 .title(request.title())
                 .content(request.content())
                 .postIp(request.postIp())
                 .hashtag(request.hashTag())
+                .userId(userId)
+                .projectNodeId(projectNodeId)
                 .parentPostId(parentPostId)
                 .build();
     }

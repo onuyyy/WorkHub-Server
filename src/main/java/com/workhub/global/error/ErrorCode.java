@@ -43,6 +43,10 @@ public enum ErrorCode {
     POST_NOT_FOUND(HttpStatus.NOT_FOUND, "PO-001", "게시물을 찾을 수 없습니다."),
     PARENT_POST_NOT_FOUND(HttpStatus.BAD_REQUEST, "PO-002", "부모 게시글을 찾을 수 없습니다."),
     ALREADY_DELETED_POST(HttpStatus.BAD_REQUEST, "PO-003", "이미 삭제된 게시글입니다."),
+    FORBIDDEN_POST_UPDATE(HttpStatus.FORBIDDEN, "PO-004", "게시글 수정 권한이 없습니다."),
+    FORBIDDEN_POST_DELETE(HttpStatus.FORBIDDEN, "PO-005", "게시글 삭제 권한이 없습니다."),
+    NOT_MATCHED_PROJECT_POST(HttpStatus.BAD_REQUEST, "PO-006", "잘못된 프로젝트 또는 단계의 게시글입니다."),
+    INVALID_PROJECT_STATUS_FOR_POST(HttpStatus.BAD_REQUEST, "C-0011", "진행중인 프로젝트에서만 게시글을 처리할 수 있습니다."),
 
 
     // CS 게시판

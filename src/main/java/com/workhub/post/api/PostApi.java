@@ -7,6 +7,7 @@ import com.workhub.post.record.request.PostRequest;
 import com.workhub.post.record.request.PostUpdateRequest;
 import com.workhub.post.record.response.PostPageResponse;
 import com.workhub.post.record.response.PostResponse;
+import com.workhub.userTable.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -21,6 +22,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "게시물 관리", description = "프로젝트 단계별 게시물 CRUD API")
@@ -49,7 +51,8 @@ public interface PostApi {
     ResponseEntity<ApiResponse<PostResponse>> createPost(
             @PathVariable Long projectId,
             @PathVariable Long nodeId,
-            @Valid @RequestBody PostRequest request
+            @Valid @RequestBody PostRequest request,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails
     );
 
     @Operation(
@@ -80,7 +83,8 @@ public interface PostApi {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) PostType postType,
             @RequestParam(required = false) HashTag hashTag,
-            @ParameterObject @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+            @ParameterObject @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails
     );
 
     @Operation(
@@ -106,7 +110,8 @@ public interface PostApi {
     ResponseEntity<ApiResponse<PostResponse>> getPost(
             @PathVariable Long projectId,
             @PathVariable Long nodeId,
-            @PathVariable Long postId
+            @PathVariable Long postId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails
     );
 
     // PATCH 요청으로 제목/내용/분류/해시태그/IP를 수정
@@ -135,7 +140,8 @@ public interface PostApi {
             @PathVariable Long projectId,
             @PathVariable Long nodeId,
             @PathVariable Long postId,
-            @Valid @RequestBody PostUpdateRequest request
+            @Valid @RequestBody PostUpdateRequest request,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails
     );
 
     @Operation(
@@ -161,7 +167,8 @@ public interface PostApi {
     ResponseEntity<ApiResponse<Object>> deletePost(
             @PathVariable Long projectId,
             @PathVariable Long nodeId,
-            @PathVariable Long postId
+            @PathVariable Long postId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails
     );
 
 }

@@ -87,4 +87,11 @@ public class ProjectService {
         }
         return project;
     }
+    public Project validateProject(Long projectId) {
+        Project project = findProjectById(projectId);
+        if (!Status.IN_PROGRESS.equals(project.getStatus())) {
+            throw new BusinessException(ErrorCode.INVALID_PROJECT_STATUS_FOR_POST);
+        }
+        return project;
+    }
 }
