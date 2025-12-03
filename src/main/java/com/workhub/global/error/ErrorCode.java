@@ -69,6 +69,7 @@ public enum ErrorCode {
     NOT_EXISTS_CS_QNA(HttpStatus.BAD_REQUEST, "C-012", "존재하지 않는 CS 댓글입니다."),
     NOT_MATCHED_CS_QNA_POST(HttpStatus.BAD_REQUEST, "C-013", "잘못된 게시글의 CS 댓글입니다."),
     INVALID_CS_QNA_CONTENT(HttpStatus.BAD_REQUEST, "C-014", "CS 댓글 내용이 비어있습니다."),
+    NOT_MATCHED_CS_QNA_USERID(HttpStatus.BAD_REQUEST, "C-015", "CS 댓글 작성자와 수정자가 다릅니다."),
 
     // AWS S3
     // 파일 관련 에러

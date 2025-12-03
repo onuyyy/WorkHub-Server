@@ -1,6 +1,8 @@
 package com.workhub.cs.entity;
 
 import com.workhub.global.entity.BaseTimeEntity;
+import com.workhub.global.error.ErrorCode;
+import com.workhub.global.error.exception.BusinessException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -40,5 +42,12 @@ public class CsQna extends BaseTimeEntity {
                 .parentQnaId(parentQnaId)
                 .qnaContent(content)
                 .build();
+    }
+
+    public void updateContent(String newContent) {
+        if (newContent == null && newContent.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_CS_QNA_CONTENT);
+        }
+        this.qnaContent = newContent;
     }
 }
