@@ -5,32 +5,34 @@ import com.workhub.post.entity.Post;
 import com.workhub.post.entity.PostType;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
-/** 게시글 목록에서 필요한 요약 정보를 담는 DTO */
-public record PostSummaryResponse(
+/** 계층형 게시글 응답 DTO */
+public record PostThreadResponse(
         Long postId,
+        Long parentPostId,
         PostType postType,
         HashTag hashTag,
         String title,
         String contentPreview,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt
+        List<PostThreadResponse> replies
 ) {
     private static final int PREVIEW_LENGTH = 120;
 
-    public static PostSummaryResponse from(Post post) {
-        return new PostSummaryResponse(
+    public static PostThreadResponse from(Post post, List<PostThreadResponse> replies) {
+        return new PostThreadResponse(
                 post.getPostId(),
+                post.getParentPostId(),
                 post.getType(),
                 post.getHashtag(),
                 post.getTitle(),
                 buildPreview(post.getContent()),
                 post.getCreatedAt(),
-                post.getUpdatedAt()
+                replies
         );
     }
 
-    /** 본문의 앞부분만 잘라낸 미리보기 문자열을 만든다. */
     private static String buildPreview(String content) {
         if (content == null) {
             return "";

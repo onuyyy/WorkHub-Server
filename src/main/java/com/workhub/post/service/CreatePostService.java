@@ -32,6 +32,12 @@ public class CreatePostService {
         Long parentPostId = request.parentPostId();
         if (parentPostId != null && !postService.existsActivePost(parentPostId)) {
             throw new BusinessException(ErrorCode.PARENT_POST_NOT_FOUND);
+       } else if (parentPostId != null) {
+            Post parent = postService.findById(parentPostId);
+            postService.validateNode(parent, projectNodeId);
+            if (parent.isDeleted()) {
+                throw new BusinessException(ErrorCode.ALREADY_DELETED_POST);
+            }
         }
         return PostResponse.from(postService.save(Post.of(projectNodeId, userId, parentPostId, request)));
     }

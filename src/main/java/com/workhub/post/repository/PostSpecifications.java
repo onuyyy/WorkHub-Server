@@ -38,4 +38,9 @@ public final class PostSpecifications {
     public static Specification<Post> withHashTag(HashTag hashTag) {
         return hashTag == null ? null : (root, query, builder) -> builder.equal(root.get("hashtag"), hashTag);
     }
+
+    /** 부모 게시글(부모 ID가 null)만 필터링한다. */
+    public static Specification<Post> onlyRootPosts() {
+        return (root, query, builder) -> builder.isNull(root.get("parentPostId"));
+    }
 }

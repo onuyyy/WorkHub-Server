@@ -34,6 +34,18 @@ public class DeletePostService {
         if (!target.getUserId().equals(userId)) {
             throw new BusinessException(ErrorCode.FORBIDDEN_POST_DELETE);
         }
-        target.markDeleted();
+        deleteRecursively(target);
+    }
+
+    /**
+     * 재귀적으로 게시글을 삭제하여 부모 삭제 시 모든 자식 게시글도 함께 삭제되도록 한다.
+     *
+     * @param post 삭제할 게시글
+     */
+    private void deleteRecursively(Post post) {
+        if (!post.isDeleted()) {
+            post.markDeleted();
+        }
+        postService.findChildren(post.getPostId()).forEach(this::deleteRecursively);
     }
 }

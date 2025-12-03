@@ -20,12 +20,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
+import java.util.Collections;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.ArgumentMatchers.anyLong;
 
 @ExtendWith(SpringExtension.class)
 public class PostServiceTest {
@@ -35,7 +37,6 @@ public class PostServiceTest {
     PostService postService;
     @Mock
     ProjectService projectService;
-
     CreatePostService createPostService;
     UpdatePostService updatePostService;
     DeletePostService deletePostService;
@@ -45,6 +46,7 @@ public class PostServiceTest {
         createPostService = new CreatePostService(postService, projectService);
         updatePostService = new UpdatePostService(postService, projectService);
         deletePostService = new DeletePostService(postService, projectService);
+        given(postRepository.findByParentPostIdAndDeletedAtIsNull(anyLong())).willReturn(Collections.emptyList());
     }
 
     @Test
@@ -191,7 +193,6 @@ public class PostServiceTest {
     @Test
     @DisplayName("삭제 대상 게시글이 없으면 예외를 던진다")
     void delete_withPostNotFound_shouldThrow() {
-        given(projectService.validateProject(10L)).willReturn(mockProject(10L));
         given(postRepository.findByPostIdAndDeletedAtIsNull(99L)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> deletePostService.delete(10L, 20L, 99L, 30L))
@@ -212,7 +213,6 @@ public class PostServiceTest {
                 .userId(30L)
                 .build();
         deleted.markDeleted();
-        given(projectService.validateProject(10L)).willReturn(mockProject(10L));
         given(postRepository.findByPostIdAndDeletedAtIsNull(1L)).willReturn(Optional.of(deleted));
 
         assertThatThrownBy(() -> deletePostService.delete(10L, 20L, 1L, 30L))
@@ -276,4 +276,5 @@ public class PostServiceTest {
                 .status(Status.IN_PROGRESS)
                 .build();
     }
+
 }

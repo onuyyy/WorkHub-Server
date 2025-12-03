@@ -1,13 +1,11 @@
 package com.workhub.post.service;
 
-import com.workhub.global.error.ErrorCode;
-import com.workhub.global.error.exception.BusinessException;
 import com.workhub.post.entity.HashTag;
 import com.workhub.post.entity.Post;
 import com.workhub.post.entity.PostType;
 import com.workhub.post.record.response.PostPageResponse;
 import com.workhub.post.record.response.PostResponse;
-import com.workhub.post.record.response.PostSummaryResponse;
+import com.workhub.post.record.response.PostThreadResponse;
 import com.workhub.project.service.ProjectService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -15,7 +13,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -30,12 +30,10 @@ public class ReadPostService {
      *
      * @param projectId 프로젝트 ID
      * @param nodeId 노드 ID
-     * @param userId 인증 사용자 ID
      * @param postId 게시글 ID
      * @return 조회된 게시글
      */
     public PostResponse findById(Long projectId, Long nodeId, Long userId, Long postId) {
-        ensureAuthenticated(userId);
         projectService.validateProject(projectId);
         Post post = postService.findById(postId);
         postService.validateNode(post, nodeId);
@@ -61,23 +59,55 @@ public class ReadPostService {
                                    PostType postType,
                                    HashTag hashTag,
                                    Pageable pageable) {
-        ensureAuthenticated(userId);
         projectService.validateProject(projectId);
-        Page<Post> page = postService.search(nodeId, keyword, postType, hashTag, pageable);
-        List<PostSummaryResponse> posts = page.getContent().stream()
-                .map(PostSummaryResponse::from)
+
+        Page<Post> parentPage = postService.searchParentPosts(nodeId, keyword, postType, hashTag, pageable);
+
+        List<Long> parentIds = parentPage.getContent().stream().map(Post::getPostId).toList();
+        Map<Long, List<Post>> childrenMap = buildChildrenMap(parentIds);
+
+        List<PostThreadResponse> threads = parentPage.getContent().stream()
+                .map(post -> toThreadResponse(post, childrenMap))
                 .toList();
-        return PostPageResponse.of(posts, page);
+
+        return PostPageResponse.of(threads, parentPage);
     }
 
     /**
-     * 인증되지 않은 요청을 선제적으로 차단한다.
+     * 부모-자식 관계를 빠르게 탐색할 수 있도록 부모 ID를 키로 하는 children map을 만든다.
      *
-     * @param userId 인증 사용자 ID
+     * @param rootIds 최상위 게시글 ID 목록
+     * @return 부모 ID -> 자식 게시글 목록 매핑
      */
-    private void ensureAuthenticated(Long userId) {
-        if (userId == null) {
-            throw new BusinessException(ErrorCode.NOT_LOGGED_IN);
+    private Map<Long, List<Post>> buildChildrenMap(List<Long> rootIds) {
+        Map<Long, List<Post>> childrenMap = new java.util.HashMap<>();
+        List<Long> currentLevel = rootIds;
+
+        while (!currentLevel.isEmpty()) {
+            List<Post> children = postService.findChildren(currentLevel);
+            if (children.isEmpty()) {
+                break;
+            }
+            for (Post child : children) {
+                childrenMap.computeIfAbsent(child.getParentPostId(), key -> new ArrayList<>()).add(child);
+            }
+            currentLevel = children.stream().map(Post::getPostId).toList();
         }
+
+        return childrenMap;
+    }
+
+    /**
+     * 게시글과 하위 댓글을 PostThreadResponse 구조로 재귀 변환한다.
+     *
+     * @param post 현재 게시글
+     * @param childrenMap 부모-자식 매핑
+     * @return 스레드 응답
+     */
+    private PostThreadResponse toThreadResponse(Post post, Map<Long, List<Post>> childrenMap) {
+        List<PostThreadResponse> replies = childrenMap.getOrDefault(post.getPostId(), List.of()).stream()
+                .map(child -> toThreadResponse(child, childrenMap))
+                .toList();
+        return PostThreadResponse.from(post, replies);
     }
 }
