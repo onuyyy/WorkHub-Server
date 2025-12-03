@@ -6,7 +6,9 @@ import com.workhub.global.response.ApiResponse;
 import com.workhub.projectNode.api.ProjectNodeApi;
 import com.workhub.projectNode.dto.CreateNodeRequest;
 import com.workhub.projectNode.dto.CreateNodeResponse;
+import com.workhub.projectNode.dto.UpdateNodeStatusRequest;
 import com.workhub.projectNode.service.CreateProjectNodeService;
+import com.workhub.projectNode.service.UpdateProjectNodeService;
 import com.workhub.userTable.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +24,9 @@ import org.springframework.web.bind.annotation.*;
 public class ProjectNodeController implements ProjectNodeApi {
 
     private final CreateProjectNodeService createProjectNodeService;
+    private final UpdateProjectNodeService updateProjectNodeService;
 
+    @Override
     @PostMapping
     public ResponseEntity<ApiResponse<CreateNodeResponse>> createNode(@PathVariable Long projectId,
                                                                       @RequestBody CreateNodeRequest request,
@@ -33,5 +37,18 @@ public class ProjectNodeController implements ProjectNodeApi {
                 clientInfoDto.getIpAddress(), clientInfoDto.getUserAgent());
 
         return ApiResponse.created(response, "프로젝트 노드가 생성되었습니다.");
+    }
+
+    @Override
+    @PatchMapping("{nodeId}/status")
+    public ResponseEntity<ApiResponse<String>> updateNodeStatus(@PathVariable("nodeId") Long nodeId,
+                                                                @RequestBody UpdateNodeStatusRequest request,
+                                                                @Parameter(hidden = true) @ClientInfo ClientInfoDto clientInfoDto,
+                                                                @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        updateProjectNodeService.updateNodeStatus(nodeId, request,
+                clientInfoDto.getIpAddress(), clientInfoDto.getUserAgent(), userDetails.getUserId());
+
+        return ApiResponse.success("노드 상태 변경 성공");
     }
 }

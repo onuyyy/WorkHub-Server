@@ -59,6 +59,10 @@ public class ProjectNode extends BaseTimeEntity {
         this.nodeOrder++;
     }
 
+    public void updateNodeStatus(NodeStatus nodeStatus) {
+        this.nodeStatus = nodeStatus;
+    }
+
     public static ProjectNode of(Long projectId, CreateNodeRequest request) {
         return ProjectNode.builder()
                 .title(request.title())

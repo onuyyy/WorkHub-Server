@@ -5,6 +5,7 @@ import com.workhub.global.clientInfo.ClientInfoDto;
 import com.workhub.global.response.ApiResponse;
 import com.workhub.projectNode.dto.CreateNodeRequest;
 import com.workhub.projectNode.dto.CreateNodeResponse;
+import com.workhub.projectNode.dto.UpdateNodeStatusRequest;
 import com.workhub.userTable.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -14,6 +15,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -52,6 +54,44 @@ public interface ProjectNodeApi {
 
             @Parameter(description = "노드 생성 요청 정보 (제목, 설명, 순서, 우선순위)", required = true)
             @RequestBody CreateNodeRequest request,
+
+            @Parameter(hidden = true)
+            @ClientInfo ClientInfoDto clientInfoDto,
+
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    );
+
+    @Operation(
+            summary = "프로젝트 노드 상태 변경",
+            description = "프로젝트 노드의 상태를 변경합니다. 상태 변경 이력도 함께 저장됩니다. " +
+                    "가능한 상태: NOT_STARTED(시작 전), IN_PROGRESS(진행 중), PENDING_REVIEW(검토 대기), ON_HOLD(보류)"
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "노드 상태 변경 성공"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "잘못된 요청 (유효하지 않은 상태 값 등)"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "노드를 찾을 수 없음"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "500",
+                    description = "서버 오류 (상태 변경 실패, 히스토리 저장 실패 등)"
+            )
+    })
+    @PatchMapping("{nodeId}/status")
+    ResponseEntity<ApiResponse<String>> updateNodeStatus(
+            @Parameter(description = "노드 ID", required = true)
+            @PathVariable("nodeId") Long nodeId,
+
+            @Parameter(description = "변경할 노드 상태 정보", required = true)
+            @RequestBody UpdateNodeStatusRequest request,
 
             @Parameter(hidden = true)
             @ClientInfo ClientInfoDto clientInfoDto,

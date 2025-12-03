@@ -72,7 +72,7 @@ public class CreateProjectNodeService {
                                                   Long loginUser, String userIp, String userAgent) {
 
         ProjectNode savedProjectNode = projectNodeService.saveProjectNode(ProjectNode.of(projectId, request));
-        projectNodeService.createProjectHistory(savedProjectNode.getProjectNodeId(), savedProjectNode.getDescription(),
+        projectNodeService.createNodeHistory(savedProjectNode.getProjectNodeId(), savedProjectNode.getDescription(),
                 userIp, userAgent, loginUser);
         
         return savedProjectNode;

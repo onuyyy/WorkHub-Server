@@ -12,6 +12,11 @@ public enum ErrorCode {
     // server Error
     INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "002", "서버에러, 에러가 계속될경우 담당자에게 문의 바랍니다."),
 
+    // 공통 에러
+    INVALID_ENUM_VALUE(HttpStatus.BAD_REQUEST, "E-001", "유효하지 않은 값입니다."),
+    INVALID_REQUEST_FORMAT(HttpStatus.BAD_REQUEST, "E-002", "잘못된 요청 형식입니다."),
+    STATUS_ALREADY_SET(HttpStatus.BAD_REQUEST, "E-003", "이미 해당 상태입니다."),
+
     // 인증 && 인가 (세션 기반)
     SESSION_EXPIRED(HttpStatus.UNAUTHORIZED, "A-001", "세션이 만료되었습니다."),
     INVALID_SESSION(HttpStatus.UNAUTHORIZED, "A-002", "유효하지 않은 세션입니다."),

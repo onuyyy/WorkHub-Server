@@ -72,7 +72,7 @@ public class CreateProjectNodeServiceTest {
         assertThat(result.nodeStatus()).isEqualTo(NodeStatus.NOT_STARTED);
         verify(projectNodeService).findByProjectIdByNodeOrder(projectId);
         verify(projectNodeService).saveProjectNode(any(ProjectNode.class));
-        verify(projectNodeService).createProjectHistory(eq(10L), anyString(), eq(userIp), eq(userAgent), eq(loginUser));
+        verify(projectNodeService).createNodeHistory(eq(10L), anyString(), eq(userIp), eq(userAgent), eq(loginUser));
     }
 
     @Test
@@ -126,7 +126,7 @@ public class CreateProjectNodeServiceTest {
         // nodeOrder가 2 이상인 노드들(existingNode2, existingNode3)의 incrementNodeOrder가 호출되어야 함
         verify(projectNodeService).findByProjectIdByNodeOrder(projectId);
         verify(projectNodeService).saveProjectNode(any(ProjectNode.class));
-        verify(projectNodeService).createProjectHistory(anyLong(), anyString(), anyString(), anyString(), anyLong());
+        verify(projectNodeService).createNodeHistory(anyLong(), anyString(), anyString(), anyString(), anyLong());
     }
 
     @Test
@@ -175,7 +175,7 @@ public class CreateProjectNodeServiceTest {
         assertThat(result).isNotNull();
         verify(projectNodeService).findByProjectIdByNodeOrder(projectId);
         verify(projectNodeService).saveProjectNode(any(ProjectNode.class));
-        verify(projectNodeService).createProjectHistory(anyLong(), anyString(), anyString(), anyString(), anyLong());
+        verify(projectNodeService).createNodeHistory(anyLong(), anyString(), anyString(), anyString(), anyLong());
     }
 
     @Test
@@ -245,7 +245,7 @@ public class CreateProjectNodeServiceTest {
         createProjectNodeService.createNode(projectId, request, loginUser, userIp, userAgent);
 
         // then
-        verify(projectNodeService).createProjectHistory(
+        verify(projectNodeService).createNodeHistory(
                 eq(10L),
                 eq("Test Description"),
                 eq(userIp),
@@ -283,7 +283,7 @@ public class CreateProjectNodeServiceTest {
 
         verify(projectNodeService).findByProjectIdByNodeOrder(projectId);
         verify(projectNodeService).saveProjectNode(any(ProjectNode.class));
-        verify(projectNodeService, never()).createProjectHistory(anyLong(), anyString(), anyString(), anyString(), anyLong());
+        verify(projectNodeService, never()).createNodeHistory(anyLong(), anyString(), anyString(), anyString(), anyLong());
     }
 
     @Test
@@ -311,7 +311,7 @@ public class CreateProjectNodeServiceTest {
         given(projectNodeService.findByProjectIdByNodeOrder(projectId)).willReturn(List.of());
         given(projectNodeService.saveProjectNode(any(ProjectNode.class))).willReturn(savedNode);
         doThrow(new BusinessException(ErrorCode.PROJECT_NODE_HISTORY_SAVE_FAILED))
-                .when(projectNodeService).createProjectHistory(anyLong(), anyString(), anyString(), anyString(), anyLong());
+                .when(projectNodeService).createNodeHistory(anyLong(), anyString(), anyString(), anyString(), anyLong());
 
         // when & then
         assertThatThrownBy(() -> createProjectNodeService.createNode(projectId, request, loginUser, userIp, userAgent))
@@ -320,7 +320,7 @@ public class CreateProjectNodeServiceTest {
 
         verify(projectNodeService).findByProjectIdByNodeOrder(projectId);
         verify(projectNodeService).saveProjectNode(any(ProjectNode.class));
-        verify(projectNodeService).createProjectHistory(anyLong(), anyString(), anyString(), anyString(), anyLong());
+        verify(projectNodeService).createNodeHistory(anyLong(), anyString(), anyString(), anyString(), anyLong());
     }
 
 }

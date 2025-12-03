@@ -18,6 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -191,11 +192,11 @@ public class ProjectNodeServiceTest {
         verify(projectNodeRepository).findByProjectIdAndDeletedAtIsNullOrderByNodeOrderAsc(projectId);
     }
 
-    // ========== createProjectHistory 테스트 ==========
+    // ========== createNodeHistory 테스트 ==========
 
     @Test
     @DisplayName("프로젝트 노드 히스토리를 생성하면 repository.save가 호출된다")
-    void createProjectHistory_success_shouldInvokeSave() {
+    void createNodeHistory_success_shouldInvokeSave() {
         // given
         Long nodeId = 10L;
         String beforeStatus = "Test Description";
@@ -204,7 +205,7 @@ public class ProjectNodeServiceTest {
         Long userId = 100L;
 
         // when
-        projectNodeService.createProjectHistory(nodeId, beforeStatus, userIp, userAgent, userId);
+        projectNodeService.createNodeHistory(nodeId, beforeStatus, userIp, userAgent, userId);
 
         // then
         verify(projectNodeHistoryRepository).save(any(ProjectNodeHistory.class));
@@ -212,7 +213,7 @@ public class ProjectNodeServiceTest {
 
     @Test
     @DisplayName("히스토리 생성 시 올바른 데이터로 ProjectNodeHistory가 생성된다")
-    void createProjectHistory_success_shouldCreateWithCorrectData() {
+    void createNodeHistory_success_shouldCreateWithCorrectData() {
         // given
         Long nodeId = 10L;
         String beforeStatus = "Initial Status";
@@ -223,7 +224,7 @@ public class ProjectNodeServiceTest {
         ProjectNodeHistory capturedHistory = null;
 
         // when
-        projectNodeService.createProjectHistory(nodeId, beforeStatus, userIp, userAgent, userId);
+        projectNodeService.createNodeHistory(nodeId, beforeStatus, userIp, userAgent, userId);
 
         // then
         verify(projectNodeHistoryRepository).save(argThat(history -> {
@@ -234,7 +235,7 @@ public class ProjectNodeServiceTest {
 
     @Test
     @DisplayName("히스토리 저장 실패 시 예외가 발생한다")
-    void createProjectHistory_whenSaveFails_shouldThrowException() {
+    void createNodeHistory_whenSaveFails_shouldThrowException() {
         // given
         Long nodeId = 10L;
         String beforeStatus = "Test Description";
@@ -246,7 +247,7 @@ public class ProjectNodeServiceTest {
                 .when(projectNodeHistoryRepository).save(any(ProjectNodeHistory.class));
 
         // when & then
-        assertThatThrownBy(() -> projectNodeService.createProjectHistory(nodeId, beforeStatus, userIp, userAgent, userId))
+        assertThatThrownBy(() -> projectNodeService.createNodeHistory(nodeId, beforeStatus, userIp, userAgent, userId))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PROJECT_NODE_HISTORY_SAVE_FAILED);
 
@@ -255,7 +256,7 @@ public class ProjectNodeServiceTest {
 
     @Test
     @DisplayName("다양한 사용자 정보로 히스토리 생성이 성공한다")
-    void createProjectHistory_withVariousUserInfo_shouldSucceed() {
+    void createNodeHistory_withVariousUserInfo_shouldSucceed() {
         // given
         Long nodeId = 1L;
         String beforeStatus = "Status";
@@ -267,10 +268,154 @@ public class ProjectNodeServiceTest {
         Long userId2 = 2L;
 
         // when
-        projectNodeService.createProjectHistory(nodeId, beforeStatus, userIp1, userAgent1, userId1);
-        projectNodeService.createProjectHistory(nodeId, beforeStatus, userIp2, userAgent2, userId2);
+        projectNodeService.createNodeHistory(nodeId, beforeStatus, userIp1, userAgent1, userId1);
+        projectNodeService.createNodeHistory(nodeId, beforeStatus, userIp2, userAgent2, userId2);
 
         // then
+        verify(projectNodeHistoryRepository, times(2)).save(any(ProjectNodeHistory.class));
+    }
+
+    // ========== updateNodeHistory 테스트 ==========
+
+    @Test
+    @DisplayName("노드 상태 변경 히스토리를 저장하면 originalCreator를 조회하고 히스토리가 저장된다")
+    void updateNodeHistory_success_shouldSaveHistory() {
+        // given
+        Long nodeId = 10L;
+        ActionType actionType = ActionType.UPDATE;
+        String beforeStatus = "NOT_STARTED";
+        String userIp = "127.0.0.1";
+        String userAgent = "TestAgent";
+        Long userId = 100L;
+        Long originalCreator = 999L;
+
+        ProjectNodeHistory createHistory = ProjectNodeHistory.builder()
+                .targetId(nodeId)
+                .actionType(ActionType.CREATE)
+                .createdBy(originalCreator)
+                .build();
+
+        given(projectNodeHistoryRepository.findFirstByTargetIdAndActionTypeOrderByChangeLogIdAsc(nodeId, ActionType.CREATE))
+                .willReturn(Optional.of(createHistory));
+
+        // when
+        projectNodeService.updateNodeHistory(nodeId, actionType, beforeStatus, userIp, userAgent, userId);
+
+        // then
+        verify(projectNodeHistoryRepository).findFirstByTargetIdAndActionTypeOrderByChangeLogIdAsc(nodeId, ActionType.CREATE);
+        verify(projectNodeHistoryRepository).save(any(ProjectNodeHistory.class));
+    }
+
+    @Test
+    @DisplayName("업데이트 히스토리 저장 시 originalCreator가 올바르게 조회된다")
+    void updateNodeHistory_success_shouldFetchOriginalCreator() {
+        // given
+        Long nodeId = 5L;
+        ActionType actionType = ActionType.UPDATE;
+        String beforeStatus = "IN_PROGRESS";
+        String userIp = "192.168.0.1";
+        String userAgent = "CustomAgent";
+        Long userId = 50L;
+        Long originalCreator = 123L;
+
+        ProjectNodeHistory createHistory = ProjectNodeHistory.builder()
+                .targetId(nodeId)
+                .actionType(ActionType.CREATE)
+                .createdBy(originalCreator)
+                .build();
+
+        given(projectNodeHistoryRepository.findFirstByTargetIdAndActionTypeOrderByChangeLogIdAsc(nodeId, ActionType.CREATE))
+                .willReturn(Optional.of(createHistory));
+
+        // when
+        projectNodeService.updateNodeHistory(nodeId, actionType, beforeStatus, userIp, userAgent, userId);
+
+        // then
+        verify(projectNodeHistoryRepository).findFirstByTargetIdAndActionTypeOrderByChangeLogIdAsc(nodeId, ActionType.CREATE);
+        verify(projectNodeHistoryRepository).save(any(ProjectNodeHistory.class));
+    }
+
+    @Test
+    @DisplayName("originalCreator를 찾을 수 없으면 예외가 발생한다")
+    void updateNodeHistory_whenOriginalCreatorNotFound_shouldThrowException() {
+        // given
+        Long nodeId = 10L;
+        ActionType actionType = ActionType.UPDATE;
+        String beforeStatus = "NOT_STARTED";
+        String userIp = "127.0.0.1";
+        String userAgent = "TestAgent";
+        Long userId = 100L;
+
+        given(projectNodeHistoryRepository.findFirstByTargetIdAndActionTypeOrderByChangeLogIdAsc(nodeId, ActionType.CREATE))
+                .willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> projectNodeService.updateNodeHistory(nodeId, actionType, beforeStatus, userIp, userAgent, userId))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PROJECT_NODE_NOT_FOUND);
+
+        verify(projectNodeHistoryRepository).findFirstByTargetIdAndActionTypeOrderByChangeLogIdAsc(nodeId, ActionType.CREATE);
+        verify(projectNodeHistoryRepository, never()).save(any(ProjectNodeHistory.class));
+    }
+
+    @Test
+    @DisplayName("업데이트 히스토리 저장 실패 시 예외가 발생한다")
+    void updateNodeHistory_whenSaveFails_shouldThrowException() {
+        // given
+        Long nodeId = 10L;
+        ActionType actionType = ActionType.UPDATE;
+        String beforeStatus = "NOT_STARTED";
+        String userIp = "127.0.0.1";
+        String userAgent = "TestAgent";
+        Long userId = 100L;
+        Long originalCreator = 999L;
+
+        ProjectNodeHistory createHistory = ProjectNodeHistory.builder()
+                .targetId(nodeId)
+                .actionType(ActionType.CREATE)
+                .createdBy(originalCreator)
+                .build();
+
+        given(projectNodeHistoryRepository.findFirstByTargetIdAndActionTypeOrderByChangeLogIdAsc(nodeId, ActionType.CREATE))
+                .willReturn(Optional.of(createHistory));
+        doThrow(new BusinessException(ErrorCode.PROJECT_NODE_HISTORY_SAVE_FAILED))
+                .when(projectNodeHistoryRepository).save(any(ProjectNodeHistory.class));
+
+        // when & then
+        assertThatThrownBy(() -> projectNodeService.updateNodeHistory(nodeId, actionType, beforeStatus, userIp, userAgent, userId))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PROJECT_NODE_HISTORY_SAVE_FAILED);
+
+        verify(projectNodeHistoryRepository).findFirstByTargetIdAndActionTypeOrderByChangeLogIdAsc(nodeId, ActionType.CREATE);
+        verify(projectNodeHistoryRepository).save(any(ProjectNodeHistory.class));
+    }
+
+    @Test
+    @DisplayName("다양한 ActionType으로 히스토리 업데이트가 성공한다")
+    void updateNodeHistory_withVariousActionTypes_shouldSucceed() {
+        // given
+        Long nodeId = 1L;
+        String beforeStatus = "Status";
+        String userIp = "127.0.0.1";
+        String userAgent = "Agent";
+        Long userId = 1L;
+        Long originalCreator = 100L;
+
+        ProjectNodeHistory createHistory = ProjectNodeHistory.builder()
+                .targetId(nodeId)
+                .actionType(ActionType.CREATE)
+                .createdBy(originalCreator)
+                .build();
+
+        given(projectNodeHistoryRepository.findFirstByTargetIdAndActionTypeOrderByChangeLogIdAsc(nodeId, ActionType.CREATE))
+                .willReturn(Optional.of(createHistory));
+
+        // when
+        projectNodeService.updateNodeHistory(nodeId, ActionType.UPDATE, beforeStatus, userIp, userAgent, userId);
+        projectNodeService.updateNodeHistory(nodeId, ActionType.UPDATE, beforeStatus, userIp, userAgent, userId);
+
+        // then
+        verify(projectNodeHistoryRepository, times(2)).findFirstByTargetIdAndActionTypeOrderByChangeLogIdAsc(nodeId, ActionType.CREATE);
         verify(projectNodeHistoryRepository, times(2)).save(any(ProjectNodeHistory.class));
     }
 }
