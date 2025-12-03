@@ -1,14 +1,14 @@
-package com.workhub.cs.service;
+package com.workhub.cs.service.csPost;
 
-import com.workhub.cs.dto.CsPostFileUpdateRequest;
-import com.workhub.cs.dto.CsPostResponse;
-import com.workhub.cs.dto.CsPostUpdateRequest;
+import com.workhub.cs.dto.csPost.CsPostFileUpdateRequest;
+import com.workhub.cs.dto.csPost.CsPostResponse;
+import com.workhub.cs.dto.csPost.CsPostUpdateRequest;
 import com.workhub.cs.entity.CsPost;
 import com.workhub.cs.entity.CsPostFile;
 import com.workhub.cs.entity.CsPostStatus;
+import com.workhub.cs.service.CsPostAccessValidator;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
-import com.workhub.project.service.ProjectService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 public class UpdateCsPostService {
 
     private final CsPostService csPostService;
-    private final ProjectService projectService;
+    private final CsPostAccessValidator csPostAccessValidator;
 
     /**
      * CS POST를 수정한다.
@@ -34,7 +34,7 @@ public class UpdateCsPostService {
      */
     public CsPostResponse update(Long projectId, Long csPostId, Long userId, CsPostUpdateRequest request) {
 
-        CsPost csPost = getAndValidatePost(projectId, csPostId);
+        CsPost csPost = csPostAccessValidator.validateProjectAndGetPost(projectId, csPostId);
 
         if (!csPost.getUserId().equals(userId)) {
             throw new BusinessException(ErrorCode.FORBIDDEN_CS_POST_UPDATE);
@@ -58,7 +58,7 @@ public class UpdateCsPostService {
      * @return CsPostStatus 변경 결과
      */
     public CsPostStatus changeStatus(Long projectId, Long csPostId, CsPostStatus status) {
-        CsPost csPost = getAndValidatePost(projectId, csPostId);
+        CsPost csPost = csPostAccessValidator.validateProjectAndGetPost(projectId, csPostId);
 
         csPost.changeStatus(status);
 
@@ -186,24 +186,6 @@ public class UpdateCsPostService {
             csPost.updateContent(request.content());
         }
 
-    }
-
-    /**
-     * 프로젝트 상태가 완료인지 확인한다.
-     * @param projectId 프로젝트 식별자
-     * @param csPostId 게시글 식별자
-     * @return CsPost 검증된 게시글
-     */
-    private CsPost getAndValidatePost(Long projectId, Long csPostId) {
-
-        projectService.validateCompletedProject(projectId);
-        CsPost post = csPostService.findById(csPostId);
-
-        if (!projectId.equals(post.getProjectId())) {
-            throw new BusinessException(ErrorCode.NOT_MATCHED_PROJECT_CS_POST);
-        }
-
-        return post;
     }
 
 }

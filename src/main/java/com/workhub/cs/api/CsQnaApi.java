@@ -1,0 +1,53 @@
+package com.workhub.cs.api;
+
+import com.workhub.cs.dto.csQna.CsQnaRequest;
+import com.workhub.cs.dto.csQna.CsQnaResponse;
+import com.workhub.global.response.ApiResponse;
+import com.workhub.userTable.security.CustomUserDetails;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+@Tag(name = "CS 댓글 관리", description = "CS 게시글의 QnA API")
+@RequestMapping("/api/v1/projects/{projectId}/csPosts/{csPostId}")
+public interface CsQnaApi {
+
+    @Operation(
+            summary = "CS 댓글 작성",
+            description = "완료된 프로젝트의 CS 게시글에 댓글을 작성합니다.",
+            parameters = {
+                    @Parameter(name = "projectId", description = "프로젝트 식별자", in = ParameterIn.PATH, required = true),
+                    @Parameter(name = "csPostId", description = "CS 게시글 식별자", in = ParameterIn.PATH, required = true)
+            }
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "201",
+                    description = "CS 댓글 작성 성공",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = CsQnaResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청 (예: 빈 내용, 다른 게시글의 부모 댓글)"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "게시글 또는 댓글을 찾을 수 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류")
+    })
+    @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    ResponseEntity<ApiResponse<CsQnaResponse>> create(
+            @PathVariable Long projectId,
+            @PathVariable Long csPostId,
+            @Valid @RequestBody CsQnaRequest csQnaRequest,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails
+    );
+}

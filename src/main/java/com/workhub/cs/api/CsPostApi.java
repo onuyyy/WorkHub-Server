@@ -1,9 +1,9 @@
 package com.workhub.cs.api;
 
-import com.workhub.cs.dto.CsPostRequest;
-import com.workhub.cs.dto.CsPostResponse;
-import com.workhub.cs.dto.CsPostSearchRequest;
-import com.workhub.cs.dto.CsPostUpdateRequest;
+import com.workhub.cs.dto.csPost.CsPostRequest;
+import com.workhub.cs.dto.csPost.CsPostResponse;
+import com.workhub.cs.dto.csPost.CsPostSearchRequest;
+import com.workhub.cs.dto.csPost.CsPostUpdateRequest;
 import com.workhub.cs.entity.CsPostStatus;
 import com.workhub.global.response.ApiResponse;
 import com.workhub.userTable.security.CustomUserDetails;

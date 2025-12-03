@@ -1,7 +1,7 @@
-package com.workhub.cs.service;
+package com.workhub.cs.service.csPost;
 
-import com.workhub.cs.dto.CsPostRequest;
-import com.workhub.cs.dto.CsPostResponse;
+import com.workhub.cs.dto.csPost.CsPostRequest;
+import com.workhub.cs.dto.csPost.CsPostResponse;
 import com.workhub.cs.entity.CsPost;
 import com.workhub.cs.entity.CsPostFile;
 import com.workhub.project.service.ProjectService;

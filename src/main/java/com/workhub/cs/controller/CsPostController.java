@@ -1,15 +1,15 @@
 package com.workhub.cs.controller;
 
 import com.workhub.cs.api.CsPostApi;
-import com.workhub.cs.dto.CsPostRequest;
-import com.workhub.cs.dto.CsPostResponse;
-import com.workhub.cs.dto.CsPostSearchRequest;
-import com.workhub.cs.dto.CsPostUpdateRequest;
+import com.workhub.cs.dto.csPost.CsPostRequest;
+import com.workhub.cs.dto.csPost.CsPostResponse;
+import com.workhub.cs.dto.csPost.CsPostSearchRequest;
+import com.workhub.cs.dto.csPost.CsPostUpdateRequest;
 import com.workhub.cs.entity.CsPostStatus;
-import com.workhub.cs.service.CreateCsPostService;
-import com.workhub.cs.service.DeleteCsPostService;
-import com.workhub.cs.service.ReadCsPostService;
-import com.workhub.cs.service.UpdateCsPostService;
+import com.workhub.cs.service.csPost.CreateCsPostService;
+import com.workhub.cs.service.csPost.DeleteCsPostService;
+import com.workhub.cs.service.csPost.ReadCsPostService;
+import com.workhub.cs.service.csPost.UpdateCsPostService;
 import com.workhub.global.response.ApiResponse;
 import com.workhub.userTable.security.CustomUserDetails;
 import jakarta.validation.Valid;

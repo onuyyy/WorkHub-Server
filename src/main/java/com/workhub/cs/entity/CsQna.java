@@ -32,4 +32,13 @@ public class CsQna extends BaseTimeEntity {
 
     @Column(name = "parent_qna_id")
     private Long parentQnaId;
+
+    public static CsQna of(Long csPostId, Long userId, Long parentQnaId, String content) {
+        return CsQna.builder()
+                .csPostId(csPostId)
+                .userId(userId)
+                .parentQnaId(parentQnaId)
+                .qnaContent(content)
+                .build();
+    }
 }

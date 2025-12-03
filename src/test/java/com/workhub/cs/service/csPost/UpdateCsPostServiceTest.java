@@ -1,14 +1,12 @@
-package com.workhub.cs.service;
+package com.workhub.cs.service.csPost;
 
-import com.workhub.cs.dto.CsPostResponse;
-import com.workhub.cs.dto.CsPostUpdateRequest;
+import com.workhub.cs.dto.csPost.CsPostResponse;
+import com.workhub.cs.dto.csPost.CsPostUpdateRequest;
 import com.workhub.cs.entity.CsPost;
 import com.workhub.cs.entity.CsPostStatus;
+import com.workhub.cs.service.CsPostAccessValidator;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
-import com.workhub.project.entity.Project;
-import com.workhub.project.entity.Status;
-import com.workhub.project.service.ProjectService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,7 +31,7 @@ class UpdateCsPostServiceTest {
     private CsPostService csPostService;
 
     @Mock
-    private ProjectService projectService;
+    private CsPostAccessValidator csPostAccessValidator;
 
     @InjectMocks
     private UpdateCsPostService updateCsPostService;
@@ -59,8 +57,6 @@ class UpdateCsPostServiceTest {
         Long csPostId = 2L;
         Long userId = 2L;
 
-        mockProjectLookup(projectId);
-
         CsPost original = CsPost.builder()
                 .csPostId(csPostId)
                 .projectId(projectId)
@@ -75,7 +71,7 @@ class UpdateCsPostServiceTest {
         CsPostUpdateRequest request =
                 new CsPostUpdateRequest("수정 제목", "수정 완료", List.of());
 
-        when(csPostService.findById(csPostId))
+        when(csPostAccessValidator.validateProjectAndGetPost(projectId, csPostId))
                 .thenReturn(original);
 
         when(csPostService.findFilesByCsPostId(csPostId))
@@ -89,8 +85,7 @@ class UpdateCsPostServiceTest {
         assertThat(original.getTitle()).isEqualTo("수정 제목");
         assertThat(original.getContent()).isEqualTo("수정 완료");
 
-        verify(projectService).validateCompletedProject(projectId);
-        verify(csPostService).findById(csPostId);
+        verify(csPostAccessValidator).validateProjectAndGetPost(projectId, csPostId);
         verify(csPostService, never()).save(any(CsPost.class));
     }
 
@@ -103,13 +98,14 @@ class UpdateCsPostServiceTest {
 
         CsPostUpdateRequest request = new CsPostUpdateRequest("수정 제목", "수정 완료", List.of());
 
-        mockProjectLookup(projectId, Status.IN_PROGRESS);
+        when(csPostAccessValidator.validateProjectAndGetPost(projectId, csPostId))
+                .thenThrow(new BusinessException(ErrorCode.INVALID_PROJECT_STATUS_FOR_CS_POST));
 
         assertThatThrownBy(() -> updateCsPostService.update(projectId, csPostId, userId, request))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_PROJECT_STATUS_FOR_CS_POST);
 
-        verify(csPostService, never()).findById(any());
+        verify(csPostAccessValidator).validateProjectAndGetPost(projectId, csPostId);
         verify(csPostService, never()).save(any(CsPost.class));
     }
 
@@ -121,8 +117,6 @@ class UpdateCsPostServiceTest {
         Long authorId = 2L;
         Long requesterId = 3L;
 
-        mockProjectLookup(projectId);
-
         CsPost original = CsPost.builder()
                 .csPostId(csPostId)
                 .projectId(projectId)
@@ -133,15 +127,14 @@ class UpdateCsPostServiceTest {
 
         CsPostUpdateRequest request = new CsPostUpdateRequest("수정 제목", "수정 완료", List.of());
 
-        when(csPostService.findById(csPostId))
+        when(csPostAccessValidator.validateProjectAndGetPost(projectId, csPostId))
                 .thenReturn(original);
 
         assertThatThrownBy(() -> updateCsPostService.update(projectId, csPostId, requesterId, request))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN_CS_POST_UPDATE);
 
-        verify(projectService).validateCompletedProject(projectId);
-        verify(csPostService).findById(csPostId);
+        verify(csPostAccessValidator).validateProjectAndGetPost(projectId, csPostId);
         verify(csPostService, never()).save(any(CsPost.class));
 
     }
@@ -161,14 +154,12 @@ class UpdateCsPostServiceTest {
                 .csPostStatus(CsPostStatus.RECEIVED)
                 .build();
 
-        mockProjectLookup(projectId);
-        when(csPostService.findById(1L)).thenReturn(mockSaved);
+        when(csPostAccessValidator.validateProjectAndGetPost(projectId, 1L)).thenReturn(mockSaved);
 
         updateCsPostService.changeStatus(projectId, 1L, status);
 
         assertThat(mockSaved.getCsPostStatus()).isEqualTo(status);
-        verify(projectService).validateCompletedProject(projectId);
-        verify(csPostService).findById(1L);
+        verify(csPostAccessValidator).validateProjectAndGetPost(projectId, 1L);
         verify(csPostService, never()).save(any(CsPost.class));
     }
 
@@ -176,15 +167,14 @@ class UpdateCsPostServiceTest {
     @DisplayName("존재하지 않는 CS 게시글 상태 변경 시 예외 발생")
     void givenInvalidPostId_whenStatusUpdate_thenThrowException() {
         Long projectId = 1L;
-        mockProjectLookup(projectId);
-        when(csPostService.findById(1L)).thenThrow(new BusinessException(ErrorCode.NOT_EXISTS_CS_POST));
+        when(csPostAccessValidator.validateProjectAndGetPost(projectId, 1L))
+                .thenThrow(new BusinessException(ErrorCode.NOT_EXISTS_CS_POST));
 
         assertThatThrownBy(() -> updateCsPostService.changeStatus(projectId, 1L, CsPostStatus.RECEIVED))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage(ErrorCode.NOT_EXISTS_CS_POST.getMessage());
 
-        verify(projectService).validateCompletedProject(projectId);
-        verify(csPostService).findById(1L);
+        verify(csPostAccessValidator).validateProjectAndGetPost(projectId, 1L);
         verify(csPostService, never()).save(any(CsPost.class));
     }
 
@@ -201,36 +191,13 @@ class UpdateCsPostServiceTest {
                 .csPostStatus(CsPostStatus.RECEIVED)
                 .build();
 
-        mockProjectLookup(projectId);
-        when(csPostService.findById(1L)).thenReturn(mockSaved);
+        when(csPostAccessValidator.validateProjectAndGetPost(projectId, 1L)).thenReturn(mockSaved);
 
         CsPostStatus result = updateCsPostService.changeStatus(projectId, 1L, CsPostStatus.COMPLETED);
 
         assertThat(result).isEqualTo(CsPostStatus.COMPLETED);
         assertThat(mockSaved.getCsPostStatus()).isEqualTo(CsPostStatus.COMPLETED);
-        verify(projectService).validateCompletedProject(projectId);
-        verify(csPostService).findById(1L);
+        verify(csPostAccessValidator).validateProjectAndGetPost(projectId, 1L);
         verify(csPostService, never()).save(any());
-    }
-
-    private void mockProjectLookup(Long projectId) {
-        mockProjectLookup(projectId, Status.COMPLETED);
-    }
-
-    private void mockProjectLookup(Long projectId, Status status) {
-        if (Status.COMPLETED.equals(status)) {
-            when(projectService.validateCompletedProject(projectId)).thenReturn(
-                    Project.builder()
-                            .projectId(projectId)
-                            .projectTitle("project")
-                            .status(Status.COMPLETED)
-                            .build()
-            );
-            return;
-        }
-
-        when(projectService.validateCompletedProject(projectId)).thenThrow(
-                new BusinessException(ErrorCode.INVALID_PROJECT_STATUS_FOR_CS_POST)
-        );
     }
 }

@@ -1,4 +1,4 @@
-package com.workhub.cs.dto;
+package com.workhub.cs.dto.csPost;
 
 public record CsPostFileUpdateRequest(
         Long fileId,

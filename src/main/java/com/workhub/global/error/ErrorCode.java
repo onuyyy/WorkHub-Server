@@ -66,6 +66,9 @@ public enum ErrorCode {
     FORBIDDEN_CS_POST_UPDATE(HttpStatus.FORBIDDEN, "C-009", "CS 게시글 수정 권한이 없습니다."),
     ALREADY_DELETED_CS_POST(HttpStatus.BAD_REQUEST, "C-0010", "이미 삭재된 CS 게시글입니다."),
     INVALID_PROJECT_STATUS_FOR_CS_POST(HttpStatus.BAD_REQUEST, "C-0011", "완료된 프로젝트에서만 CS 게시글을 처리할 수 있습니다."),
+    NOT_EXISTS_CS_QNA(HttpStatus.BAD_REQUEST, "C-012", "존재하지 않는 CS 댓글입니다."),
+    NOT_MATCHED_CS_QNA_POST(HttpStatus.BAD_REQUEST, "C-013", "잘못된 게시글의 CS 댓글입니다."),
+    INVALID_CS_QNA_CONTENT(HttpStatus.BAD_REQUEST, "C-014", "CS 댓글 내용이 비어있습니다."),
 
     // AWS S3
     // 파일 관련 에러

@@ -1,4 +1,4 @@
-package com.workhub.cs.dto;
+package com.workhub.cs.dto.csPost;
 
 import com.workhub.cs.entity.CsPost;
 import com.workhub.cs.entity.CsPostFile;

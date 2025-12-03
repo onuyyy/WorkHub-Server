@@ -1,4 +1,4 @@
-package com.workhub.cs.dto;
+package com.workhub.cs.dto.csPost;
 
 import jakarta.validation.constraints.NotBlank;
 

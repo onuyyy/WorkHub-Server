@@ -1,7 +1,7 @@
 package com.workhub.cs.entity;
 
-import com.workhub.cs.dto.CsPostRequest;
-import com.workhub.cs.dto.CsPostUpdateRequest;
+import com.workhub.cs.dto.csPost.CsPostRequest;
+import com.workhub.cs.dto.csPost.CsPostUpdateRequest;
 import com.workhub.global.entity.BaseTimeEntity;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;

@@ -1,10 +1,10 @@
-package com.workhub.cs.service;
+package com.workhub.cs.service.csPost;
 
-import com.workhub.cs.dto.CsPostSearchRequest;
+import com.workhub.cs.dto.csPost.CsPostSearchRequest;
 import com.workhub.cs.entity.CsPost;
 import com.workhub.cs.entity.CsPostFile;
-import com.workhub.cs.repository.CsPostFileRepository;
-import com.workhub.cs.repository.CsPostRepository;
+import com.workhub.cs.repository.csPost.CsPostFileRepository;
+import com.workhub.cs.repository.csPost.CsPostRepository;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import jakarta.transaction.Transactional;

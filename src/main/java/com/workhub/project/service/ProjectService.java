@@ -87,6 +87,7 @@ public class ProjectService {
         }
         return project;
     }
+
     public Project validateProject(Long projectId) {
         Project project = findProjectById(projectId);
         if (!Status.IN_PROGRESS.equals(project.getStatus())) {

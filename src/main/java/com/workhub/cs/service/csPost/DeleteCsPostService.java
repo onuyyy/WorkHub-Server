@@ -1,4 +1,4 @@
-package com.workhub.cs.service;
+package com.workhub.cs.service.csPost;
 
 import com.workhub.cs.entity.CsPost;
 import com.workhub.global.error.ErrorCode;

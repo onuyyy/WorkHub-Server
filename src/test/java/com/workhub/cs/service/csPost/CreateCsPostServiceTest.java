@@ -1,8 +1,8 @@
-package com.workhub.cs.service;
+package com.workhub.cs.service.csPost;
 
-import com.workhub.cs.dto.CsPostFileRequest;
-import com.workhub.cs.dto.CsPostRequest;
-import com.workhub.cs.dto.CsPostResponse;
+import com.workhub.cs.dto.csPost.CsPostFileRequest;
+import com.workhub.cs.dto.csPost.CsPostRequest;
+import com.workhub.cs.dto.csPost.CsPostResponse;
 import com.workhub.cs.entity.CsPost;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
