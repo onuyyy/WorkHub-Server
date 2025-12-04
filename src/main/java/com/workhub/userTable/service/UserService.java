@@ -1,11 +1,15 @@
 package com.workhub.userTable.service;
 
 import com.workhub.userTable.dto.UserLoginRecord;
+import com.workhub.userTable.dto.AdminPasswordResetRequest;
+import com.workhub.userTable.dto.UserPasswordChangeRequest;
 import com.workhub.userTable.dto.UserRegisterRecord;
+import com.workhub.userTable.dto.UserTableResponse;
+import com.workhub.userTable.entity.Status;
+import com.workhub.userTable.entity.UserRole;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import com.workhub.userTable.repository.UserRepository;
-import com.workhub.userTable.entity.Status;
 import com.workhub.userTable.entity.UserTable;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -47,18 +51,41 @@ public class UserService {
         validateLoginId(record.loginId());
         validateEmail(record.email());
 
+        UserTable userTable = UserTable.of(
+                record,
+                passwordEncoder.encode(record.password())
+        );
 
-        UserTable userTable = UserTable.builder()
-                .loginId(record.loginId())
-                .password(passwordEncoder.encode(record.password()))
-                .email(record.email())
-                .phone(record.phone())
-                .role(record.role())
-                .status(Status.ACTIVE)
-                .companyId(record.companyId())
-                .build();
-        
         return userRepository.save(userTable);
+    }
+
+    @Transactional
+    public void changePassword(Long targetUserId, UserPasswordChangeRequest passwordChangeRequest) {
+        UserTable userTable = getUserById(targetUserId);
+        if (!passwordEncoder.matches(passwordChangeRequest.currentPassword(), userTable.getPassword())) {
+            throw new BusinessException(ErrorCode.NOT_EQUAL_PASSWORD);
+        }
+
+        userTable.updatePassword(passwordEncoder.encode(passwordChangeRequest.newPassword()));
+    }
+
+    @Transactional
+    public void resetPassword(Long targetUserId, AdminPasswordResetRequest passwordResetRequest) {
+        UserTable userTable = getUserById(targetUserId);
+        userTable.updatePassword(passwordEncoder.encode(passwordResetRequest.newPassword()));
+    }
+
+    @Transactional
+    public UserTableResponse updateRole(Long userId, UserRole role) {
+        UserTable userTable = getUserById(userId);
+        userTable.updateRole(role);
+        return UserTableResponse.from(userTable);
+    }
+
+    @Transactional
+    public void deleteUser(Long userId) {
+        UserTable userTable = getUserById(userId);
+        userTable.updateStatus(Status.INACTIVE);
     }
 
     private void validateLoginId(String loginId) {

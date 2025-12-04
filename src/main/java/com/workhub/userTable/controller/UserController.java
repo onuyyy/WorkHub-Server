@@ -1,34 +1,37 @@
 package com.workhub.userTable.controller;
 
+import com.workhub.global.response.ApiResponse;
+import com.workhub.userTable.api.UserTableApi;
+import com.workhub.userTable.dto.AdminPasswordResetRequest;
 import com.workhub.userTable.dto.UserLoginRecord;
+import com.workhub.userTable.dto.UserPasswordChangeRequest;
 import com.workhub.userTable.dto.UserRegisterRecord;
 import com.workhub.userTable.dto.UserTableResponse;
-import com.workhub.global.response.ApiResponse;
 import com.workhub.userTable.entity.UserTable;
+import com.workhub.global.security.CustomUserDetails;
 import com.workhub.userTable.service.UserService;
+import com.workhub.userTable.dto.UserRoleUpdateRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1")
 @RequiredArgsConstructor
-public class UserController {
+public class UserController implements UserTableApi {
 
     private final UserService userService;
 
     @PostMapping("/users/login")
+    @Override
     public ResponseEntity<ApiResponse<String>> login(@RequestBody UserLoginRecord userLoginRecord,
                                                      HttpServletRequest request) {
 
@@ -51,9 +54,40 @@ public class UserController {
     }
 
     @PostMapping("/admin/users/add/user")
-    @PreAuthorize("hasRole('ADMIN')")
+    @Override
     public ResponseEntity<ApiResponse<UserTableResponse>> register(@RequestBody @Valid UserRegisterRecord registerRecord) {
         UserTable createdUser = userService.register(registerRecord);
         return ApiResponse.created(UserTableResponse.from(createdUser), "관리자가 계정을 생성했습니다.");
+    }
+
+    @PatchMapping("/auth/passwordReset/confirm")
+    @Override
+    public ResponseEntity<ApiResponse<String>> updatePassword(@AuthenticationPrincipal CustomUserDetails userDetails,
+                                              @Valid @RequestBody UserPasswordChangeRequest passwordUpdateDto) {
+        userService.changePassword(userDetails.getUserId(), passwordUpdateDto);
+        return ApiResponse.success("비밀번호 재설정 완료", "비밀번호 재설정 요청 성공");
+    }
+
+    @PatchMapping("/admin/users/{userId}/password/reset")
+    @Override
+    public ResponseEntity<ApiResponse<String>> resetPasswordByAdmin(@PathVariable Long userId,
+                                                    @Valid @RequestBody AdminPasswordResetRequest passwordResetDto) {
+        userService.resetPassword(userId, passwordResetDto);
+        return ApiResponse.success("관리자 비밀번호 초기화 완료", "관리자가 비밀번호를 초기화했습니다.");
+    }
+
+    @PatchMapping("/admin/users/{userId}/role")
+    @Override
+    public ResponseEntity<ApiResponse<UserTableResponse>> updateUserRole(@PathVariable Long userId,
+                                                                         @Valid @RequestBody UserRoleUpdateRequest request) {
+        UserTableResponse updatedUser = userService.updateRole(userId, request.role());
+        return ApiResponse.success(updatedUser, "회원 역할이 변경되었습니다.");
+    }
+
+    @DeleteMapping("/admin/users/{userId}")
+    @Override
+    public ResponseEntity<ApiResponse<Object>> deleteUser(@PathVariable Long userId) {
+        userService.deleteUser(userId);
+        return ApiResponse.success(null, "회원이 비활성화되었습니다.");
     }
 }

@@ -1,4 +1,4 @@
-package com.workhub.userTable.security;
+package com.workhub.global.security;
 
 import com.workhub.userTable.entity.UserTable;
 import lombok.Getter;
