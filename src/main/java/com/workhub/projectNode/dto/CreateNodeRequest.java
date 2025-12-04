@@ -5,7 +5,6 @@ import com.workhub.projectNode.entity.Priority;
 public record CreateNodeRequest(
         String title,
         String description,
-        Integer nodeOrder,
         Priority priority
 ) {
 }

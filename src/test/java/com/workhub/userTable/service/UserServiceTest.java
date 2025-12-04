@@ -89,8 +89,8 @@ class UserServiceTest {
             given(userRepository.findById(5L)).willReturn(Optional.empty());
 
             assertThatThrownBy(() -> userService.getUser(5L))
-                    .isInstanceOf(RuntimeException.class)
-                    .hasMessage("User not found");
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessage(ErrorCode.USER_NOT_EXISTS.getMessage());
         }
     }
 

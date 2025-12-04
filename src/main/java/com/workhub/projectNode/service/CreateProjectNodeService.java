@@ -32,30 +32,25 @@ public class CreateProjectNodeService {
     public CreateNodeResponse createNode(Long projectId, CreateNodeRequest request) {
 
         List<ProjectNode> projectNodeList = projectNodeService.findByProjectIdByNodeOrder(projectId);
-        
-        adjustNodeOrdersIfNecessary(projectNodeList, request.nodeOrder());
-        ProjectNode savedProjectNode = saveProjectNodeAndHistory(projectId, request);
+
+        Integer nodeOrder = calculateNodeOrder(projectNodeList);
+        ProjectNode savedProjectNode = saveProjectNodeAndHistory(projectId, request, nodeOrder);
 
         return CreateNodeResponse.from(savedProjectNode);
     }
 
     /**
-     * 기존 노드들의 순서를 조정
-     * 요청된 node_order와 같은 순서의 노드가 존재하는 경우,
-     * 해당 노드부터 그 이후 노드까지의 node_order를 1씩 증가
+     * 새로운 노드의 순서를 계산
+     * 프로젝트 노드 리스트가 비어있으면 1, 그렇지 않으면 마지막 노드 순서 + 1
+     *
      * @param projectNodeList 프로젝트의 노드 리스트
-     * @param requestNodeOrder 요청된 노드 순서
+     * @return 계산된 노드 순서
      */
-    private void adjustNodeOrdersIfNecessary(List<ProjectNode> projectNodeList, Integer requestNodeOrder) {
-
-        boolean hasSameOrder = projectNodeList.stream()
-                .anyMatch(node -> node.getNodeOrder().equals(requestNodeOrder));
-
-        if(hasSameOrder) {
-            projectNodeList.stream()
-                    .filter(node -> node.getNodeOrder() >= requestNodeOrder)
-                    .forEach(ProjectNode::incrementNodeOrder);
+    private Integer calculateNodeOrder(List<ProjectNode> projectNodeList) {
+        if (projectNodeList.isEmpty()) {
+            return 1;
         }
+        return projectNodeList.getLast().getNodeOrder() + 1;
     }
 
     /**
@@ -63,11 +58,12 @@ public class CreateProjectNodeService {
      *
      * @param projectId 프로젝트 ID
      * @param request   노드 생성 요청 정보
+     * @param nodeOrder 노드 순서
      * @return 생성된 프로젝트 노드 응답 정보
      */
-    private ProjectNode saveProjectNodeAndHistory(Long projectId, CreateNodeRequest request) {
+    private ProjectNode saveProjectNodeAndHistory(Long projectId, CreateNodeRequest request, Integer nodeOrder) {
 
-        ProjectNode savedProjectNode = projectNodeService.saveProjectNode(ProjectNode.of(projectId, request));
+        ProjectNode savedProjectNode = projectNodeService.saveProjectNode(ProjectNode.of(projectId, request, nodeOrder));
 
         historyRecorder.recordHistory(HistoryType.PROJECT_NODE, savedProjectNode.getProjectNodeId(), ActionType.CREATE,
                 savedProjectNode.getDescription());

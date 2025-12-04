@@ -63,13 +63,13 @@ public class ProjectNode extends BaseTimeEntity {
         this.nodeStatus = nodeStatus;
     }
 
-    public static ProjectNode of(Long projectId, CreateNodeRequest request) {
+    public static ProjectNode of(Long projectId, CreateNodeRequest request, Integer nodeOrder) {
         return ProjectNode.builder()
                 .title(request.title())
                 .description(request.description())
                 .nodeStatus(NodeStatus.NOT_STARTED)
                 .priority(request.priority())
-                .nodeOrder(request.nodeOrder())
+                .nodeOrder(nodeOrder)
                 .projectId(projectId)
                 .build();
     }

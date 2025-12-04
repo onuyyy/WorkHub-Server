@@ -67,15 +67,16 @@ class UserControllerTest {
     @Test
     @DisplayName("관리자가 회원 역할을 성공적으로 변경하면 200 응답을 반환한다")
     void updateUserRole_success() {
-        UserTable updatedUser = UserTable.of(
-                "testUser",
-                "encoded",
-                "user@test.com",
-                "01012345678",
-                UserRole.CLIENT,
-                Status.ACTIVE,
-                1L
-        );
+        UserTable updatedUser = UserTable.builder()
+                .loginId("testUser")
+                .password("encoded")
+                .email("user@test.com")
+                .phone("01012345678")
+                .role(UserRole.CLIENT)
+                .status(Status.ACTIVE)
+                .companyId(1L)
+                .build();
+
         ReflectionTestUtils.setField(updatedUser, "userId", 1L);
         UserTableResponse responseDto = UserTableResponse.from(updatedUser);
         when(userService.updateRole(anyLong(), any(UserRole.class))).thenReturn(responseDto);
@@ -103,15 +104,16 @@ class UserControllerTest {
     }
 
     private UserTable sampleUserWithId(Long userId) {
-        UserTable user = UserTable.of(
-                "member",
-                "encoded",
-                "member@workhub.com",
-                "01012345678",
-                UserRole.CLIENT,
-                Status.ACTIVE,
-                1L
-        );
+        UserTable user = UserTable.builder()
+                .loginId("testUser")
+                .password("encoded")
+                .email("user@test.com")
+                .phone("01012345678")
+                .role(UserRole.CLIENT)
+                .status(Status.ACTIVE)
+                .companyId(1L)
+                .build();
+
         ReflectionTestUtils.setField(user, "userId", userId);
         return user;
     }
