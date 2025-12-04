@@ -11,7 +11,7 @@ import com.workhub.cs.service.csPost.DeleteCsPostService;
 import com.workhub.cs.service.csPost.ReadCsPostService;
 import com.workhub.cs.service.csPost.UpdateCsPostService;
 import com.workhub.global.response.ApiResponse;
-import com.workhub.userTable.security.CustomUserDetails;
+import com.workhub.global.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

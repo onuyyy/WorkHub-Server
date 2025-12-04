@@ -6,7 +6,7 @@ import com.workhub.cs.dto.csPost.CsPostSearchRequest;
 import com.workhub.cs.dto.csPost.CsPostUpdateRequest;
 import com.workhub.cs.entity.CsPostStatus;
 import com.workhub.global.response.ApiResponse;
-import com.workhub.userTable.security.CustomUserDetails;
+import com.workhub.global.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;

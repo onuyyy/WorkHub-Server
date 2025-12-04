@@ -9,7 +9,7 @@ import com.workhub.cs.service.csQna.DeleteCsQnaService;
 import com.workhub.cs.service.csQna.ReadCsQnaService;
 import com.workhub.cs.service.csQna.UpdateCsQnaService;
 import com.workhub.global.response.ApiResponse;
-import com.workhub.userTable.security.CustomUserDetails;
+import com.workhub.global.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
