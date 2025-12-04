@@ -1,13 +1,13 @@
 package com.workhub.post.api;
 
 import com.workhub.global.response.ApiResponse;
+import com.workhub.global.security.CustomUserDetails;
 import com.workhub.post.entity.HashTag;
 import com.workhub.post.entity.PostType;
 import com.workhub.post.record.request.PostRequest;
 import com.workhub.post.record.request.PostUpdateRequest;
 import com.workhub.post.record.response.PostPageResponse;
 import com.workhub.post.record.response.PostResponse;
-import com.workhub.userTable.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
