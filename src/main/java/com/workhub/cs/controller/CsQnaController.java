@@ -5,21 +5,26 @@ import com.workhub.cs.dto.csQna.CsQnaRequest;
 import com.workhub.cs.dto.csQna.CsQnaResponse;
 import com.workhub.cs.dto.csQna.CsQnaUpdateRequest;
 import com.workhub.cs.service.csQna.CreateCsQnaService;
+import com.workhub.cs.service.csQna.ReadCsQnaService;
 import com.workhub.cs.service.csQna.UpdateCsQnaService;
 import com.workhub.global.response.ApiResponse;
 import com.workhub.userTable.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/projects/{projectId}/csPosts/{csPostId}")
+@RequestMapping("/api/v1/projects/{projectId}/csPosts/{csPostId}/qnas")
 public class CsQnaController implements CsQnaApi {
 
     private final CreateCsQnaService createCsQnaService;
+    private final ReadCsQnaService readCsQnaService;
     private final UpdateCsQnaService updateCsQnaService;
 
     /**
@@ -46,7 +51,29 @@ public class CsQnaController implements CsQnaApi {
     }
 
     /**
+     * CS POST의 댓글 목록을 조회한다.
+     *
+     * @param projectId 프로젝트 식별자
+     * @param csPostId 게시글 식별자
+     * @param pageable 페이징 정보 (최상위 댓글 기준)
+     * @return Page<CsQnaResponse> 계층 구조로 구성된 댓글 목록
+     */
+    @Override
+    @GetMapping
+    public ResponseEntity<ApiResponse<Page<CsQnaResponse>>> findCsQnas(
+            @PathVariable Long projectId,
+            @PathVariable Long csPostId,
+            @PageableDefault(size = 20) Pageable pageable
+    ) {
+        Page<CsQnaResponse> response = readCsQnaService.findCsQnas(
+                projectId, csPostId, pageable);
+
+        return ApiResponse.success(response, "CS Comment 목록이 조회되었습니다.");
+    }
+
+    /**
      * CS POST의 댓글을 수정한다.
+     *
      * @param projectId 프로젝트 식별자
      * @param csPostId 게시글 식별자
      * @param csQnaId 댓글 식별자
@@ -54,6 +81,7 @@ public class CsQnaController implements CsQnaApi {
      * @param userDetails 유저 식별자
      * @return CsQnaResponse
      */
+    @Override
     @PatchMapping("/{csQnaId}")
     public ResponseEntity<ApiResponse<CsQnaResponse>> update(
             @PathVariable Long projectId,

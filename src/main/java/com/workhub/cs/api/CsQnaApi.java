@@ -15,15 +15,20 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Tag(name = "CS 댓글 관리", description = "CS 게시글의 QnA API")
-@RequestMapping("/api/v1/projects/{projectId}/csPosts/{csPostId}")
+@RequestMapping("/api/v1/projects/{projectId}/csPosts/{csPostId}/qnas")
 public interface CsQnaApi {
 
     @Operation(
@@ -81,5 +86,29 @@ public interface CsQnaApi {
             @PathVariable Long csQnaId,
             @Valid @RequestBody CsQnaUpdateRequest csQnaUpdateRequest,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails
+    );
+
+    @Operation(
+            summary = "CS 댓글 목록 조회",
+            description = "완료된 프로젝트의 CS 게시글에 작성된 댓글 목록을 계층 구조로 조회합니다. 최상위 댓글만 페이징되며, 각 댓글의 답글은 children 필드에 모두 포함됩니다.",
+            parameters = {
+                    @Parameter(name = "projectId", description = "프로젝트 식별자", in = ParameterIn.PATH, required = true),
+                    @Parameter(name = "csPostId", description = "CS 게시글 식별자", in = ParameterIn.PATH, required = true)
+            }
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "CS 댓글 목록 조회 성공",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "게시글을 찾을 수 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류")
+    })
+    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    ResponseEntity<ApiResponse<Page<CsQnaResponse>>> findCsQnas(
+            @PathVariable Long projectId,
+            @PathVariable Long csPostId,
+            @PageableDefault(size = 20) Pageable pageable
     );
 }
