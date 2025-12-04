@@ -1,6 +1,10 @@
 package com.workhub.post.entity;
 
 import com.workhub.global.entity.BaseTimeEntity;
+import com.workhub.global.error.ErrorCode;
+import com.workhub.global.error.exception.BusinessException;
+import com.workhub.post.record.request.PostFileRequest;
+import com.workhub.post.record.request.PostFileUpdateRequest;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -31,4 +35,32 @@ public class PostFile extends BaseTimeEntity {
 
     @Column(name = "file_order")
     private Integer fileOrder;
+
+    public static PostFile of(Long postId, PostFileRequest request) {
+        return PostFile.builder()
+                .postId(postId)
+                .fileName(request.fileName())
+                .fileOrder(validateOrder(request.fileOrder()))
+                .build();
+    }
+
+    public static PostFile of(Long postId, PostFileUpdateRequest request) {
+        return PostFile.builder()
+                .postId(postId)
+                .fileName(request.fileName())
+                .fileOrder(validateOrder(request.fileOrder()))
+                .build();
+    }
+
+    public void markDeleted(){ markDeletedNow();}
+
+    public void updateOrder(Integer newOrder){ this.fileOrder = validateOrder(newOrder); }
+
+    private static Integer validateOrder(Integer fileOrder) {
+        if (fileOrder == null || fileOrder < 0) {
+            throw new BusinessException(ErrorCode.INVALID_POST_FILE_ORDER);
+        }
+        return fileOrder;
+    }
+
 }

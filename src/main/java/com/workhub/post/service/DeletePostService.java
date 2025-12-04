@@ -3,6 +3,7 @@ package com.workhub.post.service;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import com.workhub.post.entity.Post;
+import com.workhub.post.entity.PostFile;
 import com.workhub.project.service.ProjectService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +46,8 @@ public class DeletePostService {
     private void deleteRecursively(Post post) {
         if (!post.isDeleted()) {
             post.markDeleted();
+            postService.findFilesByPostId(post.getPostId())
+                    .forEach(PostFile::markDeleted);
         }
         postService.findChildren(post.getPostId()).forEach(this::deleteRecursively);
     }

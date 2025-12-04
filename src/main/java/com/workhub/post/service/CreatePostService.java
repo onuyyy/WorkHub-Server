@@ -3,12 +3,16 @@ package com.workhub.post.service;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import com.workhub.post.entity.Post;
+import com.workhub.post.entity.PostFile;
+import com.workhub.post.record.request.PostFileRequest;
 import com.workhub.post.record.request.PostRequest;
 import com.workhub.post.record.response.PostResponse;
 import com.workhub.project.service.ProjectService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -29,16 +33,36 @@ public class CreatePostService {
      */
     public PostResponse create(Long projectId, Long projectNodeId, Long userId, PostRequest request) {
         projectService.validateProject(projectId);
+
         Long parentPostId = request.parentPostId();
         if (parentPostId != null && !postService.existsActivePost(parentPostId)) {
             throw new BusinessException(ErrorCode.PARENT_POST_NOT_FOUND);
-       } else if (parentPostId != null) {
+        }
+        if (parentPostId != null) {
             Post parent = postService.findById(parentPostId);
             postService.validateNode(parent, projectNodeId);
-            if (parent.isDeleted()) {
-                throw new BusinessException(ErrorCode.ALREADY_DELETED_POST);
-            }
         }
-        return PostResponse.from(postService.save(Post.of(projectNodeId, userId, parentPostId, request)));
+
+        Post savedPost = postService.save(Post.of(projectNodeId, userId, parentPostId, request));
+        List<PostFile> savedFiles = savePostFiles(savedPost.getPostId(), request.files());
+
+        return PostResponse.from(savedPost, savedFiles);
+    }
+
+    /**
+     * 첨부 파일 요청을 엔티티로 변환해 한번에 저장한다.
+     *
+     * @param postId 게시글 ID
+     * @param fileRequests 첨부 파일 요청 목록
+     * @return 저장된 파일 목록, 없으면 빈 리스트
+     */
+    private List<PostFile> savePostFiles(Long postId, List<PostFileRequest> fileRequests) {
+        if (fileRequests == null || fileRequests.isEmpty()) {
+            return List.of();
+        }
+        List<PostFile> files = fileRequests.stream()
+                .map(request -> PostFile.of(postId, request))
+                .toList();
+        return postService.savePostFiles(files);
     }
 }

@@ -8,6 +8,7 @@ import com.workhub.post.entity.PostType;
 import com.workhub.post.record.request.PostRequest;
 import com.workhub.post.record.request.PostUpdateRequest;
 import com.workhub.post.record.response.PostResponse;
+import com.workhub.post.repository.PostFileRepository;
 import com.workhub.post.repository.PostRepository;
 import com.workhub.project.entity.Project;
 import com.workhub.project.entity.Status;
@@ -21,6 +22,7 @@ import org.mockito.Mock;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -33,6 +35,8 @@ import static org.mockito.ArgumentMatchers.anyLong;
 public class PostServiceTest {
     @Mock
     PostRepository postRepository;
+    @Mock
+    PostFileRepository postFileRepository;
     @InjectMocks
     PostService postService;
     @Mock
@@ -47,13 +51,14 @@ public class PostServiceTest {
         updatePostService = new UpdatePostService(postService, projectService);
         deletePostService = new DeletePostService(postService, projectService);
         given(postRepository.findByParentPostIdAndDeletedAtIsNull(anyLong())).willReturn(Collections.emptyList());
+        given(postFileRepository.findByPostId(anyLong())).willReturn(Collections.emptyList());
     }
 
     @Test
     @DisplayName("부모 게시물이 없으면 예외를 던진다.")
     void create_withParentNotFound_shouldThrow() {
         PostRequest request = new PostRequest(
-                "title", PostType.NOTICE, "content", "11.1.1",1L, HashTag.DESIGN
+                "title", PostType.NOTICE, "content", "11.1.1",1L, HashTag.DESIGN, List.of()
         );
         given(postRepository.existsByPostIdAndDeletedAtIsNull(1L)).willReturn(false);
         given(projectService.validateProject(10L)).willReturn(mockProject(10L));
@@ -67,7 +72,7 @@ public class PostServiceTest {
     @DisplayName("부모 게시글이 이미 삭제된 경우 예외를 던진다")
     void create_withDeletedParent_shouldThrowAlreadyDeleted() {
         PostRequest request = new PostRequest(
-                "title", PostType.NOTICE, "content", "11.1.1",1L, HashTag.DESIGN
+                "title", PostType.NOTICE, "content", "11.1.1",1L, HashTag.DESIGN, List.of()
         );
         given(postRepository.existsByPostIdAndDeletedAtIsNull(1L)).willReturn(false);
         given(projectService.validateProject(10L)).willReturn(mockProject(10L));
@@ -92,7 +97,7 @@ public class PostServiceTest {
         given(projectService.validateProject(10L)).willReturn(mockProject(10L));
 
         PostRequest request = new PostRequest(
-                "title", PostType.NOTICE, "content", "127.0.0.1", null, HashTag.DESIGN
+                "title", PostType.NOTICE, "content", "127.0.0.1", null, HashTag.DESIGN, List.of()
         );
 
         PostResponse result = createPostService.create(10L, 20L, 30L, request);
@@ -105,7 +110,7 @@ public class PostServiceTest {
     @DisplayName("프로젝트 상태가 유효하지 않으면 게시글을 생성할 수 없다")
     void create_withInvalidProjectStatus_shouldThrow() {
         PostRequest request = new PostRequest(
-                "title", PostType.NOTICE, "content", "127.0.0.1", null, HashTag.DESIGN
+                "title", PostType.NOTICE, "content", "127.0.0.1", null, HashTag.DESIGN, List.of()
         );
         given(projectService.validateProject(10L)).willThrow(new BusinessException(ErrorCode.INVALID_PROJECT_STATUS_FOR_POST));
 
@@ -129,7 +134,7 @@ public class PostServiceTest {
                 .build();
 
         PostUpdateRequest request = new PostUpdateRequest(
-                "new", PostType.NOTICE, "new content", "2.2.2.2", HashTag.DESIGN
+                "new", PostType.NOTICE, "new content", "2.2.2.2", HashTag.DESIGN, List.of()
         );
 
         given(projectService.validateProject(10L)).willReturn(mockProject(10L));
@@ -156,7 +161,7 @@ public class PostServiceTest {
                 .build();
 
         PostUpdateRequest request = new PostUpdateRequest(
-                "new", PostType.NOTICE, "new content", "2.2.2.2", HashTag.DESIGN
+                "new", PostType.NOTICE, "new content", "2.2.2.2", HashTag.DESIGN, List.of()
         );
 
         given(projectService.validateProject(10L)).willReturn(mockProject(10L));
@@ -171,7 +176,7 @@ public class PostServiceTest {
     @DisplayName("프로젝트 상태가 유효하지 않으면 게시글을 수정할 수 없다")
     void update_withInvalidProjectStatus_shouldThrow() {
         PostUpdateRequest request = new PostUpdateRequest(
-                "new", PostType.NOTICE, "new content", "2.2.2.2", HashTag.DESIGN
+                "new", PostType.NOTICE, "new content", "2.2.2.2", HashTag.DESIGN, List.of()
         );
         given(projectService.validateProject(10L)).willThrow(new BusinessException(ErrorCode.INVALID_PROJECT_STATUS_FOR_POST));
 

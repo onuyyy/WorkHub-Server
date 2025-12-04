@@ -51,7 +51,10 @@ public enum ErrorCode {
     FORBIDDEN_POST_UPDATE(HttpStatus.FORBIDDEN, "PO-004", "게시글 수정 권한이 없습니다."),
     FORBIDDEN_POST_DELETE(HttpStatus.FORBIDDEN, "PO-005", "게시글 삭제 권한이 없습니다."),
     NOT_MATCHED_PROJECT_POST(HttpStatus.BAD_REQUEST, "PO-006", "잘못된 프로젝트 또는 단계의 게시글입니다."),
-    INVALID_PROJECT_STATUS_FOR_POST(HttpStatus.BAD_REQUEST, "C-0011", "진행중인 프로젝트에서만 게시글을 처리할 수 있습니다."),
+    INVALID_PROJECT_STATUS_FOR_POST(HttpStatus.BAD_REQUEST, "PO-007", "진행중인 프로젝트에서만 게시글을 처리할 수 있습니다."),
+    INVALID_POST_FILE_ORDER(HttpStatus.BAD_REQUEST, "PO-008", "파일 순서(fileOrder)는 0 이상의 값이어야 합니다."),
+    NOT_EXISTS_POST_FILE(HttpStatus.BAD_REQUEST, "PO-009", "존재하지 않는 게시글 파일입니다."),
+    INVALID_POST_FILE_UPDATE(HttpStatus.BAD_REQUEST, "PO-010", "잘못된 게시글 파일 수정 요청입니다."),
 
 
     // CS 게시판
