@@ -55,6 +55,8 @@ public enum ErrorCode {
     INVALID_POST_FILE_ORDER(HttpStatus.BAD_REQUEST, "PO-008", "파일 순서(fileOrder)는 0 이상의 값이어야 합니다."),
     NOT_EXISTS_POST_FILE(HttpStatus.BAD_REQUEST, "PO-009", "존재하지 않는 게시글 파일입니다."),
     INVALID_POST_FILE_UPDATE(HttpStatus.BAD_REQUEST, "PO-010", "잘못된 게시글 파일 수정 요청입니다."),
+    NOT_EXISTS_POST_LINK(HttpStatus.BAD_REQUEST, "PO-011", "존재하지 않는 게시글 링크입니다."),
+    INVALID_POST_LINK_UPDATE(HttpStatus.BAD_REQUEST, "PO-012", "잘못된 게시글 링크 수정 요청입니다."),
 
 
     // CS 게시판

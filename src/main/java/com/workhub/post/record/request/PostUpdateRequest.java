@@ -14,5 +14,6 @@ public record PostUpdateRequest (
         @NotBlank String content,
         @NotBlank String postIp,
         @NotNull HashTag hashTag,
-        @Valid List<PostFileUpdateRequest> files
+        @Valid List<PostFileUpdateRequest> files,
+        @Valid List<PostLinkUpdateRequest> links
 ) { }

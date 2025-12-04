@@ -16,5 +16,6 @@ public record PostRequest(
         Long parentPostId,
         HashTag hashTag,
 
-        @Valid List<PostFileRequest> files
+        @Valid List<PostFileRequest> files,
+        @Valid List<PostLinkRequest> links
 ) { }

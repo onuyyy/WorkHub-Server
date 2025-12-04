@@ -4,7 +4,9 @@ import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import com.workhub.post.entity.Post;
 import com.workhub.post.entity.PostFile;
+import com.workhub.post.entity.PostLink;
 import com.workhub.post.record.request.PostFileRequest;
+import com.workhub.post.record.request.PostLinkRequest;
 import com.workhub.post.record.request.PostRequest;
 import com.workhub.post.record.response.PostResponse;
 import com.workhub.project.service.ProjectService;
@@ -45,8 +47,9 @@ public class CreatePostService {
 
         Post savedPost = postService.save(Post.of(projectNodeId, userId, parentPostId, request));
         List<PostFile> savedFiles = savePostFiles(savedPost.getPostId(), request.files());
+        List<PostLink> savedLinks = savePostLinks(savedPost.getPostId(), request.links());
 
-        return PostResponse.from(savedPost, savedFiles);
+        return PostResponse.from(savedPost, savedFiles, savedLinks);
     }
 
     /**
@@ -64,5 +67,22 @@ public class CreatePostService {
                 .map(request -> PostFile.of(postId, request))
                 .toList();
         return postService.savePostFiles(files);
+    }
+
+    /**
+     * 참고 링크 요청을 엔티티로 변환해 저장한다.
+     *
+     * @param postId 게시글 ID
+     * @param linkRequests 링크 요청 목록
+     * @return 저장된 링크 목록
+     */
+    private List<PostLink> savePostLinks(Long postId, List<PostLinkRequest> linkRequests) {
+        if (linkRequests == null || linkRequests.isEmpty()) {
+            return List.of();
+        }
+        List<PostLink> links = linkRequests.stream()
+                .map(request -> PostLink.of(postId, request.referenceLink(), request.linkDescription()))
+                .toList();
+        return postService.savePostLinks(links);
     }
 }

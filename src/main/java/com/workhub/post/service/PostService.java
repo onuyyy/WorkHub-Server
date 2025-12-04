@@ -5,8 +5,10 @@ import com.workhub.global.error.exception.BusinessException;
 import com.workhub.post.entity.HashTag;
 import com.workhub.post.entity.Post;
 import com.workhub.post.entity.PostFile;
+import com.workhub.post.entity.PostLink;
 import com.workhub.post.entity.PostType;
 import com.workhub.post.repository.PostFileRepository;
+import com.workhub.post.repository.PostLinkRepository;
 import com.workhub.post.repository.PostRepository;
 import com.workhub.post.repository.PostSpecifications;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,7 @@ import java.util.List;
 public class PostService {
     private final PostRepository postRepository;
     private final PostFileRepository postFileRepository;
+    private final PostLinkRepository postLinkRepository;
 
     /**
      * 게시글을 저장한다.
@@ -134,5 +137,18 @@ public class PostService {
     @Transactional(readOnly = true)
     public List<PostFile> findFilesByPostId(Long postId) {
         return postFileRepository.findByPostId(postId);
+    }
+
+    public List<PostLink> savePostLinks(List<PostLink> postLinks) {
+        return postLinkRepository.saveAll(postLinks);
+    }
+
+    public PostLink savePostLink(PostLink postLink) {
+        return postLinkRepository.save(postLink);
+    }
+
+    @Transactional(readOnly = true)
+    public List<PostLink> findLinksByPostId(Long postId) {
+        return postLinkRepository.findByPostId(postId);
     }
 }

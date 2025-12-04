@@ -3,6 +3,7 @@ package com.workhub.post.service;
 import com.workhub.post.entity.HashTag;
 import com.workhub.post.entity.Post;
 import com.workhub.post.entity.PostFile;
+import com.workhub.post.entity.PostLink;
 import com.workhub.post.entity.PostType;
 import com.workhub.post.record.response.PostPageResponse;
 import com.workhub.post.record.response.PostResponse;
@@ -42,9 +43,12 @@ public class ReadPostService {
         List<PostFile> files = postService.findFilesByPostId(postId).stream()
                 .filter(file -> file.getDeletedAt() == null)
                 .toList();
+        List<PostLink> links = postService.findLinksByPostId(postId).stream()
+                .filter(link -> link.getDeletedAt() == null)
+                .toList();
 
 
-        return PostResponse.from(post, files);
+        return PostResponse.from(post, files, links);
     }
 
     /**

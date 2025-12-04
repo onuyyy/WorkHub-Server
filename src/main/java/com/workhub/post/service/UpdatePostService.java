@@ -4,7 +4,9 @@ import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import com.workhub.post.entity.Post;
 import com.workhub.post.entity.PostFile;
+import com.workhub.post.entity.PostLink;
 import com.workhub.post.record.request.PostFileUpdateRequest;
+import com.workhub.post.record.request.PostLinkUpdateRequest;
 import com.workhub.post.record.request.PostUpdateRequest;
 import com.workhub.post.record.response.PostResponse;
 import com.workhub.project.service.ProjectService;
@@ -41,7 +43,12 @@ public class UpdatePostService {
                 .filter(file -> file.getDeletedAt() == null)
                 .toList();
 
-        return PostResponse.from(target, visibleFiles);
+        List<PostLink> updatedLinks = updateLinks(postId, request.links());
+        List<PostLink> visibleLinks = updatedLinks.stream()
+                .filter(link -> link.getDeletedAt() == null)
+                .toList();
+
+        return PostResponse.from(target, visibleFiles, visibleLinks);
     }
 
     /**
@@ -136,5 +143,90 @@ public class UpdatePostService {
         }
         PostFile newFile = PostFile.of(postId, req);
         return postService.savePostFile(newFile);
+    }
+
+    /**
+     * 링크 수정 요청을 반영해 추가/삭제/내용 변경을 처리한다.
+     *
+     * @param postId 게시글 ID
+     * @param linkRequests 링크 수정 요청 목록
+     * @return 최신 링크 목록
+     */
+    private List<PostLink> updateLinks(Long postId, List<PostLinkUpdateRequest> linkRequests) {
+        List<PostLink> existingLinks = postService.findLinksByPostId(postId);
+
+        if (linkRequests == null || linkRequests.isEmpty()) {
+            return existingLinks;
+        }
+
+        Map<Long, PostLink> existingLinkMap = mapExistingLinks(existingLinks);
+        markRemovedLinks(existingLinks, extractLinkRequestedIds(linkRequests));
+
+        List<PostLink> resultLinks = new ArrayList<>();
+        for (PostLinkUpdateRequest req : linkRequests) {
+            PostLink processed = handleLinkRequest(postId, req, existingLinkMap);
+            if (processed != null) {
+                resultLinks.add(processed);
+            }
+        }
+        return resultLinks;
+    }
+
+    /** 기존 링크를 ID 기반 맵으로 구성한다. */
+    private Map<Long, PostLink> mapExistingLinks(List<PostLink> existingLinks) {
+        return existingLinks.stream()
+                .collect(Collectors.toMap(PostLink::getLinkId, link -> link));
+    }
+
+    /** 요청에 포함된 링크 ID만 추출한다. */
+    private Set<Long> extractLinkRequestedIds(List<PostLinkUpdateRequest> linkRequests) {
+        return linkRequests.stream()
+                .map(PostLinkUpdateRequest::linkId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+    }
+
+    /** 요청 목록에 없는 기존 링크를 삭제 처리한다. */
+    private void markRemovedLinks(List<PostLink> existingLinks, Set<Long> requestedIds) {
+        for (PostLink existingLink : existingLinks) {
+            if (!requestedIds.contains(existingLink.getLinkId())) {
+                existingLink.markDeleted();
+            }
+        }
+    }
+
+    /**
+     * 단일 링크 수정 요청을 처리한다.
+     */
+    private PostLink handleLinkRequest(Long postId,
+                                       PostLinkUpdateRequest req,
+                                       Map<Long, PostLink> existingLinkMap) {
+        if (req.linkId() == null) {
+            return addNewLink(postId, req);
+        }
+
+        PostLink target = existingLinkMap.get(req.linkId());
+        if (target == null) {
+            throw new BusinessException(ErrorCode.NOT_EXISTS_POST_LINK);
+        }
+
+        if (req.deleted()) {
+            target.markDeleted();
+            return null;
+        }
+
+        target.update(req.referenceLink(), req.linkDescription());
+        return target;
+    }
+
+    /**
+     * 신규 링크를 생성하고 저장한다.
+     */
+    private PostLink addNewLink(Long postId, PostLinkUpdateRequest req) {
+        if (req.deleted()) {
+            throw new BusinessException(ErrorCode.INVALID_POST_LINK_UPDATE);
+        }
+        PostLink newLink = PostLink.of(postId, req.referenceLink(), req.linkDescription());
+        return postService.savePostLink(newLink);
     }
 }
