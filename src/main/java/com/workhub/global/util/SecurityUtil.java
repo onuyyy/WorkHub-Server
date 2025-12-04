@@ -1,6 +1,6 @@
 package com.workhub.global.util;
 
-import com.workhub.userTable.security.CustomUserDetails;
+import com.workhub.global.security.CustomUserDetails;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
