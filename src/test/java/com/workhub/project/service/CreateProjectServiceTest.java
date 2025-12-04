@@ -1,419 +1,353 @@
 package com.workhub.project.service;
 
-import com.workhub.global.error.ErrorCode;
-import com.workhub.global.error.exception.BusinessException;
+import com.workhub.global.entity.ActionType;
+import com.workhub.global.entity.HistoryType;
+import com.workhub.global.history.HistoryRecorder;
 import com.workhub.project.dto.CreateProjectRequest;
 import com.workhub.project.dto.ProjectResponse;
-import com.workhub.project.entity.Project;
-import com.workhub.project.entity.ProjectClientMember;
-import com.workhub.project.entity.ProjectDevMember;
-import com.workhub.project.entity.ProjectHistory;
+import com.workhub.project.entity.*;
+import com.workhub.userTable.entity.UserTable;
+import com.workhub.userTable.security.CustomUserDetails;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
+import static com.workhub.userTable.entity.UserRole.ADMIN;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.never;
 
 @ExtendWith(MockitoExtension.class)
-public class CreateProjectServiceTest {
+class CreateProjectServiceTest {
 
     @Mock
-    ProjectService projectService;
+    private ProjectService projectService;
+
+    @Mock
+    private HistoryRecorder historyRecorder;
 
     @InjectMocks
-    CreateProjectService createProjectService;
+    private CreateProjectService createProjectService;
 
-    @Test
-    @DisplayName("프로젝트 생성 시 프로젝트, 히스토리, 멤버, 멤버 히스토리가 모두 저장된다")
-    void createProject_success_shouldSaveAllEntities() {
-        // given
-        Long loginUser = 1L;
-        String userIp = "127.0.0.1";
-        String userAgent = "TestAgent";
+    private CreateProjectRequest mockRequest;
+    private Project mockProject;
+    private ProjectClientMember mockClientMember;
+    private ProjectDevMember mockDevMember;
 
-        List<Long> managerIds = Arrays.asList(10L, 20L);
-        List<Long> developerIds = Arrays.asList(30L, 40L);
-
-        CreateProjectRequest request = new CreateProjectRequest(
-                "Test Project",
-                "Test Description",
-                100L,
-                managerIds,
-                developerIds,
-                LocalDate.now(),
-                LocalDate.now().plusMonths(6)
-        );
-
-        Project savedProject = Project.builder()
-                .projectId(1L)
-                .projectTitle("Test Project")
-                .projectDescription("Test Description")
+    @BeforeEach
+    void init() {
+        // SecurityContext 설정
+        UserTable mockUser = UserTable.builder()
+                .userId(1L)
+                .loginId("testuser")
+                .password("password")
+                .role(ADMIN)
                 .build();
 
-        List<ProjectClientMember> savedClientMembers = Arrays.asList(
-                ProjectClientMember.builder().projectClientMemberId(1L).userId(10L).projectId(1L).build(),
-                ProjectClientMember.builder().projectClientMemberId(2L).userId(20L).projectId(1L).build()
+        CustomUserDetails userDetails = new CustomUserDetails(mockUser);
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        mockRequest = new CreateProjectRequest(
+                "테스트 프로젝트",
+                "프로젝트 설명입니다",
+                100L,
+                Arrays.asList(1L, 2L),
+                Arrays.asList(3L, 4L),
+                LocalDate.of(2025, 1, 1),
+                LocalDate.of(2025, 6, 30)
         );
 
-        List<ProjectDevMember> savedDevMembers = Arrays.asList(
-                ProjectDevMember.builder().projectMemberId(1L).userId(30L).projectId(1L).build(),
-                ProjectDevMember.builder().projectMemberId(2L).userId(40L).projectId(1L).build()
-        );
+        mockProject = Project.builder()
+                .projectId(1L)
+                .projectTitle("테스트 프로젝트")
+                .projectDescription("프로젝트 설명입니다")
+                .status(Status.CONTRACT)
+                .contractStartDate(LocalDate.of(2025, 1, 1))
+                .contractEndDate(LocalDate.of(2025, 6, 30))
+                .clientCompanyId(100L)
+                .build();
 
-        given(projectService.saveProject(any(Project.class))).willReturn(savedProject);
-        given(projectService.saveProjectClientMember(anyList())).willReturn(savedClientMembers);
-        given(projectService.saveProjectDevMember(anyList())).willReturn(savedDevMembers);
+        mockClientMember = ProjectClientMember.builder()
+                .projectClientMemberId(1L)
+                .userId(1L)
+                .projectId(1L)
+                .role(Role.READ)
+                .assignedAt(LocalDate.now())
+                .build();
 
-        // when
-        ProjectResponse result = createProjectService.createProject(request, loginUser, userIp, userAgent);
+        mockDevMember = ProjectDevMember.builder()
+                .projectMemberId(1L)
+                .userId(3L)
+                .projectId(1L)
+                .devPart(DevPart.BE)
+                .assignedAt(LocalDate.now())
+                .build();
+    }
 
-        // then
+    @Test
+    @DisplayName("프로젝트 생성 요청 시 프로젝트가 생성되고 응답이 반환된다.")
+    void givenCreateProjectRequest_whenCreateProject_thenReturnProjectResponse() {
+        when(projectService.saveProject(any(Project.class))).thenReturn(mockProject);
+        when(projectService.saveProjectClientMember(anyList())).thenReturn(Arrays.asList(mockClientMember));
+        when(projectService.saveProjectDevMember(anyList())).thenReturn(Arrays.asList(mockDevMember));
+        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+        doNothing().when(projectService).saveProjectClientMemberHistory(anyList());
+        doNothing().when(projectService).saveProjectDevMemberHistory(anyList());
+
+        ProjectResponse result = createProjectService.createProject(mockRequest);
+
         assertThat(result).isNotNull();
         assertThat(result.projectId()).isEqualTo(1L);
-        assertThat(result.projectTitle()).isEqualTo("Test Project");
+        assertThat(result.projectTitle()).isEqualTo("테스트 프로젝트");
+        assertThat(result.projectDescription()).isEqualTo("프로젝트 설명입니다");
+        assertThat(result.status()).isEqualTo(Status.CONTRACT);
+        assertThat(result.contractStartDate()).isEqualTo(LocalDate.of(2025, 1, 1));
+        assertThat(result.contractEndDate()).isEqualTo(LocalDate.of(2025, 6, 30));
+
         verify(projectService).saveProject(any(Project.class));
-        verify(projectService).saveProjectHistory(any(ProjectHistory.class));
-        verify(projectService).saveProjectClientMember(anyList());
-        verify(projectService).saveProjectDevMember(anyList());
-        verify(projectService).saveProjectClientMemberHistory(anyList());
-        verify(projectService).saveProjectDevMemberHistory(anyList());
+        verify(historyRecorder).recordHistory(HistoryType.PROJECT, 1L, ActionType.CREATE, "프로젝트 설명입니다");
     }
 
     @Test
-    @DisplayName("프로젝트 생성 시 저장된 프로젝트 ID로 멤버가 생성된다")
-    void createProject_success_shouldCreateMembersWithSavedProjectId() {
-        // given
-        Long loginUser = 1L;
-        String userIp = "127.0.0.1";
-        String userAgent = "TestAgent";
-
-        List<Long> managerIds = List.of(10L);
-        List<Long> developerIds = List.of(20L);
-
-        CreateProjectRequest request = new CreateProjectRequest(
-                "Test Project",
-                "Test Description",
-                100L,
-                managerIds,
-                developerIds,
-                LocalDate.now(),
-                LocalDate.now().plusMonths(6)
-        );
-
-        Project savedProject = Project.builder()
-                .projectId(99L)
-                .projectTitle("Test Project")
+    @DisplayName("프로젝트 생성 시 클라이언트 멤버가 저장되고 히스토리가 기록된다.")
+    void givenCreateProjectRequest_whenCreateProject_thenSaveClientMembersAndHistory() {
+        ProjectClientMember clientMember1 = ProjectClientMember.builder()
+                .projectClientMemberId(1L)
+                .userId(1L)
+                .projectId(1L)
                 .build();
 
-        List<ProjectClientMember> savedClientMembers = List.of(
-                ProjectClientMember.builder().projectClientMemberId(1L).build()
-        );
+        ProjectClientMember clientMember2 = ProjectClientMember.builder()
+                .projectClientMemberId(2L)
+                .userId(2L)
+                .projectId(1L)
+                .build();
 
-        List<ProjectDevMember> savedDevMembers = List.of(
-                ProjectDevMember.builder().projectMemberId(1L).build()
-        );
+        when(projectService.saveProject(any(Project.class))).thenReturn(mockProject);
+        when(projectService.saveProjectClientMember(anyList())).thenReturn(Arrays.asList(clientMember1, clientMember2));
+        when(projectService.saveProjectDevMember(anyList())).thenReturn(Arrays.asList(mockDevMember));
+        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+        doNothing().when(projectService).saveProjectClientMemberHistory(anyList());
+        doNothing().when(projectService).saveProjectDevMemberHistory(anyList());
 
-        given(projectService.saveProject(any(Project.class))).willReturn(savedProject);
-        given(projectService.saveProjectClientMember(anyList())).willReturn(savedClientMembers);
-        given(projectService.saveProjectDevMember(anyList())).willReturn(savedDevMembers);
+        createProjectService.createProject(mockRequest);
 
-        // when
-        createProjectService.createProject(request, loginUser, userIp, userAgent);
-
-        // then
-        verify(projectService).saveProject(any(Project.class));
-        verify(projectService).saveProjectClientMember(argThat(members ->
-            members != null && members.size() == 1
+        verify(projectService).saveProjectClientMember(argThat(list ->
+                list.size() == 2 &&
+                list.stream().anyMatch(m -> m.getUserId().equals(1L)) &&
+                list.stream().anyMatch(m -> m.getUserId().equals(2L))
         ));
-        verify(projectService).saveProjectDevMember(argThat(members ->
-            members != null && members.size() == 1
+        verify(projectService).saveProjectClientMemberHistory(argThat(list -> list.size() == 2));
+    }
+
+    @Test
+    @DisplayName("프로젝트 생성 시 개발 멤버가 저장되고 히스토리가 기록된다.")
+    void givenCreateProjectRequest_whenCreateProject_thenSaveDevMembersAndHistory() {
+        ProjectDevMember devMember1 = ProjectDevMember.builder()
+                .projectMemberId(1L)
+                .userId(3L)
+                .projectId(1L)
+                .build();
+
+        ProjectDevMember devMember2 = ProjectDevMember.builder()
+                .projectMemberId(2L)
+                .userId(4L)
+                .projectId(1L)
+                .build();
+
+        when(projectService.saveProject(any(Project.class))).thenReturn(mockProject);
+        when(projectService.saveProjectClientMember(anyList())).thenReturn(Arrays.asList(mockClientMember));
+        when(projectService.saveProjectDevMember(anyList())).thenReturn(Arrays.asList(devMember1, devMember2));
+        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+        doNothing().when(projectService).saveProjectClientMemberHistory(anyList());
+        doNothing().when(projectService).saveProjectDevMemberHistory(anyList());
+
+        createProjectService.createProject(mockRequest);
+
+        verify(projectService).saveProjectDevMember(argThat(list ->
+                list.size() == 2 &&
+                list.stream().anyMatch(m -> m.getUserId().equals(3L)) &&
+                list.stream().anyMatch(m -> m.getUserId().equals(4L))
+        ));
+        verify(projectService).saveProjectDevMemberHistory(argThat(list -> list.size() == 2));
+    }
+
+    @Test
+    @DisplayName("프로젝트 생성 시 요청 데이터가 엔티티로 올바르게 매핑된다.")
+    void givenCreateProjectRequest_whenCreateProject_thenRequestMappedToEntity() {
+        when(projectService.saveProject(any(Project.class))).thenReturn(mockProject);
+        when(projectService.saveProjectClientMember(anyList())).thenReturn(Arrays.asList(mockClientMember));
+        when(projectService.saveProjectDevMember(anyList())).thenReturn(Arrays.asList(mockDevMember));
+        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+        doNothing().when(projectService).saveProjectClientMemberHistory(anyList());
+        doNothing().when(projectService).saveProjectDevMemberHistory(anyList());
+
+        createProjectService.createProject(mockRequest);
+
+        verify(projectService).saveProject(argThat(project ->
+                project.getProjectTitle().equals("테스트 프로젝트") &&
+                project.getProjectDescription().equals("프로젝트 설명입니다") &&
+                project.getStatus().equals(Status.CONTRACT) &&
+                project.getClientCompanyId().equals(100L)
         ));
     }
 
     @Test
-    @DisplayName("고객사 멤버가 없어도 프로젝트 생성이 성공한다")
-    void createProject_withoutClientMembers_shouldSucceed() {
-        // given
-        Long loginUser = 1L;
-        String userIp = "127.0.0.1";
-        String userAgent = "TestAgent";
+    @DisplayName("프로젝트 저장 실패 시 예외가 발생한다.")
+    void givenCreateProjectRequest_whenSaveProjectFails_thenThrowException() {
+        when(projectService.saveProject(any(Project.class)))
+                .thenThrow(new RuntimeException("프로젝트 저장 실패"));
 
-        List<Long> developerIds = List.of(30L);
+        assertThatThrownBy(() -> createProjectService.createProject(mockRequest))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("프로젝트 저장 실패");
 
-        CreateProjectRequest request = new CreateProjectRequest(
-                "Test Project",
-                "Test Description",
-                100L,
-                List.of(),
-                developerIds,
-                LocalDate.now(),
-                LocalDate.now().plusMonths(6)
-        );
-
-        Project savedProject = Project.builder()
-                .projectId(1L)
-                .projectTitle("Test Project")
-                .build();
-
-        List<ProjectDevMember> savedDevMembers = List.of(
-                ProjectDevMember.builder().projectMemberId(1L).build()
-        );
-
-        given(projectService.saveProject(any(Project.class))).willReturn(savedProject);
-        given(projectService.saveProjectClientMember(anyList())).willReturn(List.of());
-        given(projectService.saveProjectDevMember(anyList())).willReturn(savedDevMembers);
-
-        // when
-        ProjectResponse result = createProjectService.createProject(request, loginUser, userIp, userAgent);
-
-        // then
-        assertThat(result).isNotNull();
         verify(projectService).saveProject(any(Project.class));
-        verify(projectService).saveProjectHistory(any(ProjectHistory.class));
-    }
-
-    @Test
-    @DisplayName("개발사 멤버가 없어도 프로젝트 생성이 성공한다")
-    void createProject_withoutDevMembers_shouldSucceed() {
-        // given
-        Long loginUser = 1L;
-        String userIp = "127.0.0.1";
-        String userAgent = "TestAgent";
-
-        List<Long> managerIds = List.of(10L);
-
-        CreateProjectRequest request = new CreateProjectRequest(
-                "Test Project",
-                "Test Description",
-                100L,
-                managerIds,
-                List.of(),
-                LocalDate.now(),
-                LocalDate.now().plusMonths(6)
-        );
-
-        Project savedProject = Project.builder()
-                .projectId(1L)
-                .projectTitle("Test Project")
-                .build();
-
-        List<ProjectClientMember> savedClientMembers = List.of(
-                ProjectClientMember.builder().projectClientMemberId(1L).build()
-        );
-
-        given(projectService.saveProject(any(Project.class))).willReturn(savedProject);
-        given(projectService.saveProjectClientMember(anyList())).willReturn(savedClientMembers);
-        given(projectService.saveProjectDevMember(anyList())).willReturn(List.of());
-
-        // when
-        ProjectResponse result = createProjectService.createProject(request, loginUser, userIp, userAgent);
-
-        // then
-        assertThat(result).isNotNull();
-        verify(projectService).saveProject(any(Project.class));
-        verify(projectService).saveProjectHistory(any(ProjectHistory.class));
-    }
-
-    @Test
-    @DisplayName("프로젝트 히스토리 저장 시 올바른 사용자 정보가 전달된다")
-    void createProject_success_shouldPassCorrectUserInfo() {
-        // given
-        Long loginUser = 999L;
-        String userIp = "192.168.0.1";
-        String userAgent = "CustomAgent";
-
-        CreateProjectRequest request = new CreateProjectRequest(
-                "Test Project",
-                "Test Description",
-                100L,
-                List.of(),
-                List.of(),
-                LocalDate.now(),
-                LocalDate.now().plusMonths(6)
-        );
-
-        Project savedProject = Project.builder()
-                .projectId(1L)
-                .projectTitle("Test Project")
-                .build();
-
-        given(projectService.saveProject(any(Project.class))).willReturn(savedProject);
-        given(projectService.saveProjectClientMember(anyList())).willReturn(List.of());
-        given(projectService.saveProjectDevMember(anyList())).willReturn(List.of());
-
-        // when
-        createProjectService.createProject(request, loginUser, userIp, userAgent);
-
-        // then
-        verify(projectService).saveProjectHistory(any(ProjectHistory.class));
-    }
-
-    // ========== 실패 케이스 ==========
-
-    @Test
-    @DisplayName("프로젝트 저장 실패 시 예외가 발생한다")
-    void createProject_whenSaveProjectFails_shouldThrowException() {
-        // given
-        Long loginUser = 1L;
-        String userIp = "127.0.0.1";
-        String userAgent = "TestAgent";
-
-        CreateProjectRequest request = new CreateProjectRequest(
-                "Test Project",
-                "Test Description",
-                100L,
-                List.of(10L),
-                List.of(20L),
-                LocalDate.now(),
-                LocalDate.now().plusMonths(6)
-        );
-
-        given(projectService.saveProject(any(Project.class)))
-                .willThrow(new BusinessException(ErrorCode.PROJECT_SAVE_FAILED));
-
-        // when & then
-        assertThatThrownBy(() -> createProjectService.createProject(request, loginUser, userIp, userAgent))
-                .isInstanceOf(BusinessException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PROJECT_SAVE_FAILED);
-
-        // 프로젝트 저장 이후의 메서드들은 호출되지 않아야 함
-        verify(projectService).saveProject(any(Project.class));
-        verify(projectService, never()).saveProjectHistory(any(ProjectHistory.class));
+        verify(historyRecorder, never()).recordHistory(any(), anyLong(), any(), anyString());
         verify(projectService, never()).saveProjectClientMember(anyList());
         verify(projectService, never()).saveProjectDevMember(anyList());
     }
 
     @Test
-    @DisplayName("고객사 멤버 저장 실패 시 예외가 발생한다")
-    void createProject_whenSaveClientMemberFails_shouldThrowException() {
-        // given
-        Long loginUser = 1L;
-        String userIp = "127.0.0.1";
-        String userAgent = "TestAgent";
+    @DisplayName("히스토리 기록 실패 시 예외가 전파된다.")
+    void givenCreateProjectRequest_whenHistoryRecordFails_thenThrowException() {
+        when(projectService.saveProject(any(Project.class))).thenReturn(mockProject);
+        doThrow(new RuntimeException("히스토리 저장 실패"))
+                .when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
 
-        List<Long> managerIds = List.of(10L);
-
-        CreateProjectRequest request = new CreateProjectRequest(
-                "Test Project",
-                "Test Description",
-                100L,
-                managerIds,
-                List.of(),
-                LocalDate.now(),
-                LocalDate.now().plusMonths(6)
-        );
-
-        Project savedProject = Project.builder()
-                .projectId(1L)
-                .projectTitle("Test Project")
-                .build();
-
-        given(projectService.saveProject(any(Project.class))).willReturn(savedProject);
-        given(projectService.saveProjectClientMember(anyList()))
-                .willThrow(new BusinessException(ErrorCode.CLIENT_MEMBER_SAVE_FAILED));
-
-        // when & then
-        assertThatThrownBy(() -> createProjectService.createProject(request, loginUser, userIp, userAgent))
-                .isInstanceOf(BusinessException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.CLIENT_MEMBER_SAVE_FAILED);
+        assertThatThrownBy(() -> createProjectService.createProject(mockRequest))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("히스토리 저장 실패");
 
         verify(projectService).saveProject(any(Project.class));
-        verify(projectService).saveProjectHistory(any(ProjectHistory.class));
+        verify(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+        verify(projectService, never()).saveProjectClientMember(anyList());
+    }
+
+    @Test
+    @DisplayName("클라이언트 멤버 저장 실패 시 예외가 전파된다.")
+    void givenCreateProjectRequest_whenSaveClientMemberFails_thenThrowException() {
+        when(projectService.saveProject(any(Project.class))).thenReturn(mockProject);
+        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+        when(projectService.saveProjectClientMember(anyList()))
+                .thenThrow(new RuntimeException("클라이언트 멤버 저장 실패"));
+
+        assertThatThrownBy(() -> createProjectService.createProject(mockRequest))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("클라이언트 멤버 저장 실패");
+
+        verify(projectService).saveProject(any(Project.class));
+        verify(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
         verify(projectService).saveProjectClientMember(anyList());
         verify(projectService, never()).saveProjectClientMemberHistory(anyList());
     }
 
     @Test
-    @DisplayName("개발사 멤버 저장 실패 시 예외가 발생한다")
-    void createProject_whenSaveDevMemberFails_shouldThrowException() {
-        // given
-        Long loginUser = 1L;
-        String userIp = "127.0.0.1";
-        String userAgent = "TestAgent";
+    @DisplayName("개발 멤버 저장 실패 시 예외가 전파된다.")
+    void givenCreateProjectRequest_whenSaveDevMemberFails_thenThrowException() {
+        when(projectService.saveProject(any(Project.class))).thenReturn(mockProject);
+        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+        when(projectService.saveProjectClientMember(anyList())).thenReturn(Arrays.asList(mockClientMember));
+        doNothing().when(projectService).saveProjectClientMemberHistory(anyList());
+        when(projectService.saveProjectDevMember(anyList()))
+                .thenThrow(new RuntimeException("개발 멤버 저장 실패"));
 
-        List<Long> developerIds = List.of(30L);
-
-        CreateProjectRequest request = new CreateProjectRequest(
-                "Test Project",
-                "Test Description",
-                100L,
-                List.of(),
-                developerIds,
-                LocalDate.now(),
-                LocalDate.now().plusMonths(6)
-        );
-
-        Project savedProject = Project.builder()
-                .projectId(1L)
-                .projectTitle("Test Project")
-                .build();
-
-        given(projectService.saveProject(any(Project.class))).willReturn(savedProject);
-        given(projectService.saveProjectClientMember(anyList())).willReturn(List.of());
-        given(projectService.saveProjectDevMember(anyList()))
-                .willThrow(new BusinessException(ErrorCode.DEV_MEMBER_SAVE_FAILED));
-
-        // when & then
-        assertThatThrownBy(() -> createProjectService.createProject(request, loginUser, userIp, userAgent))
-                .isInstanceOf(BusinessException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DEV_MEMBER_SAVE_FAILED);
+        assertThatThrownBy(() -> createProjectService.createProject(mockRequest))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("개발 멤버 저장 실패");
 
         verify(projectService).saveProject(any(Project.class));
-        verify(projectService).saveProjectHistory(any(ProjectHistory.class));
         verify(projectService).saveProjectClientMember(anyList());
         verify(projectService).saveProjectDevMember(anyList());
         verify(projectService, never()).saveProjectDevMemberHistory(anyList());
     }
 
     @Test
-    @DisplayName("프로젝트 히스토리 저장 실패 시 예외가 발생한다")
-    void createProject_whenSaveHistoryFails_shouldThrowException() {
-        // given
-        Long loginUser = 1L;
-        String userIp = "127.0.0.1";
-        String userAgent = "TestAgent";
-
-        CreateProjectRequest request = new CreateProjectRequest(
-                "Test Project",
-                "Test Description",
+    @DisplayName("빈 클라이언트 멤버 리스트로 프로젝트 생성 시 빈 리스트가 저장된다.")
+    void givenEmptyClientMemberList_whenCreateProject_thenSaveEmptyList() {
+        CreateProjectRequest requestWithEmptyClients = new CreateProjectRequest(
+                "테스트 프로젝트",
+                "프로젝트 설명입니다",
                 100L,
-                List.of(),
-                List.of(),
-                LocalDate.now(),
-                LocalDate.now().plusMonths(6)
+                Collections.emptyList(),
+                Arrays.asList(3L, 4L),
+                LocalDate.of(2025, 1, 1),
+                LocalDate.of(2025, 6, 30)
         );
 
-        Project savedProject = Project.builder()
-                .projectId(1L)
-                .projectTitle("Test Project")
-                .build();
+        when(projectService.saveProject(any(Project.class))).thenReturn(mockProject);
+        when(projectService.saveProjectClientMember(anyList())).thenReturn(Collections.emptyList());
+        when(projectService.saveProjectDevMember(anyList())).thenReturn(Arrays.asList(mockDevMember));
+        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+        doNothing().when(projectService).saveProjectClientMemberHistory(anyList());
+        doNothing().when(projectService).saveProjectDevMemberHistory(anyList());
 
-        given(projectService.saveProject(any(Project.class))).willReturn(savedProject);
+        ProjectResponse result = createProjectService.createProject(requestWithEmptyClients);
 
-        // void 메서드에 예외 설정
-        doThrow(new BusinessException(ErrorCode.PROJECT_HISTORY_SAVE_FAILED))
-                .when(projectService).saveProjectHistory(any(ProjectHistory.class));
+        assertThat(result).isNotNull();
+        verify(projectService).saveProjectClientMember(argThat(List::isEmpty));
+        verify(projectService).saveProjectClientMemberHistory(argThat(List::isEmpty));
+    }
 
-        // when & then
-        assertThatThrownBy(() -> createProjectService.createProject(request, loginUser, userIp, userAgent))
-                .isInstanceOf(BusinessException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PROJECT_HISTORY_SAVE_FAILED);
+    @Test
+    @DisplayName("빈 개발 멤버 리스트로 프로젝트 생성 시 빈 리스트가 저장된다.")
+    void givenEmptyDevMemberList_whenCreateProject_thenSaveEmptyList() {
+        CreateProjectRequest requestWithEmptyDevs = new CreateProjectRequest(
+                "테스트 프로젝트",
+                "프로젝트 설명입니다",
+                100L,
+                Arrays.asList(1L, 2L),
+                Collections.emptyList(),
+                LocalDate.of(2025, 1, 1),
+                LocalDate.of(2025, 6, 30)
+        );
 
-        verify(projectService).saveProject(any(Project.class));
-        verify(projectService).saveProjectHistory(any(ProjectHistory.class));
-        verify(projectService, never()).saveProjectClientMember(anyList());
-        verify(projectService, never()).saveProjectDevMember(anyList());
+        when(projectService.saveProject(any(Project.class))).thenReturn(mockProject);
+        when(projectService.saveProjectClientMember(anyList())).thenReturn(Arrays.asList(mockClientMember));
+        when(projectService.saveProjectDevMember(anyList())).thenReturn(Collections.emptyList());
+        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+        doNothing().when(projectService).saveProjectClientMemberHistory(anyList());
+        doNothing().when(projectService).saveProjectDevMemberHistory(anyList());
+
+        ProjectResponse result = createProjectService.createProject(requestWithEmptyDevs);
+
+        assertThat(result).isNotNull();
+        verify(projectService).saveProjectDevMember(argThat(List::isEmpty));
+        verify(projectService).saveProjectDevMemberHistory(argThat(List::isEmpty));
+    }
+
+    @Test
+    @DisplayName("프로젝트 생성 시 모든 저장 메서드가 순차적으로 호출된다.")
+    void givenCreateProjectRequest_whenCreateProject_thenAllSaveMethodsCalledInOrder() {
+        when(projectService.saveProject(any(Project.class))).thenReturn(mockProject);
+        when(projectService.saveProjectClientMember(anyList())).thenReturn(Arrays.asList(mockClientMember));
+        when(projectService.saveProjectDevMember(anyList())).thenReturn(Arrays.asList(mockDevMember));
+        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+        doNothing().when(projectService).saveProjectClientMemberHistory(anyList());
+        doNothing().when(projectService).saveProjectDevMemberHistory(anyList());
+
+        createProjectService.createProject(mockRequest);
+
+        var inOrder = inOrder(projectService, historyRecorder);
+        inOrder.verify(projectService).saveProject(any(Project.class));
+        inOrder.verify(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+        inOrder.verify(projectService).saveProjectClientMember(anyList());
+        inOrder.verify(projectService).saveProjectClientMemberHistory(anyList());
+        inOrder.verify(projectService).saveProjectDevMember(anyList());
+        inOrder.verify(projectService).saveProjectDevMemberHistory(anyList());
     }
 }

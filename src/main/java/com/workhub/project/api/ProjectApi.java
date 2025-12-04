@@ -1,12 +1,9 @@
 package com.workhub.project.api;
 
-import com.workhub.global.clientInfo.ClientInfo;
-import com.workhub.global.clientInfo.ClientInfoDto;
 import com.workhub.global.response.ApiResponse;
 import com.workhub.project.dto.CreateProjectRequest;
 import com.workhub.project.dto.ProjectResponse;
 import com.workhub.project.dto.UpdateStatusRequest;
-import com.workhub.userTable.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -15,7 +12,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Project", description = "프로젝트 관리 API")
@@ -48,13 +44,7 @@ public interface ProjectApi {
     @PreAuthorize("hasRole('ADMIN')")
     ResponseEntity<ApiResponse<ProjectResponse>> createProject(
             @Parameter(description = "프로젝트 생성 요청 정보", required = true)
-            @RequestBody CreateProjectRequest projectRequest,
-
-            @Parameter(hidden = true)
-            @ClientInfo ClientInfoDto clientInfoDto,
-
-            @Parameter(hidden = true)
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @RequestBody CreateProjectRequest projectRequest
     );
 
     @Operation(
@@ -90,13 +80,7 @@ public interface ProjectApi {
             @PathVariable("projectId") Long projectId,
 
             @Parameter(description = "변경할 상태 정보", required = true)
-            @RequestBody UpdateStatusRequest request,
-
-            @Parameter(hidden = true)
-            @ClientInfo ClientInfoDto clientInfoDto,
-
-            @Parameter(hidden = true)
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @RequestBody UpdateStatusRequest request
     );
 
     @Operation(
@@ -133,13 +117,7 @@ public interface ProjectApi {
             @PathVariable("projectId") Long projectId,
 
             @Parameter(description = "프로젝트 수정 요청 정보", required = true)
-            @RequestBody CreateProjectRequest request,
-
-            @Parameter(hidden = true)
-            @ClientInfo ClientInfoDto clientInfoDto,
-
-            @Parameter(hidden = true)
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @RequestBody CreateProjectRequest request
     );
 
     @Operation(
@@ -168,12 +146,6 @@ public interface ProjectApi {
     @PreAuthorize("hasRole('ADMIN')")
     ResponseEntity<ApiResponse<String>> deleteProject(
             @Parameter(description = "삭제할 프로젝트 ID", required = true)
-            @PathVariable("projectId") Long projectId,
-
-            @Parameter(hidden = true)
-            @ClientInfo ClientInfoDto clientInfoDto,
-
-            @Parameter(hidden = true)
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @PathVariable("projectId") Long projectId
     );
 }

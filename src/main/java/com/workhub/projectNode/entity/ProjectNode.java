@@ -68,7 +68,7 @@ public class ProjectNode extends BaseTimeEntity {
                 .title(request.title())
                 .description(request.description())
                 .nodeStatus(NodeStatus.NOT_STARTED)
-                .priority(Priority.valueOf(request.priority()))
+                .priority(request.priority())
                 .nodeOrder(request.nodeOrder())
                 .projectId(projectId)
                 .build();

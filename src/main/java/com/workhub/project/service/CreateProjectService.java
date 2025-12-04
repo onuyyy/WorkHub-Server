@@ -1,5 +1,8 @@
 package com.workhub.project.service;
 
+import com.workhub.global.entity.ActionType;
+import com.workhub.global.entity.HistoryType;
+import com.workhub.global.history.HistoryRecorder;
 import com.workhub.project.dto.CreateProjectRequest;
 import com.workhub.project.dto.ProjectResponse;
 import com.workhub.project.entity.*;
@@ -17,19 +20,18 @@ import java.util.List;
 public class CreateProjectService {
 
     private final ProjectService projectService;
+    private final HistoryRecorder historyRecorder;
 
     /**
      * 프로젝트를 생성하고 관련 히스토리 및 멤버 정보를 저장
      * @param request 프로젝트 생성 요청 정보
-     * @param userIp 요청한 사용자의 IP 주소
-     * @param userAgent 요청한 사용자의 User Agent 정보
      * @return 생성된 프로젝트 응답 정보
      */
-    public ProjectResponse createProject(CreateProjectRequest request, Long loginUser, String userIp, String userAgent) {
+    public ProjectResponse createProject(CreateProjectRequest request) {
 
-        Project savedProject = saveProjectAndHistory(request, loginUser, userIp, userAgent);
-        saveClientMembersAndHistory(request.managerNames(), savedProject.getProjectId(), loginUser, userIp, userAgent);
-        saveDevMembersAndHistory(request.developerNames(), savedProject.getProjectId(), loginUser, userIp, userAgent);
+        Project savedProject = saveProjectAndHistory(request);
+        saveClientMembersAndHistory(request.managerNames(), savedProject.getProjectId());
+        saveDevMembersAndHistory(request.developerNames(), savedProject.getProjectId());
 
         return ProjectResponse.from(savedProject);
     }
@@ -37,16 +39,13 @@ public class CreateProjectService {
     /**
      * 프로젝트를 저장하고 프로젝트 히스토리를 함께 저장.
      * @param request 프로젝트 생성 요청 정보
-     * @param loginUser 로그인한 사용자 ID
-     * @param userIp 요청한 사용자의 IP 주소
-     * @param userAgent 요청한 사용자의 User Agent 정보
      * @return 저장된 프로젝트 엔티티
      */
-    private Project saveProjectAndHistory(CreateProjectRequest request, Long loginUser, String userIp, String userAgent) {
+    private Project saveProjectAndHistory(CreateProjectRequest request) {
 
         Project savedProject = projectService.saveProject(Project.of(request));
-        ProjectHistory projectHistory = ProjectHistory.of(savedProject, loginUser, userIp, userAgent);
-        projectService.saveProjectHistory(projectHistory);
+        historyRecorder.recordHistory(HistoryType.PROJECT, savedProject.getProjectId(), ActionType.CREATE,
+                savedProject.getProjectDescription());
 
         return savedProject;
     }
@@ -55,11 +54,8 @@ public class CreateProjectService {
      * 프로젝트 고객사 멤버를 저장하고 멤버 히스토리를 함께 저장.
      * @param memberIds 고객사 멤버 ID 리스트
      * @param projectId 프로젝트 ID
-     * @param loginUser 로그인한 사용자 ID
-     * @param userIp 요청한 사용자의 IP 주소
-     * @param userAgent 요청한 사용자의 User Agent 정보
      */
-    private void saveClientMembersAndHistory(List<Long> memberIds, Long projectId, Long loginUser, String userIp, String userAgent) {
+    private void saveClientMembersAndHistory(List<Long> memberIds, Long projectId) {
 
         List<ProjectClientMember> clientMembers = memberIds.stream()
                 .map(client -> ProjectClientMember.of(client, projectId))
@@ -69,7 +65,7 @@ public class CreateProjectService {
 
         List<ProjectClientMemberHistory> clientMemberHistories = savedProjectClientMember.stream()
                 .map(ProjectClientMember::getProjectClientMemberId)
-                .map(memberId -> ProjectClientMemberHistory.of(memberId, loginUser, userIp, userAgent))
+                .map(ProjectClientMemberHistory::of)
                 .toList();
 
         projectService.saveProjectClientMemberHistory(clientMemberHistories);
@@ -79,11 +75,8 @@ public class CreateProjectService {
      * 프로젝트 개발사 멤버를 저장하고 멤버 히스토리를 함께 저장.
      * @param developerIds 개발사 멤버 ID 리스트
      * @param projectId 프로젝트 ID
-     * @param loginUser 로그인한 사용자 ID
-     * @param userIp 요청한 사용자의 IP 주소
-     * @param userAgent 요청한 사용자의 User Agent 정보
      */
-    private void saveDevMembersAndHistory(List<Long> developerIds, Long projectId, Long loginUser, String userIp, String userAgent) {
+    private void saveDevMembersAndHistory(List<Long> developerIds, Long projectId) {
 
         List<ProjectDevMember> devMembers = developerIds.stream()
                 .map(developer -> ProjectDevMember.of(developer, projectId))
@@ -93,7 +86,7 @@ public class CreateProjectService {
 
         List<ProjectDevMemberHistory> devMemberHistories = savedProjectDevMember.stream()
                 .map(ProjectDevMember::getProjectMemberId)
-                .map(devId -> ProjectDevMemberHistory.of(devId, loginUser, userIp, userAgent))
+                .map(ProjectDevMemberHistory::of)
                 .toList();
 
         projectService.saveProjectDevMemberHistory(devMemberHistories);

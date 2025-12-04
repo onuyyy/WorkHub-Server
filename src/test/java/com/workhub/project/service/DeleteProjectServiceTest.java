@@ -1,10 +1,13 @@
 package com.workhub.project.service;
 
 import com.workhub.global.entity.ActionType;
+import com.workhub.global.entity.HistoryType;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
+import com.workhub.global.history.HistoryRecorder;
 import com.workhub.project.entity.Project;
 import com.workhub.project.entity.Status;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -12,173 +15,177 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDate;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class DeleteProjectServiceTest {
+class DeleteProjectServiceTest {
 
     @Mock
-    ProjectService projectService;
+    private ProjectService projectService;
+
+    @Mock
+    private HistoryRecorder historyRecorder;
 
     @InjectMocks
-    DeleteProjectService deleteProjectService;
+    private DeleteProjectService deleteProjectService;
+
+    private Project mockProject;
+
+    @BeforeEach
+    void init() {
+        mockProject = Project.builder()
+                .projectId(1L)
+                .projectTitle("테스트 프로젝트")
+                .projectDescription("테스트 설명")
+                .status(Status.IN_PROGRESS)
+                .contractStartDate(LocalDate.now())
+                .contractEndDate(LocalDate.now().plusMonths(6))
+                .clientCompanyId(100L)
+                .build();
+    }
 
     @Test
-    @DisplayName("프로젝트 삭제 시 프로젝트 조회, soft delete, 히스토리 저장이 모두 실행된다")
-    void deleteProject_success_shouldMarkDeletedAndSaveHistory() {
+    @DisplayName("유효한 프로젝트 ID로 삭제하면 프로젝트가 삭제되고 히스토리가 기록된다.")
+    void givenValidProjectId_whenDeleteProject_thenProjectIsDeletedAndHistoryRecorded() {
         // given
         Long projectId = 1L;
-        Long userId = 100L;
-        String userIp = "127.0.0.1";
-        String userAgent = "TestAgent";
-
-        Project project = Project.builder()
-                .projectId(projectId)
-                .projectTitle("Test Project")
-                .status(Status.IN_PROGRESS)
-                .build();
-
-        given(projectService.findProjectById(projectId)).willReturn(project);
+        when(projectService.findProjectById(projectId)).thenReturn(mockProject);
+        doNothing().when(historyRecorder).recordHistory(
+                any(HistoryType.class),
+                anyLong(),
+                any(ActionType.class),
+                anyString()
+        );
 
         // when
-        deleteProjectService.deleteProject(projectId, userId, userIp, userAgent);
+        deleteProjectService.deleteProject(projectId);
 
         // then
         verify(projectService).findProjectById(projectId);
-        verify(projectService).updateProjectHistory(
-                eq(projectId),
-                eq(ActionType.DELETE),
-                anyString(),
-                eq(userIp),
-                eq(userAgent),
-                eq(userId)
+        assertThat(mockProject.getStatus()).isEqualTo(Status.DELETED);
+        verify(historyRecorder).recordHistory(
+                HistoryType.PROJECT,
+                projectId,
+                ActionType.DELETE,
+                Status.IN_PROGRESS.toString()
         );
     }
 
     @Test
-    @DisplayName("프로젝트 삭제 시 올바른 beforeData가 히스토리에 저장된다")
-    void deleteProject_shouldSaveCorrectBeforeData() {
+    @DisplayName("CONTRACT 상태의 프로젝트를 삭제하면 상태가 DELETED로 변경되고 히스토리가 기록된다.")
+    void givenContractProject_whenDeleteProject_thenProjectIsDeletedAndHistoryRecorded() {
         // given
         Long projectId = 1L;
-        Long userId = 100L;
-        String userIp = "127.0.0.1";
-        String userAgent = "TestAgent";
-
-        Project project = Project.builder()
+        Project contractProject = Project.builder()
                 .projectId(projectId)
-                .projectTitle("Test Project")
-                .status(Status.DELIVERY)
-                .build();
-
-        given(projectService.findProjectById(projectId)).willReturn(project);
-
-        // when
-        deleteProjectService.deleteProject(projectId, userId, userIp, userAgent);
-
-        // then
-        verify(projectService).updateProjectHistory(
-                eq(projectId),
-                eq(ActionType.DELETE),
-                eq("DELIVERY"),  // beforeStatus
-                eq(userIp),
-                eq(userAgent),
-                eq(userId)
-        );
-    }
-
-    @Test
-    @DisplayName("프로젝트 삭제 시 올바른 사용자 정보가 전달된다")
-    void deleteProject_success_shouldPassCorrectUserInfo() {
-        // given
-        Long projectId = 1L;
-        Long userId = 999L;
-        String userIp = "192.168.0.1";
-        String userAgent = "CustomAgent";
-
-        Project project = Project.builder()
-                .projectId(projectId)
-                .projectTitle("Test Project")
+                .projectTitle("계약 중인 프로젝트")
                 .status(Status.CONTRACT)
                 .build();
 
-        given(projectService.findProjectById(projectId)).willReturn(project);
+        when(projectService.findProjectById(projectId)).thenReturn(contractProject);
+        doNothing().when(historyRecorder).recordHistory(
+                any(HistoryType.class),
+                anyLong(),
+                any(ActionType.class),
+                anyString()
+        );
 
         // when
-        deleteProjectService.deleteProject(projectId, userId, userIp, userAgent);
+        deleteProjectService.deleteProject(projectId);
 
         // then
-        verify(projectService).updateProjectHistory(
-                eq(projectId),
-                eq(ActionType.DELETE),
-                anyString(),
-                eq(userIp),
-                eq(userAgent),
-                eq(userId)
+        verify(projectService).findProjectById(projectId);
+        assertThat(contractProject.getStatus()).isEqualTo(Status.DELETED);
+        verify(historyRecorder).recordHistory(
+                HistoryType.PROJECT,
+                projectId,
+                ActionType.DELETE,
+                Status.CONTRACT.toString()
         );
     }
 
-    // ========== 실패 케이스 ==========
+    @Test
+    @DisplayName("COMPLETED 상태의 프로젝트를 삭제하면 상태가 DELETED로 변경되고 히스토리가 기록된다.")
+    void givenCompletedProject_whenDeleteProject_thenProjectIsDeletedAndHistoryRecorded() {
+        // given
+        Long projectId = 1L;
+        Project completedProject = Project.builder()
+                .projectId(projectId)
+                .projectTitle("완료된 프로젝트")
+                .status(Status.COMPLETED)
+                .build();
+
+        when(projectService.findProjectById(projectId)).thenReturn(completedProject);
+        doNothing().when(historyRecorder).recordHistory(
+                any(HistoryType.class),
+                anyLong(),
+                any(ActionType.class),
+                anyString()
+        );
+
+        // when
+        deleteProjectService.deleteProject(projectId);
+
+        // then
+        verify(projectService).findProjectById(projectId);
+        assertThat(completedProject.getStatus()).isEqualTo(Status.DELETED);
+        verify(historyRecorder).recordHistory(
+                HistoryType.PROJECT,
+                projectId,
+                ActionType.DELETE,
+                Status.COMPLETED.toString()
+        );
+    }
 
     @Test
-    @DisplayName("존재하지 않는 프로젝트 ID로 삭제 시 예외가 발생한다")
-    void deleteProject_whenProjectNotFound_shouldThrowException() {
+    @DisplayName("존재하지 않는 프로젝트 ID로 삭제하면 예외를 발생시킨다.")
+    void givenInvalidProjectId_whenDeleteProject_thenThrowException() {
         // given
-        Long nonExistentProjectId = 999L;
-        Long userId = 100L;
-        String userIp = "127.0.0.1";
-        String userAgent = "TestAgent";
-
-        given(projectService.findProjectById(nonExistentProjectId))
-                .willThrow(new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
+        Long projectId = 999L;
+        when(projectService.findProjectById(projectId))
+                .thenThrow(new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
 
         // when & then
-        assertThatThrownBy(() -> deleteProjectService.deleteProject(
-                nonExistentProjectId, userId, userIp, userAgent))
+        assertThatThrownBy(() -> deleteProjectService.deleteProject(projectId))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PROJECT_NOT_FOUND);
 
-        // 프로젝트 조회 실패 시 히스토리는 저장되지 않아야 함
-        verify(projectService).findProjectById(nonExistentProjectId);
-        verify(projectService, never()).updateProjectHistory(
-                anyLong(), any(ActionType.class), anyString(), anyString(), anyString(), anyLong()
+        verify(projectService).findProjectById(projectId);
+        verify(historyRecorder, never()).recordHistory(
+                any(HistoryType.class),
+                anyLong(),
+                any(ActionType.class),
+                anyString()
         );
     }
 
     @Test
-    @DisplayName("히스토리 저장 실패 시 예외가 발생한다")
-    void deleteProject_whenSaveHistoryFails_shouldThrowException() {
+    @DisplayName("프로젝트 삭제 시 히스토리는 삭제 전 상태를 기록한다.")
+    void givenProject_whenDeleteProject_thenHistoryRecordsBeforeStatus() {
         // given
         Long projectId = 1L;
-        Long userId = 100L;
-        String userIp = "127.0.0.1";
-        String userAgent = "TestAgent";
+        Status beforeStatus = mockProject.getStatus();
+        when(projectService.findProjectById(projectId)).thenReturn(mockProject);
+        doNothing().when(historyRecorder).recordHistory(
+                any(HistoryType.class),
+                anyLong(),
+                any(ActionType.class),
+                anyString()
+        );
 
-        Project project = Project.builder()
-                .projectId(projectId)
-                .projectTitle("Test Project")
-                .status(Status.CONTRACT)
-                .build();
+        // when
+        deleteProjectService.deleteProject(projectId);
 
-        given(projectService.findProjectById(projectId)).willReturn(project);
-
-        // void 메서드에 예외 설정
-        doThrow(new BusinessException(ErrorCode.PROJECT_HISTORY_SAVE_FAILED))
-                .when(projectService).updateProjectHistory(
-                        anyLong(), any(ActionType.class), anyString(), anyString(), anyString(), anyLong()
-                );
-
-        // when & then
-        assertThatThrownBy(() -> deleteProjectService.deleteProject(
-                projectId, userId, userIp, userAgent))
-                .isInstanceOf(BusinessException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PROJECT_HISTORY_SAVE_FAILED);
-
-        verify(projectService).findProjectById(projectId);
-        verify(projectService).updateProjectHistory(
-                anyLong(), any(ActionType.class), anyString(), anyString(), anyString(), anyLong()
+        // then
+        verify(historyRecorder).recordHistory(
+                HistoryType.PROJECT,
+                projectId,
+                ActionType.DELETE,
+                beforeStatus.toString()
         );
     }
 }

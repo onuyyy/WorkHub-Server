@@ -1,7 +1,5 @@
 package com.workhub.project.controller;
 
-import com.workhub.global.clientInfo.ClientInfo;
-import com.workhub.global.clientInfo.ClientInfoDto;
 import com.workhub.global.response.ApiResponse;
 import com.workhub.project.api.ProjectApi;
 import com.workhub.project.dto.CreateProjectRequest;
@@ -10,13 +8,10 @@ import com.workhub.project.dto.UpdateStatusRequest;
 import com.workhub.project.service.CreateProjectService;
 import com.workhub.project.service.DeleteProjectService;
 import com.workhub.project.service.UpdateProjectService;
-import com.workhub.userTable.security.CustomUserDetails;
-import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -31,29 +26,18 @@ public class ProjectController implements ProjectApi {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<ProjectResponse>> createProject(@RequestBody CreateProjectRequest projectRequest,
-                                                                      @Parameter(hidden = true) @ClientInfo ClientInfoDto clientInfoDto,
-                                                                      @AuthenticationPrincipal CustomUserDetails userDetails) {
+    public ResponseEntity<ApiResponse<ProjectResponse>> createProject(@RequestBody CreateProjectRequest projectRequest) {
 
-        Long userId = userDetails.getUserId();
-
-        log.info("userId : {}, requestIp : {}", userId, clientInfoDto.getIpAddress());
-        ProjectResponse projectResponse = createProjectService.createProject(projectRequest, userId, clientInfoDto.getIpAddress(), clientInfoDto.getUserAgent());
-
+        ProjectResponse projectResponse = createProjectService.createProject(projectRequest);
         return ApiResponse.created(projectResponse, "프로젝트가 생성되었습니다.");
     }
 
     @PatchMapping("/{projectId}/status")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<String>> updateStatus(@PathVariable("projectId") Long projectId,
-                                                            @RequestBody UpdateStatusRequest request,
-                                                            @Parameter(hidden = true) @ClientInfo ClientInfoDto clientInfoDto,
-                                                            @AuthenticationPrincipal CustomUserDetails userDetails) {
+                                                            @RequestBody UpdateStatusRequest request) {
 
-        log.info("updateStatus : {}, userName : {}. requestIp : {}", request.status(), userDetails.getUsername(), clientInfoDto.getIpAddress());
-
-        updateProjectService.updateProjectStatus(projectId, request,
-                clientInfoDto.getIpAddress(), clientInfoDto.getUserAgent(), userDetails.getUserId());
+        updateProjectService.updateProjectStatus(projectId, request);
 
         return ApiResponse.success("상태 변경 성공");
     }
@@ -61,29 +45,18 @@ public class ProjectController implements ProjectApi {
     @PutMapping("{projectId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<ProjectResponse>> updateProject(@PathVariable("projectId") Long projectId,
-                                                                      @RequestBody CreateProjectRequest request,
-                                                                      @Parameter(hidden = true) @ClientInfo ClientInfoDto clientInfoDto,
-                                                                      @AuthenticationPrincipal CustomUserDetails userDetails) {
+                                                                      @RequestBody CreateProjectRequest request) {
 
-        log.info("updateProject : {}, requestIp : {}", projectId, clientInfoDto.getIpAddress());
-
-        ProjectResponse projectResponse = updateProjectService.updateProject(projectId, request,
-                clientInfoDto.getIpAddress(), clientInfoDto.getUserAgent(), userDetails.getUserId());
-
+        ProjectResponse projectResponse = updateProjectService.updateProject(projectId, request);
         return ApiResponse.success(projectResponse, "프로젝트 수정에 성공했습니다.");
     }
 
     @DeleteMapping("{projectId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse<String>> deleteProject(@PathVariable("projectId") Long projectId,
-                                                             @Parameter(hidden = true) @ClientInfo ClientInfoDto clientInfoDto,
-                                                             @AuthenticationPrincipal CustomUserDetails userDetails) {
+    public ResponseEntity<ApiResponse<String>> deleteProject(@PathVariable("projectId") Long projectId) {
 
-        log.info("deleteProject : {}, requestIp : {}", projectId, clientInfoDto.getIpAddress());
 
-        deleteProjectService.deleteProject(projectId, userDetails.getUserId(),
-                clientInfoDto.getIpAddress(), clientInfoDto.getUserAgent());
-
+        deleteProjectService.deleteProject(projectId);
         return ApiResponse.success("프로젝트가 삭제되었습니다.");
     }
 

@@ -1,7 +1,5 @@
 package com.workhub.projectNode.controller;
 
-import com.workhub.global.clientInfo.ClientInfo;
-import com.workhub.global.clientInfo.ClientInfoDto;
 import com.workhub.global.response.ApiResponse;
 import com.workhub.projectNode.api.ProjectNodeApi;
 import com.workhub.projectNode.dto.CreateNodeRequest;
@@ -9,12 +7,9 @@ import com.workhub.projectNode.dto.CreateNodeResponse;
 import com.workhub.projectNode.dto.UpdateNodeStatusRequest;
 import com.workhub.projectNode.service.CreateProjectNodeService;
 import com.workhub.projectNode.service.UpdateProjectNodeService;
-import com.workhub.userTable.security.CustomUserDetails;
-import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @Slf4j
@@ -29,26 +24,18 @@ public class ProjectNodeController implements ProjectNodeApi {
     @Override
     @PostMapping
     public ResponseEntity<ApiResponse<CreateNodeResponse>> createNode(@PathVariable Long projectId,
-                                                                      @RequestBody CreateNodeRequest request,
-                                                                      @Parameter(hidden = true) @ClientInfo ClientInfoDto clientInfoDto,
-                                                                      @AuthenticationPrincipal CustomUserDetails userDetails) {
+                                                                      @RequestBody CreateNodeRequest request) {
 
-        CreateNodeResponse response = createProjectNodeService.createNode(projectId, request, userDetails.getUserId(),
-                clientInfoDto.getIpAddress(), clientInfoDto.getUserAgent());
-
+        CreateNodeResponse response = createProjectNodeService.createNode(projectId, request);
         return ApiResponse.created(response, "프로젝트 노드가 생성되었습니다.");
     }
 
     @Override
     @PatchMapping("{nodeId}/status")
     public ResponseEntity<ApiResponse<String>> updateNodeStatus(@PathVariable("nodeId") Long nodeId,
-                                                                @RequestBody UpdateNodeStatusRequest request,
-                                                                @Parameter(hidden = true) @ClientInfo ClientInfoDto clientInfoDto,
-                                                                @AuthenticationPrincipal CustomUserDetails userDetails) {
+                                                                @RequestBody UpdateNodeStatusRequest request) {
 
-        updateProjectNodeService.updateNodeStatus(nodeId, request,
-                clientInfoDto.getIpAddress(), clientInfoDto.getUserAgent(), userDetails.getUserId());
-
+        updateProjectNodeService.updateNodeStatus(nodeId, request);
         return ApiResponse.success("노드 상태 변경 성공");
     }
 }

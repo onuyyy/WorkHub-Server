@@ -1,6 +1,7 @@
 package com.workhub.projectNode.dto;
 
 import com.workhub.projectNode.entity.NodeStatus;
+import com.workhub.projectNode.entity.Priority;
 import com.workhub.projectNode.entity.ProjectNode;
 import lombok.Builder;
 
@@ -12,7 +13,7 @@ public record CreateNodeResponse(
         String description,
         NodeStatus nodeStatus,
         Integer nodeOrder,
-        String priority
+        Priority priority
 ) {
     public static CreateNodeResponse from(ProjectNode projectNode) {
         return CreateNodeResponse.builder()
@@ -22,6 +23,7 @@ public record CreateNodeResponse(
                 .description(projectNode.getDescription())
                 .nodeStatus(projectNode.getNodeStatus())
                 .nodeOrder(projectNode.getNodeOrder())
+                .priority(projectNode.getPriority())
                 .build();
     }
 }

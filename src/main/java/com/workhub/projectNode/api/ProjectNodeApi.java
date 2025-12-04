@@ -1,12 +1,9 @@
 package com.workhub.projectNode.api;
 
-import com.workhub.global.clientInfo.ClientInfo;
-import com.workhub.global.clientInfo.ClientInfoDto;
 import com.workhub.global.response.ApiResponse;
 import com.workhub.projectNode.dto.CreateNodeRequest;
 import com.workhub.projectNode.dto.CreateNodeResponse;
 import com.workhub.projectNode.dto.UpdateNodeStatusRequest;
-import com.workhub.userTable.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -14,7 +11,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -53,13 +49,7 @@ public interface ProjectNodeApi {
             @PathVariable Long projectId,
 
             @Parameter(description = "노드 생성 요청 정보 (제목, 설명, 순서, 우선순위)", required = true)
-            @RequestBody CreateNodeRequest request,
-
-            @Parameter(hidden = true)
-            @ClientInfo ClientInfoDto clientInfoDto,
-
-            @Parameter(hidden = true)
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @RequestBody CreateNodeRequest request
     );
 
     @Operation(
@@ -91,12 +81,6 @@ public interface ProjectNodeApi {
             @PathVariable("nodeId") Long nodeId,
 
             @Parameter(description = "변경할 노드 상태 정보", required = true)
-            @RequestBody UpdateNodeStatusRequest request,
-
-            @Parameter(hidden = true)
-            @ClientInfo ClientInfoDto clientInfoDto,
-
-            @Parameter(hidden = true)
-            @AuthenticationPrincipal CustomUserDetails userDetails
+            @RequestBody UpdateNodeStatusRequest request
     );
 }

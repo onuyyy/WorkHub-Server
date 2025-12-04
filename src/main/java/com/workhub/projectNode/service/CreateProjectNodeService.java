@@ -1,5 +1,8 @@
 package com.workhub.projectNode.service;
 
+import com.workhub.global.entity.ActionType;
+import com.workhub.global.entity.HistoryType;
+import com.workhub.global.history.HistoryRecorder;
 import com.workhub.projectNode.dto.CreateNodeRequest;
 import com.workhub.projectNode.dto.CreateNodeResponse;
 import com.workhub.projectNode.entity.ProjectNode;
@@ -17,24 +20,21 @@ import java.util.List;
 public class CreateProjectNodeService {
 
     private final ProjectNodeService projectNodeService;
+    private final HistoryRecorder historyRecorder;
 
     /**
      * 프로젝트 노드를 생성하고 관련 히스토리를 저장
      *
      * @param projectId 프로젝트 ID
      * @param request   노드 생성 요청 정보
-     * @param loginUser 로그인한 사용자 ID
-     * @param userIp    요청한 사용자의 IP 주소
-     * @param userAgent 요청한 사용자의 User Agent 정보
      * @return 생성된 프로젝트 노드 응답 정보
      */
-    public CreateNodeResponse createNode(Long projectId, CreateNodeRequest request,
-                                  Long loginUser, String userIp, String userAgent) {
+    public CreateNodeResponse createNode(Long projectId, CreateNodeRequest request) {
 
         List<ProjectNode> projectNodeList = projectNodeService.findByProjectIdByNodeOrder(projectId);
         
         adjustNodeOrdersIfNecessary(projectNodeList, request.nodeOrder());
-        ProjectNode savedProjectNode = saveProjectNodeAndHistory(projectId, request, loginUser, userIp, userAgent);
+        ProjectNode savedProjectNode = saveProjectNodeAndHistory(projectId, request);
 
         return CreateNodeResponse.from(savedProjectNode);
     }
@@ -63,18 +63,15 @@ public class CreateProjectNodeService {
      *
      * @param projectId 프로젝트 ID
      * @param request   노드 생성 요청 정보
-     * @param loginUser 로그인한 사용자 ID
-     * @param userIp    요청한 사용자의 IP 주소
-     * @param userAgent 요청한 사용자의 User Agent 정보
      * @return 생성된 프로젝트 노드 응답 정보
      */
-    private ProjectNode saveProjectNodeAndHistory(Long projectId, CreateNodeRequest request,
-                                                  Long loginUser, String userIp, String userAgent) {
+    private ProjectNode saveProjectNodeAndHistory(Long projectId, CreateNodeRequest request) {
 
         ProjectNode savedProjectNode = projectNodeService.saveProjectNode(ProjectNode.of(projectId, request));
-        projectNodeService.createNodeHistory(savedProjectNode.getProjectNodeId(), savedProjectNode.getDescription(),
-                userIp, userAgent, loginUser);
-        
+
+        historyRecorder.recordHistory(HistoryType.PROJECT_NODE, savedProjectNode.getProjectNodeId(), ActionType.CREATE,
+                savedProjectNode.getDescription());
+
         return savedProjectNode;
     }
 }

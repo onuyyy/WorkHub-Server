@@ -1,308 +1,264 @@
 package com.workhub.projectNode.service;
 
+import com.workhub.global.entity.ActionType;
+import com.workhub.global.entity.HistoryType;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
+import com.workhub.global.history.HistoryRecorder;
 import com.workhub.projectNode.dto.UpdateNodeStatusRequest;
 import com.workhub.projectNode.entity.NodeStatus;
 import com.workhub.projectNode.entity.ProjectNode;
+import com.workhub.userTable.entity.UserTable;
+import com.workhub.userTable.security.CustomUserDetails;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
+import static com.workhub.userTable.entity.UserRole.ADMIN;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class UpdateProjectNodeServiceTest {
+class UpdateProjectNodeServiceTest {
 
     @Mock
-    ProjectNodeService projectNodeService;
+    private ProjectNodeService projectNodeService;
+
+    @Mock
+    private HistoryRecorder historyRecorder;
 
     @InjectMocks
-    UpdateProjectNodeService updateProjectNodeService;
+    private UpdateProjectNodeService updateProjectNodeService;
 
-    // ========== 성공 케이스 ==========
+    private ProjectNode mockProjectNode;
 
-    @Test
-    @DisplayName("노드 상태 변경이 성공하면 히스토리가 저장된다")
-    void updateNodeStatus_success_shouldSaveHistory() {
-        // given
-        Long nodeId = 1L;
-        Long userId = 100L;
-        String userIp = "127.0.0.1";
-        String userAgent = "TestAgent";
-
-        UpdateNodeStatusRequest request = new UpdateNodeStatusRequest(NodeStatus.IN_PROGRESS);
-
-        ProjectNode existingNode = ProjectNode.builder()
-                .projectNodeId(nodeId)
-                .nodeStatus(NodeStatus.NOT_STARTED)
+    @BeforeEach
+    void init() {
+        // SecurityContext 설정
+        UserTable mockUser = UserTable.builder()
+                .userId(1L)
+                .loginId("testuser")
+                .password("password")
+                .role(ADMIN)
                 .build();
 
-        given(projectNodeService.findById(nodeId)).willReturn(existingNode);
+        CustomUserDetails userDetails = new CustomUserDetails(mockUser);
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        // when
-        updateProjectNodeService.updateNodeStatus(nodeId, request, userIp, userAgent, userId);
+        mockProjectNode = ProjectNode.builder()
+                .projectNodeId(1L)
+                .title("테스트 노드")
+                .description("테스트 설명")
+                .nodeStatus(NodeStatus.NOT_STARTED)
+                .nodeOrder(1)
+                .projectId(100L)
+                .build();
+    }
 
-        // then
+    @Test
+    @DisplayName("프로젝트 노드 상태를 정상적으로 업데이트하고 히스토리를 기록한다.")
+    void givenValidNodeIdAndStatus_whenUpdateNodeStatus_thenSuccess() {
+        Long nodeId = 1L;
+        UpdateNodeStatusRequest request = new UpdateNodeStatusRequest(NodeStatus.IN_PROGRESS);
+
+        when(projectNodeService.findById(nodeId)).thenReturn(mockProjectNode);
+        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+
+        updateProjectNodeService.updateNodeStatus(nodeId, request);
+
+        assertThat(mockProjectNode.getNodeStatus()).isEqualTo(NodeStatus.IN_PROGRESS);
         verify(projectNodeService).findById(nodeId);
-        verify(projectNodeService).updateNodeHistory(
+        verify(historyRecorder).recordHistory(
+                eq(HistoryType.PROJECT_NODE),
                 eq(nodeId),
-                any(),
-                eq("NOT_STARTED"),
-                eq(userIp),
-                eq(userAgent),
-                eq(userId)
+                eq(ActionType.UPDATE),
+                eq("NOT_STARTED")
         );
     }
 
     @Test
-    @DisplayName("NOT_STARTED에서 IN_PROGRESS로 상태 변경이 성공한다")
-    void updateNodeStatus_fromNotStartedToInProgress_shouldSucceed() {
-        // given
-        Long nodeId = 1L;
-        Long userId = 100L;
-        String userIp = "192.168.0.1";
-        String userAgent = "CustomAgent";
-
+    @DisplayName("존재하지 않는 노드 ID로 상태 업데이트 시 예외 발생")
+    void givenInvalidNodeId_whenUpdateNodeStatus_thenThrowException() {
+        Long invalidNodeId = 999L;
         UpdateNodeStatusRequest request = new UpdateNodeStatusRequest(NodeStatus.IN_PROGRESS);
 
-        ProjectNode existingNode = ProjectNode.builder()
-                .projectNodeId(nodeId)
-                .nodeStatus(NodeStatus.NOT_STARTED)
-                .build();
+        when(projectNodeService.findById(invalidNodeId))
+                .thenThrow(new BusinessException(ErrorCode.PROJECT_NODE_NOT_FOUND));
 
-        given(projectNodeService.findById(nodeId)).willReturn(existingNode);
-
-        // when
-        updateProjectNodeService.updateNodeStatus(nodeId, request, userIp, userAgent, userId);
-
-        // then
-        verify(projectNodeService).findById(nodeId);
-        verify(projectNodeService).updateNodeHistory(anyLong(), any(), anyString(), anyString(), anyString(), anyLong());
-    }
-
-    @Test
-    @DisplayName("IN_PROGRESS에서 PENDING_REVIEW로 상태 변경이 성공한다")
-    void updateNodeStatus_fromInProgressToPendingReview_shouldSucceed() {
-        // given
-        Long nodeId = 1L;
-        Long userId = 100L;
-        String userIp = "127.0.0.1";
-        String userAgent = "TestAgent";
-
-        UpdateNodeStatusRequest request = new UpdateNodeStatusRequest(NodeStatus.PENDING_REVIEW);
-
-        ProjectNode existingNode = ProjectNode.builder()
-                .projectNodeId(nodeId)
-                .nodeStatus(NodeStatus.IN_PROGRESS)
-                .build();
-
-        given(projectNodeService.findById(nodeId)).willReturn(existingNode);
-
-        // when
-        updateProjectNodeService.updateNodeStatus(nodeId, request, userIp, userAgent, userId);
-
-        // then
-        verify(projectNodeService).findById(nodeId);
-        verify(projectNodeService).updateNodeHistory(anyLong(), any(), eq("IN_PROGRESS"), anyString(), anyString(), anyLong());
-    }
-
-    @Test
-    @DisplayName("PENDING_REVIEW에서 ON_HOLD로 상태 변경이 성공한다")
-    void updateNodeStatus_fromPendingReviewToOnHold_shouldSucceed() {
-        // given
-        Long nodeId = 1L;
-        Long userId = 100L;
-        String userIp = "127.0.0.1";
-        String userAgent = "TestAgent";
-
-        UpdateNodeStatusRequest request = new UpdateNodeStatusRequest(NodeStatus.ON_HOLD);
-
-        ProjectNode existingNode = ProjectNode.builder()
-                .projectNodeId(nodeId)
-                .nodeStatus(NodeStatus.PENDING_REVIEW)
-                .build();
-
-        given(projectNodeService.findById(nodeId)).willReturn(existingNode);
-
-        // when
-        updateProjectNodeService.updateNodeStatus(nodeId, request, userIp, userAgent, userId);
-
-        // then
-        verify(projectNodeService).findById(nodeId);
-        verify(projectNodeService).updateNodeHistory(anyLong(), any(), eq("PENDING_REVIEW"), anyString(), anyString(), anyLong());
-    }
-
-    @Test
-    @DisplayName("올바른 사용자 정보로 히스토리가 저장된다")
-    void updateNodeStatus_success_shouldSaveHistoryWithCorrectUserInfo() {
-        // given
-        Long nodeId = 10L;
-        Long userId = 999L;
-        String userIp = "10.0.0.1";
-        String userAgent = "Mozilla/5.0";
-
-        UpdateNodeStatusRequest request = new UpdateNodeStatusRequest(NodeStatus.IN_PROGRESS);
-
-        ProjectNode existingNode = ProjectNode.builder()
-                .projectNodeId(nodeId)
-                .nodeStatus(NodeStatus.NOT_STARTED)
-                .build();
-
-        given(projectNodeService.findById(nodeId)).willReturn(existingNode);
-
-        // when
-        updateProjectNodeService.updateNodeStatus(nodeId, request, userIp, userAgent, userId);
-
-        // then
-        verify(projectNodeService).updateNodeHistory(
-                eq(nodeId),
-                any(),
-                anyString(),
-                eq(userIp),
-                eq(userAgent),
-                eq(userId)
-        );
-    }
-
-    // ========== 실패 케이스 ==========
-
-    @Test
-    @DisplayName("존재하지 않는 노드의 상태 변경 시 예외가 발생한다")
-    void updateNodeStatus_whenNodeNotFound_shouldThrowException() {
-        // given
-        Long nodeId = 999L;
-        Long userId = 100L;
-        String userIp = "127.0.0.1";
-        String userAgent = "TestAgent";
-
-        UpdateNodeStatusRequest request = new UpdateNodeStatusRequest(NodeStatus.IN_PROGRESS);
-
-        given(projectNodeService.findById(nodeId))
-                .willThrow(new BusinessException(ErrorCode.PROJECT_NODE_NOT_FOUND));
-
-        // when & then
-        assertThatThrownBy(() -> updateProjectNodeService.updateNodeStatus(nodeId, request, userIp, userAgent, userId))
+        assertThatThrownBy(() ->
+                updateProjectNodeService.updateNodeStatus(invalidNodeId, request))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PROJECT_NODE_NOT_FOUND);
 
-        verify(projectNodeService).findById(nodeId);
-        verify(projectNodeService, never()).updateNodeHistory(anyLong(), any(), anyString(), anyString(), anyString(), anyLong());
+        verify(projectNodeService).findById(invalidNodeId);
+        verify(historyRecorder, never()).recordHistory(any(), any(), any(), any());
     }
 
     @Test
-    @DisplayName("동일한 상태로 변경 시도하면 예외가 발생한다")
-    void updateNodeStatus_whenSameStatus_shouldThrowException() {
-        // given
+    @DisplayName("현재 상태와 동일한 상태로 변경 시도 시 예외 발생")
+    void givenSameStatus_whenUpdateNodeStatus_thenThrowException() {
         Long nodeId = 1L;
-        Long userId = 100L;
-        String userIp = "127.0.0.1";
-        String userAgent = "TestAgent";
+        UpdateNodeStatusRequest request = new UpdateNodeStatusRequest(NodeStatus.NOT_STARTED);
 
-        UpdateNodeStatusRequest request = new UpdateNodeStatusRequest(NodeStatus.IN_PROGRESS);
+        when(projectNodeService.findById(nodeId)).thenReturn(mockProjectNode);
 
-        ProjectNode existingNode = ProjectNode.builder()
+        assertThatThrownBy(() ->
+                updateProjectNodeService.updateNodeStatus(nodeId, request))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.STATUS_ALREADY_SET);
+
+        verify(projectNodeService).findById(nodeId);
+        verify(historyRecorder, never()).recordHistory(any(), any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("NOT_STARTED에서 PENDING_REVIEW로 상태 변경 시 성공")
+    void givenNotStartedStatus_whenUpdateToPendingReview_thenSuccess() {
+        Long nodeId = 1L;
+        UpdateNodeStatusRequest request = new UpdateNodeStatusRequest(NodeStatus.PENDING_REVIEW);
+
+        when(projectNodeService.findById(nodeId)).thenReturn(mockProjectNode);
+        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+
+        updateProjectNodeService.updateNodeStatus(nodeId, request);
+
+        assertThat(mockProjectNode.getNodeStatus()).isEqualTo(NodeStatus.PENDING_REVIEW);
+        verify(historyRecorder).recordHistory(
+                eq(HistoryType.PROJECT_NODE),
+                eq(nodeId),
+                eq(ActionType.UPDATE),
+                eq("NOT_STARTED")
+        );
+    }
+
+    @Test
+    @DisplayName("IN_PROGRESS에서 PENDING_REVIEW로 상태 변경 시 성공")
+    void givenInProgressStatus_whenUpdateToPendingReview_thenSuccess() {
+        Long nodeId = 1L;
+        ProjectNode inProgressNode = ProjectNode.builder()
                 .projectNodeId(nodeId)
+                .title("진행중 노드")
                 .nodeStatus(NodeStatus.IN_PROGRESS)
                 .build();
 
-        given(projectNodeService.findById(nodeId)).willReturn(existingNode);
-
-        // when & then
-        assertThatThrownBy(() -> updateProjectNodeService.updateNodeStatus(nodeId, request, userIp, userAgent, userId))
-                .isInstanceOf(BusinessException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.STATUS_ALREADY_SET);
-
-        verify(projectNodeService).findById(nodeId);
-        verify(projectNodeService, never()).updateNodeHistory(anyLong(), any(), anyString(), anyString(), anyString(), anyLong());
-    }
-
-    @Test
-    @DisplayName("NOT_STARTED 상태를 NOT_STARTED로 변경 시도하면 예외가 발생한다")
-    void updateNodeStatus_whenNotStartedToNotStarted_shouldThrowException() {
-        // given
-        Long nodeId = 1L;
-        Long userId = 100L;
-        String userIp = "127.0.0.1";
-        String userAgent = "TestAgent";
-
-        UpdateNodeStatusRequest request = new UpdateNodeStatusRequest(NodeStatus.NOT_STARTED);
-
-        ProjectNode existingNode = ProjectNode.builder()
-                .projectNodeId(nodeId)
-                .nodeStatus(NodeStatus.NOT_STARTED)
-                .build();
-
-        given(projectNodeService.findById(nodeId)).willReturn(existingNode);
-
-        // when & then
-        assertThatThrownBy(() -> updateProjectNodeService.updateNodeStatus(nodeId, request, userIp, userAgent, userId))
-                .isInstanceOf(BusinessException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.STATUS_ALREADY_SET);
-
-        verify(projectNodeService).findById(nodeId);
-        verify(projectNodeService, never()).updateNodeHistory(anyLong(), any(), anyString(), anyString(), anyString(), anyLong());
-    }
-
-    @Test
-    @DisplayName("PENDING_REVIEW 상태를 PENDING_REVIEW로 변경 시도하면 예외가 발생한다")
-    void updateNodeStatus_whenPendingReviewToPendingReview_shouldThrowException() {
-        // given
-        Long nodeId = 1L;
-        Long userId = 100L;
-        String userIp = "127.0.0.1";
-        String userAgent = "TestAgent";
-
         UpdateNodeStatusRequest request = new UpdateNodeStatusRequest(NodeStatus.PENDING_REVIEW);
 
-        ProjectNode existingNode = ProjectNode.builder()
-                .projectNodeId(nodeId)
-                .nodeStatus(NodeStatus.PENDING_REVIEW)
-                .build();
+        when(projectNodeService.findById(nodeId)).thenReturn(inProgressNode);
+        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
 
-        given(projectNodeService.findById(nodeId)).willReturn(existingNode);
+        updateProjectNodeService.updateNodeStatus(nodeId, request);
 
-        // when & then
-        assertThatThrownBy(() -> updateProjectNodeService.updateNodeStatus(nodeId, request, userIp, userAgent, userId))
-                .isInstanceOf(BusinessException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.STATUS_ALREADY_SET);
-
-        verify(projectNodeService).findById(nodeId);
-        verify(projectNodeService, never()).updateNodeHistory(anyLong(), any(), anyString(), anyString(), anyString(), anyLong());
+        assertThat(inProgressNode.getNodeStatus()).isEqualTo(NodeStatus.PENDING_REVIEW);
+        verify(historyRecorder).recordHistory(
+                eq(HistoryType.PROJECT_NODE),
+                eq(nodeId),
+                eq(ActionType.UPDATE),
+                eq("IN_PROGRESS")
+        );
     }
 
     @Test
-    @DisplayName("히스토리 저장 실패 시 예외가 발생한다")
-    void updateNodeStatus_whenSaveHistoryFails_shouldThrowException() {
-        // given
+    @DisplayName("ON_HOLD에서 IN_PROGRESS로 상태 변경 시 성공")
+    void givenOnHoldStatus_whenUpdateToInProgress_thenSuccess() {
         Long nodeId = 1L;
-        Long userId = 100L;
-        String userIp = "127.0.0.1";
-        String userAgent = "TestAgent";
+        ProjectNode onHoldNode = ProjectNode.builder()
+                .projectNodeId(nodeId)
+                .title("보류된 노드")
+                .nodeStatus(NodeStatus.ON_HOLD)
+                .build();
 
         UpdateNodeStatusRequest request = new UpdateNodeStatusRequest(NodeStatus.IN_PROGRESS);
 
-        ProjectNode existingNode = ProjectNode.builder()
-                .projectNodeId(nodeId)
-                .nodeStatus(NodeStatus.NOT_STARTED)
-                .build();
+        when(projectNodeService.findById(nodeId)).thenReturn(onHoldNode);
+        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
 
-        given(projectNodeService.findById(nodeId)).willReturn(existingNode);
-        doThrow(new BusinessException(ErrorCode.PROJECT_NODE_HISTORY_SAVE_FAILED))
-                .when(projectNodeService).updateNodeHistory(anyLong(), any(), anyString(), anyString(), anyString(), anyLong());
+        updateProjectNodeService.updateNodeStatus(nodeId, request);
 
-        // when & then
-        assertThatThrownBy(() -> updateProjectNodeService.updateNodeStatus(nodeId, request, userIp, userAgent, userId))
-                .isInstanceOf(BusinessException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PROJECT_NODE_HISTORY_SAVE_FAILED);
+        assertThat(onHoldNode.getNodeStatus()).isEqualTo(NodeStatus.IN_PROGRESS);
+        verify(historyRecorder).recordHistory(
+                eq(HistoryType.PROJECT_NODE),
+                eq(nodeId),
+                eq(ActionType.UPDATE),
+                eq("ON_HOLD")
+        );
+    }
 
-        verify(projectNodeService).findById(nodeId);
-        verify(projectNodeService).updateNodeHistory(anyLong(), any(), anyString(), anyString(), anyString(), anyLong());
+    @Test
+    @DisplayName("상태 업데이트 시 변경 전 상태가 히스토리에 기록된다.")
+    void givenStatusChange_whenUpdateNodeStatus_thenRecordPreviousStatus() {
+        Long nodeId = 1L;
+        UpdateNodeStatusRequest request = new UpdateNodeStatusRequest(NodeStatus.IN_PROGRESS);
+
+        when(projectNodeService.findById(nodeId)).thenReturn(mockProjectNode);
+        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+
+        updateProjectNodeService.updateNodeStatus(nodeId, request);
+
+        verify(historyRecorder).recordHistory(
+                eq(HistoryType.PROJECT_NODE),
+                eq(nodeId),
+                eq(ActionType.UPDATE),
+                eq("NOT_STARTED") // 변경 전 상태
+        );
+    }
+
+    @Test
+    @DisplayName("상태 업데이트 시 모든 메서드가 순차적으로 호출된다.")
+    void givenStatusChange_whenUpdateNodeStatus_thenAllMethodsCalledInOrder() {
+        Long nodeId = 1L;
+        UpdateNodeStatusRequest request = new UpdateNodeStatusRequest(NodeStatus.IN_PROGRESS);
+
+        when(projectNodeService.findById(nodeId)).thenReturn(mockProjectNode);
+        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+
+        updateProjectNodeService.updateNodeStatus(nodeId, request);
+
+        var inOrder = inOrder(projectNodeService, historyRecorder);
+        inOrder.verify(projectNodeService).findById(nodeId);
+        inOrder.verify(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+    }
+
+    @Test
+    @DisplayName("여러 번 상태를 변경해도 각각 히스토리가 기록된다.")
+    void givenMultipleStatusChanges_whenUpdateNodeStatus_thenEachChangeRecorded() {
+        Long nodeId = 1L;
+
+        // 첫 번째 변경: NOT_STARTED -> IN_PROGRESS
+        UpdateNodeStatusRequest firstRequest = new UpdateNodeStatusRequest(NodeStatus.IN_PROGRESS);
+        when(projectNodeService.findById(nodeId)).thenReturn(mockProjectNode);
+        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+
+        updateProjectNodeService.updateNodeStatus(nodeId, firstRequest);
+
+        verify(historyRecorder).recordHistory(
+                eq(HistoryType.PROJECT_NODE),
+                eq(nodeId),
+                eq(ActionType.UPDATE),
+                eq("NOT_STARTED")
+        );
+
+        // 두 번째 변경: IN_PROGRESS -> PENDING_REVIEW
+        UpdateNodeStatusRequest secondRequest = new UpdateNodeStatusRequest(NodeStatus.PENDING_REVIEW);
+        reset(historyRecorder);
+        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+
+        updateProjectNodeService.updateNodeStatus(nodeId, secondRequest);
+
+        verify(historyRecorder).recordHistory(
+                eq(HistoryType.PROJECT_NODE),
+                eq(nodeId),
+                eq(ActionType.UPDATE),
+                eq("IN_PROGRESS")
+        );
     }
 }

@@ -1,550 +1,355 @@
 package com.workhub.project.service;
 
 import com.workhub.global.entity.ActionType;
+import com.workhub.global.entity.HistoryType;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
+import com.workhub.global.history.HistoryRecorder;
 import com.workhub.project.dto.CreateProjectRequest;
+import com.workhub.project.dto.ProjectResponse;
 import com.workhub.project.dto.UpdateStatusRequest;
 import com.workhub.project.entity.Project;
-import com.workhub.project.entity.ProjectHistory;
 import com.workhub.project.entity.Status;
+import com.workhub.userTable.entity.UserTable;
+import com.workhub.userTable.security.CustomUserDetails;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDate;
 import java.util.List;
 
+import static com.workhub.userTable.entity.UserRole.ADMIN;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.BDDMockito.given;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class UpdateProjectServiceTest {
+class UpdateProjectServiceTest {
 
     @Mock
-    ProjectService projectService;
+    private ProjectService projectService;
+
+    @Mock
+    private HistoryRecorder historyRecorder;
 
     @InjectMocks
-    UpdateProjectService updateProjectService;
+    private UpdateProjectService updateProjectService;
 
-    @Test
-    @DisplayName("프로젝트 상태 변경 시 프로젝트 조회, 상태 변경, 히스토리 저장이 모두 실행된다")
-    void updateProjectStatus_success_shouldUpdateStatusAndSaveHistory() {
-        // given
-        Long projectId = 1L;
-        Long userId = 100L;
-        String userIp = "127.0.0.1";
-        String userAgent = "TestAgent";
-        UpdateStatusRequest statusRequest = new UpdateStatusRequest(Status.IN_PROGRESS);
+    private Project mockProject;
+    private CreateProjectRequest updateRequest;
 
-        Project project = Project.builder()
-                .projectId(projectId)
-                .projectTitle("Test Project")
-                .status(Status.CONTRACT)
+    @BeforeEach
+    void init() {
+        // SecurityContext 설정
+        UserTable mockUser = UserTable.builder()
+                .userId(1L)
+                .loginId("testuser")
+                .password("password")
+                .role(ADMIN)
                 .build();
 
-        given(projectService.findProjectById(projectId)).willReturn(project);
+        CustomUserDetails userDetails = new CustomUserDetails(mockUser);
+        UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+        SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        // when
-        updateProjectService.updateProjectStatus(projectId, statusRequest, userIp, userAgent, userId);
+        mockProject = Project.builder()
+                .projectId(1L)
+                .projectTitle("기존 프로젝트")
+                .projectDescription("기존 설명")
+                .status(Status.IN_PROGRESS)
+                .contractStartDate(LocalDate.of(2024, 1, 1))
+                .contractEndDate(LocalDate.of(2024, 12, 31))
+                .clientCompanyId(100L)
+                .build();
 
-        // then
-        verify(projectService).findProjectById(projectId);
-        verify(projectService).updateProjectHistory(
-                eq(projectId),
-                eq(ActionType.UPDATE),
-                eq("CONTRACT"),
-                eq(userIp),
-                eq(userAgent),
-                eq(userId)
+        updateRequest = new CreateProjectRequest(
+                "수정된 프로젝트",
+                "수정된 설명",
+                200L,
+                List.of(1L, 2L),
+                List.of(3L, 4L),
+                LocalDate.of(2024, 2, 1),
+                LocalDate.of(2024, 11, 30)
         );
     }
 
     @Test
-    @DisplayName("프로젝트 상태가 정확히 변경된다")
-    void updateProjectStatus_success_shouldChangeStatusCorrectly() {
+    @DisplayName("프로젝트 상태를 정상적으로 업데이트하고 히스토리를 기록한다")
+    void givenValidProjectIdAndStatus_whenUpdateProjectStatus_thenSuccess() {
         // given
         Long projectId = 1L;
-        Long userId = 100L;
-        String userIp = "127.0.0.1";
-        String userAgent = "TestAgent";
         UpdateStatusRequest statusRequest = new UpdateStatusRequest(Status.COMPLETED);
 
-        Project project = Project.builder()
-                .projectId(projectId)
-                .projectTitle("Test Project")
-                .status(Status.DELIVERY)
-                .build();
-
-        given(projectService.findProjectById(projectId)).willReturn(project);
+        when(projectService.findProjectById(projectId)).thenReturn(mockProject);
 
         // when
-        updateProjectService.updateProjectStatus(projectId, statusRequest, userIp, userAgent, userId);
+        updateProjectService.updateProjectStatus(projectId, statusRequest);
 
         // then
-        // 프로젝트 엔티티의 updateProjectStatus 메서드가 호출되어 상태가 변경됨
         verify(projectService).findProjectById(projectId);
-        verify(projectService).updateProjectHistory(
+        verify(historyRecorder).recordHistory(
+                eq(HistoryType.PROJECT),
                 eq(projectId),
                 eq(ActionType.UPDATE),
-                eq("DELIVERY"),
-                eq(userIp),
-                eq(userAgent),
-                eq(userId)
+                eq("IN_PROGRESS")
         );
     }
 
     @Test
-    @DisplayName("히스토리 저장 시 올바른 사용자 정보가 전달된다")
-    void updateProjectStatus_success_shouldPassCorrectUserInfo() {
+    @DisplayName("존재하지 않는 프로젝트 ID로 상태 업데이트 시 예외 발생")
+    void givenInvalidProjectId_whenUpdateProjectStatus_thenThrowException() {
         // given
-        Long projectId = 1L;
-        Long userId = 999L;
-        String userIp = "192.168.0.1";
-        String userAgent = "CustomAgent";
-        UpdateStatusRequest statusRequest = new UpdateStatusRequest(Status.MAINTENANCE);
+        Long invalidProjectId = 999L;
+        UpdateStatusRequest statusRequest = new UpdateStatusRequest(Status.COMPLETED);
 
-        Project project = Project.builder()
-                .projectId(projectId)
-                .projectTitle("Test Project")
-                .status(Status.DELIVERY)
-                .build();
-
-        given(projectService.findProjectById(projectId)).willReturn(project);
-
-        // when
-        updateProjectService.updateProjectStatus(projectId, statusRequest, userIp, userAgent, userId);
-
-        // then
-        verify(projectService).updateProjectHistory(
-                eq(projectId),
-                eq(ActionType.UPDATE),
-                eq("DELIVERY"),
-                eq(userIp),
-                eq(userAgent),
-                eq(userId)
-        );
-    }
-
-    @Test
-    @DisplayName("모든 상태 타입으로 변경이 가능하다")
-    void updateProjectStatus_success_shouldSupportAllStatusTypes() {
-        // given
-        Long projectId = 1L;
-        Long userId = 100L;
-        String userIp = "127.0.0.1";
-        String userAgent = "TestAgent";
-
-        Project project = Project.builder()
-                .projectId(projectId)
-                .projectTitle("Test Project")
-                .status(Status.CONTRACT)
-                .build();
-
-        given(projectService.findProjectById(projectId)).willReturn(project);
-
-        // when & then - 각 상태로 변경 테스트
-        for (Status status : Status.values()) {
-            UpdateStatusRequest statusRequest = new UpdateStatusRequest(status);
-            updateProjectService.updateProjectStatus(projectId, statusRequest, userIp, userAgent, userId);
-        }
-
-        // 모든 상태에 대해 히스토리가 저장되었는지 확인
-        verify(projectService, times(Status.values().length)).updateProjectHistory(
-                anyLong(), any(ActionType.class), anyString(), anyString(), anyString(), anyLong()
-        );
-    }
-
-    // ========== 실패 케이스 ==========
-
-    @Test
-    @DisplayName("존재하지 않는 프로젝트 ID로 상태 변경 시 예외가 발생한다")
-    void updateProjectStatus_whenProjectNotFound_shouldThrowException() {
-        // given
-        Long nonExistentProjectId = 999L;
-        Long userId = 100L;
-        String userIp = "127.0.0.1";
-        String userAgent = "TestAgent";
-        UpdateStatusRequest statusRequest = new UpdateStatusRequest(Status.IN_PROGRESS);
-
-        given(projectService.findProjectById(nonExistentProjectId))
-                .willThrow(new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
+        when(projectService.findProjectById(invalidProjectId))
+                .thenThrow(new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
 
         // when & then
-        assertThatThrownBy(() -> updateProjectService.updateProjectStatus(
-                nonExistentProjectId, statusRequest, userIp, userAgent, userId))
+        assertThatThrownBy(() ->
+                updateProjectService.updateProjectStatus(invalidProjectId, statusRequest))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PROJECT_NOT_FOUND);
 
-        // 프로젝트 조회 실패 시 이후 메서드는 호출되지 않아야 함
-        verify(projectService).findProjectById(nonExistentProjectId);
-        verify(projectService, never()).updateProjectHistory(
-                anyLong(), any(ActionType.class), anyString(), anyString(), anyString(), anyLong()
+        verify(projectService).findProjectById(invalidProjectId);
+        verify(historyRecorder, never()).recordHistory(any(), any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("프로젝트 정보를 정상적으로 업데이트하고 변경된 필드마다 히스토리를 기록한다")
+    void givenValidUpdateRequest_whenUpdateProject_thenSuccessAndRecordHistory() {
+        // given
+        Long projectId = 1L;
+
+        when(projectService.findProjectById(projectId)).thenReturn(mockProject);
+
+        // when
+        ProjectResponse result = updateProjectService.updateProject(projectId, updateRequest);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.projectTitle()).isEqualTo("수정된 프로젝트");
+        assertThat(result.projectDescription()).isEqualTo("수정된 설명");
+
+        assertThat(mockProject.getProjectTitle()).isEqualTo("수정된 프로젝트");
+        assertThat(mockProject.getProjectDescription()).isEqualTo("수정된 설명");
+        assertThat(mockProject.getContractStartDate()).isEqualTo(LocalDate.of(2024, 2, 1));
+        assertThat(mockProject.getContractEndDate()).isEqualTo(LocalDate.of(2024, 11, 30));
+        assertThat(mockProject.getClientCompanyId()).isEqualTo(200L);
+
+        verify(projectService).findProjectById(projectId);
+
+        // 5개 필드 모두 변경되었으므로 5번 히스토리 기록
+        verify(historyRecorder, times(5)).recordHistory(
+                eq(HistoryType.PROJECT),
+                eq(projectId),
+                eq(ActionType.UPDATE),
+                anyString()
         );
     }
 
     @Test
-    @DisplayName("프로젝트 히스토리를 찾을 수 없는 경우 예외가 발생한다")
-    void updateProjectStatus_whenProjectHistoryNotFound_shouldThrowException() {
+    @DisplayName("일부 필드만 변경 시 해당 필드만 히스토리에 기록된다")
+    void givenPartialUpdateRequest_whenUpdateProject_thenRecordOnlyChangedFields() {
         // given
         Long projectId = 1L;
-        Long userId = 100L;
-        String userIp = "127.0.0.1";
-        String userAgent = "TestAgent";
-        UpdateStatusRequest statusRequest = new UpdateStatusRequest(Status.IN_PROGRESS);
 
-        Project project = Project.builder()
-                .projectId(projectId)
-                .projectTitle("Test Project")
-                .status(Status.CONTRACT)
-                .build();
+        // 제목과 설명만 변경하는 요청 (다른 필드는 기존 값과 동일)
+        CreateProjectRequest partialRequest = new CreateProjectRequest(
+                "수정된 프로젝트",
+                "수정된 설명",
+                100L, // 기존과 동일
+                List.of(1L, 2L),
+                List.of(3L, 4L),
+                LocalDate.of(2024, 1, 1), // 기존과 동일
+                LocalDate.of(2024, 12, 31) // 기존과 동일
+        );
 
-        given(projectService.findProjectById(projectId)).willReturn(project);
+        when(projectService.findProjectById(projectId)).thenReturn(mockProject);
 
-        // updateProjectHistory 내부에서 getProjectOriginalCreator가 호출되고 예외 발생
-        doThrow(new BusinessException(ErrorCode.PROJECT_HISTORY_NOT_FOUND))
-                .when(projectService).updateProjectHistory(
-                        anyLong(), any(ActionType.class), anyString(), anyString(), anyString(), anyLong()
-                );
+        // when
+        ProjectResponse result = updateProjectService.updateProject(projectId, partialRequest);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.projectTitle()).isEqualTo("수정된 프로젝트");
+        assertThat(result.projectDescription()).isEqualTo("수정된 설명");
+
+        verify(projectService).findProjectById(projectId);
+
+        // 2개 필드만 변경되었으므로 2번만 히스토리 기록
+        verify(historyRecorder, times(2)).recordHistory(
+                eq(HistoryType.PROJECT),
+                eq(projectId),
+                eq(ActionType.UPDATE),
+                anyString()
+        );
+    }
+
+    @Test
+    @DisplayName("필드 변경이 없으면 히스토리가 기록되지 않는다")
+    void givenNoChanges_whenUpdateProject_thenNoHistoryRecorded() {
+        // given
+        Long projectId = 1L;
+
+        // 모든 필드가 기존 값과 동일한 요청
+        CreateProjectRequest noChangeRequest = new CreateProjectRequest(
+                "기존 프로젝트",
+                "기존 설명",
+                100L,
+                List.of(1L, 2L),
+                List.of(3L, 4L),
+                LocalDate.of(2024, 1, 1),
+                LocalDate.of(2024, 12, 31)
+        );
+
+        when(projectService.findProjectById(projectId)).thenReturn(mockProject);
+
+        // when
+        ProjectResponse result = updateProjectService.updateProject(projectId, noChangeRequest);
+
+        // then
+        assertThat(result).isNotNull();
+
+        verify(projectService).findProjectById(projectId);
+
+        // 변경된 필드가 없으므로 히스토리 기록 안 됨
+        verify(historyRecorder, never()).recordHistory(any(), any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 프로젝트 ID로 업데이트 시 예외 발생")
+    void givenInvalidProjectId_whenUpdateProject_thenThrowException() {
+        // given
+        Long invalidProjectId = 999L;
+
+        when(projectService.findProjectById(invalidProjectId))
+                .thenThrow(new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
 
         // when & then
-        assertThatThrownBy(() -> updateProjectService.updateProjectStatus(
-                projectId, statusRequest, userIp, userAgent, userId))
-                .isInstanceOf(BusinessException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PROJECT_HISTORY_NOT_FOUND);
-
-        verify(projectService).findProjectById(projectId);
-        verify(projectService).updateProjectHistory(
-                anyLong(), any(ActionType.class), anyString(), anyString(), anyString(), anyLong()
-        );
-    }
-
-    @Test
-    @DisplayName("히스토리 저장 실패 시 예외가 발생한다")
-    void updateProjectStatus_whenSaveHistoryFails_shouldThrowException() {
-        // given
-        Long projectId = 1L;
-        Long userId = 100L;
-        String userIp = "127.0.0.1";
-        String userAgent = "TestAgent";
-        UpdateStatusRequest statusRequest = new UpdateStatusRequest(Status.IN_PROGRESS);
-
-        Project project = Project.builder()
-                .projectId(projectId)
-                .projectTitle("Test Project")
-                .status(Status.CONTRACT)
-                .build();
-
-        given(projectService.findProjectById(projectId)).willReturn(project);
-
-        // void 메서드에 예외 설정
-        doThrow(new BusinessException(ErrorCode.PROJECT_HISTORY_SAVE_FAILED))
-                .when(projectService).updateProjectHistory(
-                        anyLong(), any(ActionType.class), anyString(), anyString(), anyString(), anyLong()
-                );
-
-        // when & then
-        assertThatThrownBy(() -> updateProjectService.updateProjectStatus(
-                projectId, statusRequest, userIp, userAgent, userId))
-                .isInstanceOf(BusinessException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PROJECT_HISTORY_SAVE_FAILED);
-
-        verify(projectService).findProjectById(projectId);
-        verify(projectService).updateProjectHistory(
-                anyLong(), any(ActionType.class), anyString(), anyString(), anyString(), anyLong()
-        );
-    }
-
-    // ========== updateProject 테스트 ==========
-
-    @Test
-    @DisplayName("프로젝트 정보 업데이트 시 변경된 필드만 히스토리에 기록된다 - 단일 필드 변경")
-    void updateProject_whenSingleFieldChanged_shouldCreateOneHistory() {
-        // given
-        Long projectId = 1L;
-        Long userId = 100L;
-        Long originalCreator = 50L;
-        String userIp = "127.0.0.1";
-        String userAgent = "TestAgent";
-
-        Project original = Project.builder()
-                .projectId(projectId)
-                .projectTitle("Old Title")
-                .projectDescription("Old Description")
-                .contractStartDate(LocalDate.of(2024, 1, 1))
-                .contractEndDate(LocalDate.of(2024, 12, 31))
-                .clientCompanyId(100L)
-                .build();
-
-        // projectName만 변경
-        CreateProjectRequest request = new CreateProjectRequest(
-                "New Title",
-                "Old Description",
-                100L,
-                List.of(1L),
-                List.of(2L),
-                LocalDate.of(2024, 1, 1),
-                LocalDate.of(2024, 12, 31)
-        );
-
-        given(projectService.findProjectById(projectId)).willReturn(original);
-        given(projectService.getProjectOriginalCreator(projectId)).willReturn(originalCreator);
-
-        // when
-        updateProjectService.updateProject(projectId, request, userIp, userAgent, userId);
-
-        // then
-        verify(projectService).findProjectById(projectId);
-        verify(projectService).getProjectOriginalCreator(projectId);
-        verify(projectService, times(1)).saveProjectHistory(any(ProjectHistory.class));
-    }
-
-    @Test
-    @DisplayName("프로젝트 정보 업데이트 시 여러 필드 변경되면 각각 히스토리 생성")
-    void updateProject_whenMultipleFieldsChanged_shouldCreateMultipleHistories() {
-        // given
-        Long projectId = 1L;
-        Long userId = 100L;
-        Long originalCreator = 50L;
-        String userIp = "127.0.0.1";
-        String userAgent = "TestAgent";
-
-        Project original = Project.builder()
-                .projectId(projectId)
-                .projectTitle("Old Title")
-                .projectDescription("Old Description")
-                .contractStartDate(LocalDate.of(2024, 1, 1))
-                .contractEndDate(LocalDate.of(2024, 12, 31))
-                .clientCompanyId(100L)
-                .build();
-
-        // 3개 필드 변경 (title, description, company)
-        CreateProjectRequest request = new CreateProjectRequest(
-                "New Title",
-                "New Description",
-                200L,
-                List.of(1L),
-                List.of(2L),
-                LocalDate.of(2024, 1, 1),
-                LocalDate.of(2024, 12, 31)
-        );
-
-        given(projectService.findProjectById(projectId)).willReturn(original);
-        given(projectService.getProjectOriginalCreator(projectId)).willReturn(originalCreator);
-
-        // when
-        updateProjectService.updateProject(projectId, request, userIp, userAgent, userId);
-
-        // then
-        verify(projectService).findProjectById(projectId);
-        verify(projectService).getProjectOriginalCreator(projectId);
-        verify(projectService, times(3)).saveProjectHistory(any(ProjectHistory.class));
-    }
-
-    @Test
-    @DisplayName("프로젝트 정보 업데이트 시 모든 필드 변경되면 5개 히스토리 생성")
-    void updateProject_whenAllFieldsChanged_shouldCreateFiveHistories() {
-        // given
-        Long projectId = 1L;
-        Long userId = 100L;
-        Long originalCreator = 50L;
-        String userIp = "127.0.0.1";
-        String userAgent = "TestAgent";
-
-        Project original = Project.builder()
-                .projectId(projectId)
-                .projectTitle("Old Title")
-                .projectDescription("Old Description")
-                .contractStartDate(LocalDate.of(2024, 1, 1))
-                .contractEndDate(LocalDate.of(2024, 12, 31))
-                .clientCompanyId(100L)
-                .build();
-
-        // 모든 필드 변경
-        CreateProjectRequest request = new CreateProjectRequest(
-                "New Title",
-                "New Description",
-                200L,
-                List.of(1L),
-                List.of(2L),
-                LocalDate.of(2025, 1, 1),
-                LocalDate.of(2025, 12, 31)
-        );
-
-        given(projectService.findProjectById(projectId)).willReturn(original);
-        given(projectService.getProjectOriginalCreator(projectId)).willReturn(originalCreator);
-
-        // when
-        updateProjectService.updateProject(projectId, request, userIp, userAgent, userId);
-
-        // then
-        verify(projectService).findProjectById(projectId);
-        verify(projectService).getProjectOriginalCreator(projectId);
-        // 5개 필드: projectTitle, projectDescription, contractStartDate, contractEndDate, clientCompanyId
-        verify(projectService, times(5)).saveProjectHistory(any(ProjectHistory.class));
-    }
-
-    @Test
-    @DisplayName("프로젝트 정보 업데이트 시 변경사항이 없으면 히스토리가 생성되지 않는다")
-    void updateProject_whenNoFieldsChanged_shouldNotCreateHistory() {
-        // given
-        Long projectId = 1L;
-        Long userId = 100L;
-        Long originalCreator = 50L;
-        String userIp = "127.0.0.1";
-        String userAgent = "TestAgent";
-
-        Project original = Project.builder()
-                .projectId(projectId)
-                .projectTitle("Same Title")
-                .projectDescription("Same Description")
-                .contractStartDate(LocalDate.of(2024, 1, 1))
-                .contractEndDate(LocalDate.of(2024, 12, 31))
-                .clientCompanyId(100L)
-                .build();
-
-        // 동일한 값으로 요청
-        CreateProjectRequest request = new CreateProjectRequest(
-                "Same Title",
-                "Same Description",
-                100L,
-                List.of(1L),
-                List.of(2L),
-                LocalDate.of(2024, 1, 1),
-                LocalDate.of(2024, 12, 31)
-        );
-
-        given(projectService.findProjectById(projectId)).willReturn(original);
-        given(projectService.getProjectOriginalCreator(projectId)).willReturn(originalCreator);
-
-        // when
-        updateProjectService.updateProject(projectId, request, userIp, userAgent, userId);
-
-        // then
-        verify(projectService).findProjectById(projectId);
-        verify(projectService).getProjectOriginalCreator(projectId);
-        verify(projectService, never()).saveProjectHistory(any(ProjectHistory.class));
-    }
-
-    @Test
-    @DisplayName("프로젝트 정보 업데이트 시 올바른 beforeData가 히스토리에 저장된다")
-    void updateProject_shouldSaveCorrectBeforeData() {
-        // given
-        Long projectId = 1L;
-        Long userId = 100L;
-        Long originalCreator = 50L;
-        String userIp = "127.0.0.1";
-        String userAgent = "TestAgent";
-
-        Project original = Project.builder()
-                .projectId(projectId)
-                .projectTitle("Original Title")
-                .projectDescription("Original Description")
-                .contractStartDate(LocalDate.of(2024, 1, 1))
-                .contractEndDate(LocalDate.of(2024, 12, 31))
-                .clientCompanyId(100L)
-                .build();
-
-        CreateProjectRequest request = new CreateProjectRequest(
-                "New Title",
-                "Original Description",
-                100L,
-                List.of(1L),
-                List.of(2L),
-                LocalDate.of(2024, 1, 1),
-                LocalDate.of(2024, 12, 31)
-        );
-
-        given(projectService.findProjectById(projectId)).willReturn(original);
-        given(projectService.getProjectOriginalCreator(projectId)).willReturn(originalCreator);
-
-        // when
-        updateProjectService.updateProject(projectId, request, userIp, userAgent, userId);
-
-        // then
-        verify(projectService).saveProjectHistory(argThat(history ->
-                history != null &&
-                history.getBeforeData().equals("Original Title") &&
-                history.getActionType() == ActionType.UPDATE
-        ));
-    }
-
-    @Test
-    @DisplayName("존재하지 않는 프로젝트 ID로 정보 업데이트 시 예외가 발생한다")
-    void updateProject_whenProjectNotFound_shouldThrowException() {
-        // given
-        Long nonExistentProjectId = 999L;
-        Long userId = 100L;
-        String userIp = "127.0.0.1";
-        String userAgent = "TestAgent";
-
-        CreateProjectRequest request = new CreateProjectRequest(
-                "New Title",
-                "New Description",
-                100L,
-                List.of(1L),
-                List.of(2L),
-                LocalDate.of(2024, 1, 1),
-                LocalDate.of(2024, 12, 31)
-        );
-
-        given(projectService.findProjectById(nonExistentProjectId))
-                .willThrow(new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
-
-        // when & then
-        assertThatThrownBy(() -> updateProjectService.updateProject(
-                nonExistentProjectId, request, userIp, userAgent, userId))
+        assertThatThrownBy(() ->
+                updateProjectService.updateProject(invalidProjectId, updateRequest))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PROJECT_NOT_FOUND);
 
-        verify(projectService).findProjectById(nonExistentProjectId);
-        verify(projectService, never()).getProjectOriginalCreator(anyLong());
-        verify(projectService, never()).saveProjectHistory(any(ProjectHistory.class));
+        verify(projectService).findProjectById(invalidProjectId);
+        verify(historyRecorder, never()).recordHistory(any(), any(), any(), any());
     }
 
     @Test
-    @DisplayName("프로젝트 정보 업데이트 시 프로젝트 히스토리를 찾을 수 없는 경우 예외가 발생한다")
-    void updateProject_whenProjectHistoryNotFound_shouldThrowException() {
+    @DisplayName("프로젝트 제목만 변경 시 제목 히스토리만 기록된다")
+    void givenOnlyTitleChange_whenUpdateProject_thenRecordOnlyTitleHistory() {
         // given
         Long projectId = 1L;
-        Long userId = 100L;
-        String userIp = "127.0.0.1";
-        String userAgent = "TestAgent";
 
-        Project original = Project.builder()
-                .projectId(projectId)
-                .projectTitle("Old Title")
-                .projectDescription("Old Description")
-                .build();
-
-        CreateProjectRequest request = new CreateProjectRequest(
-                "New Title",
-                "Old Description",
+        CreateProjectRequest titleOnlyRequest = new CreateProjectRequest(
+                "새로운 제목",
+                "기존 설명",
                 100L,
-                List.of(1L),
-                List.of(2L),
+                List.of(1L, 2L),
+                List.of(3L, 4L),
                 LocalDate.of(2024, 1, 1),
                 LocalDate.of(2024, 12, 31)
         );
 
-        given(projectService.findProjectById(projectId)).willReturn(original);
-        given(projectService.getProjectOriginalCreator(projectId))
-                .willThrow(new BusinessException(ErrorCode.PROJECT_HISTORY_NOT_FOUND));
+        when(projectService.findProjectById(projectId)).thenReturn(mockProject);
 
-        // when & then
-        assertThatThrownBy(() -> updateProjectService.updateProject(
-                projectId, request, userIp, userAgent, userId))
-                .isInstanceOf(BusinessException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PROJECT_HISTORY_NOT_FOUND);
+        // when
+        ProjectResponse result = updateProjectService.updateProject(projectId, titleOnlyRequest);
+
+        // then
+        assertThat(result.projectTitle()).isEqualTo("새로운 제목");
+        assertThat(mockProject.getProjectTitle()).isEqualTo("새로운 제목");
 
         verify(projectService).findProjectById(projectId);
-        verify(projectService).getProjectOriginalCreator(projectId);
-        verify(projectService, never()).saveProjectHistory(any(ProjectHistory.class));
+
+        // 제목만 변경되었으므로 1번만 히스토리 기록
+        verify(historyRecorder, times(1)).recordHistory(
+                eq(HistoryType.PROJECT),
+                eq(projectId),
+                eq(ActionType.UPDATE),
+                eq("기존 프로젝트")
+        );
+    }
+
+    @Test
+    @DisplayName("계약 기간만 변경 시 시작일과 종료일 히스토리가 기록된다")
+    void givenOnlyDateChange_whenUpdateProject_thenRecordDateHistory() {
+        // given
+        Long projectId = 1L;
+
+        CreateProjectRequest dateOnlyRequest = new CreateProjectRequest(
+                "기존 프로젝트",
+                "기존 설명",
+                100L,
+                List.of(1L, 2L),
+                List.of(3L, 4L),
+                LocalDate.of(2024, 3, 1),
+                LocalDate.of(2024, 10, 31)
+        );
+
+        when(projectService.findProjectById(projectId)).thenReturn(mockProject);
+
+        // when
+        ProjectResponse result = updateProjectService.updateProject(projectId, dateOnlyRequest);
+
+        // then
+        assertThat(mockProject.getContractStartDate()).isEqualTo(LocalDate.of(2024, 3, 1));
+        assertThat(mockProject.getContractEndDate()).isEqualTo(LocalDate.of(2024, 10, 31));
+
+        verify(projectService).findProjectById(projectId);
+
+        // 시작일, 종료일 2개 변경되었으므로 2번 히스토리 기록
+        verify(historyRecorder, times(2)).recordHistory(
+                eq(HistoryType.PROJECT),
+                eq(projectId),
+                eq(ActionType.UPDATE),
+                anyString()
+        );
+    }
+
+    @Test
+    @DisplayName("고객사만 변경 시 고객사 ID 히스토리가 기록된다")
+    void givenOnlyCompanyChange_whenUpdateProject_thenRecordCompanyHistory() {
+        // given
+        Long projectId = 1L;
+
+        CreateProjectRequest companyOnlyRequest = new CreateProjectRequest(
+                "기존 프로젝트",
+                "기존 설명",
+                300L, // 변경
+                List.of(1L, 2L),
+                List.of(3L, 4L),
+                LocalDate.of(2024, 1, 1),
+                LocalDate.of(2024, 12, 31)
+        );
+
+        when(projectService.findProjectById(projectId)).thenReturn(mockProject);
+
+        // when
+        ProjectResponse result = updateProjectService.updateProject(projectId, companyOnlyRequest);
+
+        // then
+        assertThat(mockProject.getClientCompanyId()).isEqualTo(300L);
+
+        verify(projectService).findProjectById(projectId);
+
+        // 고객사 ID만 변경되었으므로 1번만 히스토리 기록
+        verify(historyRecorder, times(1)).recordHistory(
+                eq(HistoryType.PROJECT),
+                eq(projectId),
+                eq(ActionType.UPDATE),
+                eq("100")
+        );
     }
 }
