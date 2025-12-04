@@ -45,9 +45,13 @@ public class CsQna extends BaseTimeEntity {
     }
 
     public void updateContent(String newContent) {
-        if (newContent == null && newContent.isBlank()) {
+        if (newContent == null || newContent.isBlank()) {
             throw new BusinessException(ErrorCode.INVALID_CS_QNA_CONTENT);
         }
         this.qnaContent = newContent;
+    }
+
+    public void markDeleted() {
+        markDeletedNow();
     }
 }

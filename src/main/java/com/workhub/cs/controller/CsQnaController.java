@@ -5,6 +5,7 @@ import com.workhub.cs.dto.csQna.CsQnaRequest;
 import com.workhub.cs.dto.csQna.CsQnaResponse;
 import com.workhub.cs.dto.csQna.CsQnaUpdateRequest;
 import com.workhub.cs.service.csQna.CreateCsQnaService;
+import com.workhub.cs.service.csQna.DeleteCsQnaService;
 import com.workhub.cs.service.csQna.ReadCsQnaService;
 import com.workhub.cs.service.csQna.UpdateCsQnaService;
 import com.workhub.global.response.ApiResponse;
@@ -26,6 +27,7 @@ public class CsQnaController implements CsQnaApi {
     private final CreateCsQnaService createCsQnaService;
     private final ReadCsQnaService readCsQnaService;
     private final UpdateCsQnaService updateCsQnaService;
+    private final DeleteCsQnaService deleteCsQnaService;
 
     /**
      * CS POST의 댓글을 작성한다.
@@ -94,5 +96,28 @@ public class CsQnaController implements CsQnaApi {
                 projectId, csPostId, csQnaId, userDetails.getUserId(), csQnaUpdateRequest);
 
         return ApiResponse.success(response, "CS Comment가 수정되었습니다.");
+    }
+
+    /**
+     * CS POST의 댓글을 삭제한다. 댓글 삭제 시 모든 자식 댓글도 함께 삭제된다.
+     *
+     * @param projectId 프로젝트 식별자
+     * @param csPostId 게시글 식별자
+     * @param csQnaId 댓글 식별자
+     * @param userDetails 유저 정보
+     * @return 삭제된 댓글 id
+     */
+    @Override
+    @DeleteMapping("/{csQnaId}")
+    public ResponseEntity<ApiResponse<Long>> delete(
+            @PathVariable Long projectId,
+            @PathVariable Long csPostId,
+            @PathVariable Long csQnaId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
+    ) {
+        Long deletedId = deleteCsQnaService.delete(
+                projectId, csPostId, csQnaId, userDetails.getUserId());
+
+        return ApiResponse.success(deletedId, "CS Comment가 삭제되었습니다.");
     }
 }

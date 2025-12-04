@@ -67,4 +67,13 @@ public class CsQnaService {
     public Page<CsQna> findCsQnasWithReplies(Long csPostId, Pageable pageable) {
         return csQnaRepository.findCsQnasWithReplies(csPostId, pageable);
     }
+
+    /**
+     * 특정 댓글의 모든 자식 댓글(답글)을 조회한다.
+     * @param parentQnaId 부모 댓글 식별자
+     * @return List<CsQna>
+     */
+    public List<CsQna> findByParentQnaId(Long parentQnaId) {
+        return csQnaRepository.findByParentQnaId(parentQnaId);
+    }
 }

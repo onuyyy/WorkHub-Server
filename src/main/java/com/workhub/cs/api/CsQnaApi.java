@@ -19,6 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -85,6 +86,34 @@ public interface CsQnaApi {
             @PathVariable Long csPostId,
             @PathVariable Long csQnaId,
             @Valid @RequestBody CsQnaUpdateRequest csQnaUpdateRequest,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails
+    );
+
+    @Operation(
+            summary = "CS 댓글 삭제",
+            description = "완료된 프로젝트의 CS 게시글에 작성된 댓글을 삭제합니다. 댓글 삭제 시 모든 자식 댓글(답글)도 함께 삭제됩니다.",
+            parameters = {
+                    @Parameter(name = "projectId", description = "프로젝트 식별자", in = ParameterIn.PATH, required = true),
+                    @Parameter(name = "csPostId", description = "CS 게시글 식별자", in = ParameterIn.PATH, required = true),
+                    @Parameter(name = "csQnaId", description = "CS 댓글 식별자", in = ParameterIn.PATH, required = true)
+            }
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "CS 댓글 삭제 성공",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청 (예: 이미 삭제된 댓글)"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "삭제 권한이 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "게시글 또는 댓글을 찾을 수 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류")
+    })
+    @DeleteMapping(value = "/{csQnaId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    ResponseEntity<ApiResponse<Long>> delete(
+            @PathVariable Long projectId,
+            @PathVariable Long csPostId,
+            @PathVariable Long csQnaId,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails
     );
 
