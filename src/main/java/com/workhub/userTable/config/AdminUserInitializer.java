@@ -49,15 +49,16 @@ public class AdminUserInitializer {
             return;
         }
 
-        UserTable adminUser = UserTable.of(
-                loginId,
-                passwordEncoder.encode(password),
-                email,
-                phone,
-                UserRole.ADMIN,
-                Status.ACTIVE,
-                companyId
-        );
+        UserTable adminUser = UserTable.builder()
+                .loginId(loginId)
+                .password(passwordEncoder.encode(password))
+                .email(email)
+                .phone(phone)
+                .companyId(companyId)
+                .role(UserRole.ADMIN)
+                .status(Status.ACTIVE)
+                .companyId(companyId)
+                .build();
 
         userRepository.save(adminUser);
         log.info("Default admin user created with loginId: {}", loginId);

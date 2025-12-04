@@ -1,10 +1,6 @@
 package com.workhub.userTable.service;
 
-import com.workhub.userTable.dto.UserLoginRecord;
-import com.workhub.userTable.dto.AdminPasswordResetRequest;
-import com.workhub.userTable.dto.UserPasswordChangeRequest;
-import com.workhub.userTable.dto.UserRegisterRecord;
-import com.workhub.userTable.dto.UserTableResponse;
+import com.workhub.userTable.dto.*;
 import com.workhub.userTable.entity.Status;
 import com.workhub.userTable.entity.UserRole;
 import com.workhub.global.error.ErrorCode;
@@ -19,6 +15,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +24,19 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
+
+    public List<UserListResponse> getUsers(){
+        return userRepository.findAll().stream()
+                .map(UserListResponse::from)
+                .toList();
+    }
+
+    public UserDetailResponse getUser(Long userId){
+        UserTable userTable = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_EXISTS));
+        return UserDetailResponse.from(userTable);
+
+    }
 
     public UserTable getUserById(Long id) {
         return userRepository.findById(id)

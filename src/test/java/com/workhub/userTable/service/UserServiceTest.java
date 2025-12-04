@@ -2,6 +2,8 @@ package com.workhub.userTable.service;
 
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
+import com.workhub.userTable.dto.UserDetailResponse;
+import com.workhub.userTable.dto.UserListResponse;
 import com.workhub.userTable.dto.UserLoginRecord;
 import com.workhub.userTable.dto.AdminPasswordResetRequest;
 import com.workhub.userTable.dto.UserPasswordChangeRequest;
@@ -24,6 +26,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -46,6 +49,50 @@ class UserServiceTest {
 
     @InjectMocks
     private UserService userService;
+
+    @Nested
+    @DisplayName("getUsers")
+    class GetUsers {
+
+        @Test
+        @DisplayName("전체 사용자를 리스트 DTO로 반환한다")
+        void success() {
+            UserTable admin = user(1L, "admin", "admin@workhub.com", "01000000000", UserRole.ADMIN, Status.ACTIVE, 1L);
+            UserTable client = user(2L, "client", "client@workhub.com", "01011112222", UserRole.CLIENT, Status.SUSPENDED, 2L);
+            given(userRepository.findAll()).willReturn(List.of(admin, client));
+
+            List<UserListResponse> result = userService.getUsers();
+
+            assertThat(result)
+                    .containsExactly(UserListResponse.from(admin), UserListResponse.from(client));
+        }
+    }
+
+    @Nested
+    @DisplayName("getUser")
+    class GetUser {
+
+        @Test
+        @DisplayName("단일 사용자를 상세 DTO로 반환한다")
+        void success() {
+            UserTable user = user(10L, "alpha", "alpha@workhub.com", "01099998888", UserRole.DEVELOPER, Status.ACTIVE, 3L);
+            given(userRepository.findById(10L)).willReturn(Optional.of(user));
+
+            UserDetailResponse result = userService.getUser(10L);
+
+            assertThat(result).isEqualTo(UserDetailResponse.from(user));
+        }
+
+        @Test
+        @DisplayName("존재하지 않으면 런타임 예외를 던진다")
+        void fail_notFound() {
+            given(userRepository.findById(5L)).willReturn(Optional.empty());
+
+            assertThatThrownBy(() -> userService.getUser(5L))
+                    .isInstanceOf(RuntimeException.class)
+                    .hasMessage("User not found");
+        }
+    }
 
     @Nested
     @DisplayName("login")
@@ -242,6 +289,19 @@ class UserServiceTest {
             assertThat(user.getLastedAt()).isNotNull();
             verify(userRepository, never()).delete(any(UserTable.class));
         }
+    }
+
+    private UserTable user(Long userId, String loginId, String email, String phone, UserRole role, Status status, Long companyId) {
+        return UserTable.builder()
+                .userId(userId)
+                .loginId(loginId)
+                .password("encoded")
+                .email(email)
+                .phone(phone)
+                .role(role)
+                .status(status)
+                .companyId(companyId)
+                .build();
     }
 
     private UserRegisterRecord registerRecord() {

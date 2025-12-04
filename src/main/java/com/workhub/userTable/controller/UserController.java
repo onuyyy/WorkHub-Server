@@ -2,15 +2,10 @@ package com.workhub.userTable.controller;
 
 import com.workhub.global.response.ApiResponse;
 import com.workhub.userTable.api.UserTableApi;
-import com.workhub.userTable.dto.AdminPasswordResetRequest;
-import com.workhub.userTable.dto.UserLoginRecord;
-import com.workhub.userTable.dto.UserPasswordChangeRequest;
-import com.workhub.userTable.dto.UserRegisterRecord;
-import com.workhub.userTable.dto.UserTableResponse;
+import com.workhub.userTable.dto.*;
 import com.workhub.userTable.entity.UserTable;
 import com.workhub.global.security.CustomUserDetails;
 import com.workhub.userTable.service.UserService;
-import com.workhub.userTable.dto.UserRoleUpdateRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -22,15 +17,25 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api/admin/users")
 @RequiredArgsConstructor
 public class UserController implements UserTableApi {
 
     private final UserService userService;
 
-    @PostMapping("/users/login")
+    @GetMapping
+    public List<UserListResponse> getUserTable(){
+        return userService.getUsers();
+    }
+    @GetMapping("/{userId}")
+    public UserDetailResponse getUser(@PathVariable Long userId){
+        return userService.getUser(userId);
+    }
+
+    @PostMapping("/login")
     @Override
     public ResponseEntity<ApiResponse<String>> login(@RequestBody UserLoginRecord userLoginRecord,
                                                      HttpServletRequest request) {
@@ -53,7 +58,7 @@ public class UserController implements UserTableApi {
         return ApiResponse.success("로그인 성공");
     }
 
-    @PostMapping("/admin/users/add/user")
+    @PostMapping("/add/user")
     @Override
     public ResponseEntity<ApiResponse<UserTableResponse>> register(@RequestBody @Valid UserRegisterRecord registerRecord) {
         UserTable createdUser = userService.register(registerRecord);
@@ -68,7 +73,7 @@ public class UserController implements UserTableApi {
         return ApiResponse.success("비밀번호 재설정 완료", "비밀번호 재설정 요청 성공");
     }
 
-    @PatchMapping("/admin/users/{userId}/password/reset")
+    @PatchMapping("/{userId}/password/reset")
     @Override
     public ResponseEntity<ApiResponse<String>> resetPasswordByAdmin(@PathVariable Long userId,
                                                     @Valid @RequestBody AdminPasswordResetRequest passwordResetDto) {
@@ -76,7 +81,7 @@ public class UserController implements UserTableApi {
         return ApiResponse.success("관리자 비밀번호 초기화 완료", "관리자가 비밀번호를 초기화했습니다.");
     }
 
-    @PatchMapping("/admin/users/{userId}/role")
+    @PatchMapping("/{userId}/role")
     @Override
     public ResponseEntity<ApiResponse<UserTableResponse>> updateUserRole(@PathVariable Long userId,
                                                                          @Valid @RequestBody UserRoleUpdateRequest request) {
@@ -84,7 +89,7 @@ public class UserController implements UserTableApi {
         return ApiResponse.success(updatedUser, "회원 역할이 변경되었습니다.");
     }
 
-    @DeleteMapping("/admin/users/{userId}")
+    @DeleteMapping("/{userId}")
     @Override
     public ResponseEntity<ApiResponse<Object>> deleteUser(@PathVariable Long userId) {
         userService.deleteUser(userId);
