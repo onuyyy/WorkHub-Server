@@ -7,8 +7,11 @@ import com.workhub.cs.entity.CsPost;
 import com.workhub.cs.entity.CsPostFile;
 import com.workhub.cs.entity.CsPostStatus;
 import com.workhub.cs.service.CsPostAccessValidator;
+import com.workhub.global.entity.ActionType;
+import com.workhub.global.entity.HistoryType;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
+import com.workhub.global.history.HistoryRecorder;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,6 +26,7 @@ public class UpdateCsPostService {
 
     private final CsPostService csPostService;
     private final CsPostAccessValidator csPostAccessValidator;
+    private final HistoryRecorder historyRecorder;
 
     /**
      * CS POST를 수정한다.
@@ -59,6 +63,8 @@ public class UpdateCsPostService {
      */
     public CsPostStatus changeStatus(Long projectId, Long csPostId, CsPostStatus status) {
         CsPost csPost = csPostAccessValidator.validateProjectAndGetPost(projectId, csPostId);
+
+        historyRecorder.recordHistory(HistoryType.CS_POST, csPost.getCsPostId(), ActionType.UPDATE, csPost.getCsPostStatus().toString());
 
         csPost.changeStatus(status);
 
@@ -169,6 +175,7 @@ public class UpdateCsPostService {
             throw new BusinessException(ErrorCode.INVALID_FILE_UPDATE);
         }
         CsPostFile newFile = CsPostFile.of(csPostId, req);
+
         return csPostService.saveFile(newFile);
     }
 
@@ -179,10 +186,12 @@ public class UpdateCsPostService {
      */
     private void updatePost(CsPost csPost, CsPostUpdateRequest request) {
         if (request.title() != null && !request.title().isBlank()) {
+            historyRecorder.recordHistory(HistoryType.CS_POST, csPost.getCsPostId(), ActionType.UPDATE, csPost.getTitle());
             csPost.updateTitle(request.title());
         }
 
         if (request.content() != null && !request.content().isBlank()) {
+            historyRecorder.recordHistory(HistoryType.CS_POST, csPost.getCsPostId(), ActionType.UPDATE, csPost.getContent());
             csPost.updateContent(request.content());
         }
 

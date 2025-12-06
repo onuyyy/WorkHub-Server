@@ -4,6 +4,9 @@ import com.workhub.cs.dto.csPost.CsPostRequest;
 import com.workhub.cs.dto.csPost.CsPostResponse;
 import com.workhub.cs.entity.CsPost;
 import com.workhub.cs.entity.CsPostFile;
+import com.workhub.global.entity.ActionType;
+import com.workhub.global.entity.HistoryType;
+import com.workhub.global.history.HistoryRecorder;
 import com.workhub.project.service.ProjectService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +21,7 @@ public class CreateCsPostService {
 
     private final CsPostService csPostService;
     private final ProjectService projectService;
+    private final HistoryRecorder historyRecorder;
 
     /**
      * CS POST를 작성한다.
@@ -42,6 +46,8 @@ public class CreateCsPostService {
 
             csPostService.saveAllFiles(files);
         }
+
+        historyRecorder.recordHistory(HistoryType.CS_POST, csPost.getCsPostId(), ActionType.CREATE, csPost.getTitle());
 
         return CsPostResponse.from(csPost, files);
     }

@@ -6,6 +6,7 @@ import com.workhub.cs.dto.csPost.CsPostResponse;
 import com.workhub.cs.entity.CsPost;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
+import com.workhub.global.history.HistoryRecorder;
 import com.workhub.project.entity.Project;
 import com.workhub.project.entity.Status;
 import com.workhub.project.service.ProjectService;
@@ -34,6 +35,9 @@ class CreateCsPostServiceTest {
 
     @Mock
     private ProjectService projectService;
+
+    @Mock
+    private HistoryRecorder historyRecorder;
 
     @InjectMocks
     private CreateCsPostService createCsPostService;

@@ -6,6 +6,7 @@ import com.workhub.cs.entity.CsQna;
 import com.workhub.cs.service.CsPostAccessValidator;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
+import com.workhub.global.history.HistoryRecorder;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,6 +27,9 @@ class UpdateCsQnaServiceTest {
 
     @Mock
     private CsPostAccessValidator csPostAccessValidator;
+
+    @Mock
+    private HistoryRecorder historyRecorder;
 
     @InjectMocks
     private UpdateCsQnaService updateCsQnaService;

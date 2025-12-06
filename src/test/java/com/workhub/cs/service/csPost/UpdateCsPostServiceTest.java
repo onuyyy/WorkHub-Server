@@ -7,6 +7,7 @@ import com.workhub.cs.entity.CsPostStatus;
 import com.workhub.cs.service.CsPostAccessValidator;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
+import com.workhub.global.history.HistoryRecorder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -32,6 +33,9 @@ class UpdateCsPostServiceTest {
 
     @Mock
     private CsPostAccessValidator csPostAccessValidator;
+
+    @Mock
+    private HistoryRecorder historyRecorder;
 
     @InjectMocks
     private UpdateCsPostService updateCsPostService;
