@@ -61,4 +61,15 @@ public class ProjectNodeController implements ProjectNodeApi {
 
         return ApiResponse.success("노드 순서 변경 성공");
     }
+
+    @Override
+    @PutMapping("{nodeId}")
+    public ResponseEntity<ApiResponse<CreateNodeResponse>> updateNode(@PathVariable Long projectId,
+                                                                      @PathVariable Long nodeId,
+                                                                      @RequestBody UpdateNodeRequest request) {
+
+        CreateNodeResponse response = updateProjectNodeService.updateNode(projectId, nodeId, request);
+
+        return ApiResponse.success(response);
+    }
 }

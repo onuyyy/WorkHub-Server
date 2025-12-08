@@ -6,9 +6,7 @@ import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import com.workhub.global.history.HistoryRecorder;
 import com.workhub.global.util.StatusValidator;
-import com.workhub.projectNode.dto.NodeSnapshot;
-import com.workhub.projectNode.dto.UpdateNodOrderRequest;
-import com.workhub.projectNode.dto.UpdateNodeStatusRequest;
+import com.workhub.projectNode.dto.*;
 import com.workhub.projectNode.entity.ProjectNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -77,6 +75,23 @@ public class UpdateProjectNodeService {
                 );
             }
         });
-
     }
+
+    /**
+     * 프로젝트 노드의 정보를 수정합니다.
+     * @param projectId 프로젝트 ID
+     * @param nodeId  노드 ID
+     * @param request  수정 요청 정보
+     */
+    public CreateNodeResponse updateNode(Long projectId, Long nodeId, UpdateNodeRequest request) {
+
+        ProjectNode original = projectNodeService.findByIdAndProjectId(nodeId, projectId);
+        NodeSnapshot snapshot = NodeSnapshot.from(original);
+
+        original.update(request);
+        historyRecorder.recordHistory(HistoryType.PROJECT_NODE, nodeId, ActionType.UPDATE,snapshot);
+
+        return CreateNodeResponse.from(original);
+    }
+    
 }

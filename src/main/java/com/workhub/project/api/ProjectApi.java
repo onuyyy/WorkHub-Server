@@ -14,7 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-@Tag(name = "Project", description = "프로젝트 관리 API")
+@Tag(name = "프로젝트", description = "프로젝트 관리 API")
 public interface ProjectApi {
 
     @Operation(

@@ -1,11 +1,7 @@
 package com.workhub.projectNode.api;
 
 import com.workhub.global.response.ApiResponse;
-import com.workhub.projectNode.dto.CreateNodeRequest;
-import com.workhub.projectNode.dto.CreateNodeResponse;
-import com.workhub.projectNode.dto.NodeListResponse;
-import com.workhub.projectNode.dto.UpdateNodOrderRequest;
-import com.workhub.projectNode.dto.UpdateNodeStatusRequest;
+import com.workhub.projectNode.dto.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -17,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Tag(name = "Project Node", description = "프로젝트 노드 관리 API")
+@Tag(name = "프로젝트 노드", description = "프로젝트 노드 관리 API")
 public interface ProjectNodeApi {
 
     @Operation(
@@ -146,5 +142,39 @@ public interface ProjectNodeApi {
 
             @Parameter(description = "노드 순서 변경 요청 리스트 (각 노드의 ID와 새로운 순서)", required = true)
             @RequestBody List<UpdateNodOrderRequest> request
+    );
+
+    @Operation(
+            summary = "프로젝트 노드 정보 수정",
+            description = "프로젝트 노드의 내용을 수정합니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "노드 정보 변경 성공"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "잘못된 요청 (필수 항목 누락, 유효하지 않은 순서 값 등)"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "프로젝트 또는 노드를 찾을 수 없음"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "500",
+                    description = "서버 오류 (정보 변경 실패, 히스토리 저장 실패 등)"
+            )
+    })
+    @PutMapping("{nodeId}")
+    public ResponseEntity<ApiResponse<CreateNodeResponse>> updateNode(
+            @Parameter(description = "프로젝트 ID", required = true)
+            @PathVariable Long projectId,
+
+            @Parameter(description = "프로젝트 노드 ID", required = true)
+            @PathVariable Long nodeId,
+
+            @Parameter(description = "프로젝트 노드 수정 요청 정보", required = true)
+            @RequestBody UpdateNodeRequest request
     );
 }

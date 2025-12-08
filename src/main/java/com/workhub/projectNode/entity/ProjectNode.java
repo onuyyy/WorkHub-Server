@@ -2,6 +2,7 @@ package com.workhub.projectNode.entity;
 
 import com.workhub.global.entity.BaseTimeEntity;
 import com.workhub.projectNode.dto.CreateNodeRequest;
+import com.workhub.projectNode.dto.UpdateNodeRequest;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -72,6 +73,24 @@ public class ProjectNode extends BaseTimeEntity {
 
     public void updateNodeOrder(Integer nodeOrder) {
         this.nodeOrder = nodeOrder;
+    }
+
+    public void update(UpdateNodeRequest request) {
+        if(request.title() != null){
+            this.title = request.title();
+        }
+        if(request.description() != null){
+            this.description = request.description();
+        }
+        if(request.startDate() != null){
+            this.contractStartDate = request.startDate();
+        }
+        if(request.endDate() != null){
+            this.contractEndDate = request.endDate();
+        }
+        if(request.priority() != null){
+            this.priority = request.priority();
+        }
     }
 
     public static ProjectNode of(Long projectId, CreateNodeRequest request, Integer nodeOrder) {
