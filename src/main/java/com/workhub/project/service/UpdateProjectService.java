@@ -50,49 +50,12 @@ public class UpdateProjectService {
     public ProjectResponse updateProject(Long projectId, CreateProjectRequest request) {
 
         Project original = projectService.findProjectById(projectId);
-
-        recordFieldChangesIfNeeded(original, request);
-        original.update(request);
-
-        return ProjectResponse.from(original);
-    }
-
-    /**
-     * 필드 변경 감지 및 히스토리 기록
-     */
-    private void recordFieldChangesIfNeeded(Project original, CreateProjectRequest request) {
-
-        Long projectId = original.getProjectId();
         ProjectHistorySnapshot snapshot = ProjectHistorySnapshot.from(original);
 
-        // projectTitle 변경 체크
-        if (request.projectName() != null &&
-                !request.projectName().equals(original.getProjectTitle())) {
-        }
+        original.update(request);
+        historyRecorder.recordHistory(HistoryType.PROJECT, projectId, ActionType.UPDATE, snapshot);
 
-        // projectDescription 변경 체크
-        if (request.projectDescription() != null &&
-                !request.projectDescription().equals(original.getProjectDescription())) {
-        }
-
-        // contractStartDate 변경 체크
-        if (request.starDate() != null &&
-                !request.starDate().equals(original.getContractStartDate())) {
-        }
-
-        // contractEndDate 변경 체크
-        if (request.endDate() != null &&
-                !request.endDate().equals(original.getContractEndDate())) {
-        }
-
-        // clientCompanyId 변경 체크
-        if (request.company() != null &&
-                !request.company().equals(original.getClientCompanyId())) {
-        }
-
-        historyRecorder.recordHistory(
-                HistoryType.PROJECT, projectId, ActionType.UPDATE, snapshot
-        );
+        return ProjectResponse.from(original);
     }
 
 }

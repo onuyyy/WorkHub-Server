@@ -13,7 +13,8 @@ public record ProjectResponse(
         String projectDescription,
         Status status,
         LocalDate contractStartDate,
-        LocalDate contractEndDate
+        LocalDate contractEndDate,
+        Long company
 ) {
     public static ProjectResponse from(Project project) {
         return ProjectResponse.builder()
@@ -23,6 +24,7 @@ public record ProjectResponse(
                 .status(project.getStatus())
                 .contractStartDate(project.getContractStartDate())
                 .contractEndDate(project.getContractEndDate())
+                .company(project.getClientCompanyId())
                 .build();
     }
 }

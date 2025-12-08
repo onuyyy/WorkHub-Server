@@ -13,7 +13,8 @@ public record ProjectHistorySnapshot(
         String projectDescription,
         Status status,
         LocalDate contractStartDate,
-        LocalDate contractEndDate
+        LocalDate contractEndDate,
+        Long company
 ) {
     public static  ProjectHistorySnapshot from(Project project) {
         return ProjectHistorySnapshot.builder()
@@ -23,6 +24,7 @@ public record ProjectHistorySnapshot(
                 .status(project.getStatus())
                 .contractStartDate(project.getContractStartDate())
                 .contractEndDate(project.getContractEndDate())
+                .company(project.getClientCompanyId())
                 .build();
     }
 }

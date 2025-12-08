@@ -137,7 +137,7 @@ class UpdateProjectServiceTest {
     }
 
     @Test
-    @DisplayName("프로젝트 정보를 정상적으로 업데이트하고 변경된 필드마다 히스토리를 기록한다")
+    @DisplayName("프로젝트 정보를 정상적으로 업데이트하고 변경 전 상태를 히스토리에 기록한다")
     void givenValidUpdateRequest_whenUpdateProject_thenSuccessAndRecordHistory() {
         // given
         Long projectId = 1L;
@@ -152,6 +152,8 @@ class UpdateProjectServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.projectTitle()).isEqualTo("수정된 프로젝트");
         assertThat(result.projectDescription()).isEqualTo("수정된 설명");
+        assertThat(result.contractStartDate()).isEqualTo(LocalDate.of(2024, 2, 1));
+        assertThat(result.contractEndDate()).isEqualTo(LocalDate.of(2024, 11, 30));
 
         assertThat(mockProject.getProjectTitle()).isEqualTo("수정된 프로젝트");
         assertThat(mockProject.getProjectDescription()).isEqualTo("수정된 설명");
@@ -161,7 +163,7 @@ class UpdateProjectServiceTest {
 
         verify(projectService).findProjectById(projectId);
 
-        // 실제 구현은 한 번만 히스토리를 기록 (변경 전 전체 스냅샷)
+        // 변경 전 전체 스냅샷을 한 번만 히스토리에 기록
         ArgumentCaptor<ProjectHistorySnapshot> snapshotCaptor = ArgumentCaptor.forClass(ProjectHistorySnapshot.class);
         verify(historyRecorder, times(1)).recordHistory(
                 eq(HistoryType.PROJECT),
@@ -172,12 +174,16 @@ class UpdateProjectServiceTest {
 
         ProjectHistorySnapshot capturedSnapshot = snapshotCaptor.getValue();
         assertThat(capturedSnapshot.projectTitle()).isEqualTo("기존 프로젝트");
+        assertThat(capturedSnapshot.projectDescription()).isEqualTo("기존 설명");
         assertThat(capturedSnapshot.status()).isEqualTo(Status.IN_PROGRESS);
+        assertThat(capturedSnapshot.contractStartDate()).isEqualTo(LocalDate.of(2024, 1, 1));
+        assertThat(capturedSnapshot.contractEndDate()).isEqualTo(LocalDate.of(2024, 12, 31));
+        assertThat(capturedSnapshot.company()).isEqualTo(100L);
     }
 
     @Test
-    @DisplayName("일부 필드만 변경 시 해당 필드만 히스토리에 기록된다")
-    void givenPartialUpdateRequest_whenUpdateProject_thenRecordOnlyChangedFields() {
+    @DisplayName("일부 필드만 변경 시에도 변경 전 전체 상태를 히스토리에 기록한다")
+    void givenPartialUpdateRequest_whenUpdateProject_thenRecordCompleteSnapshot() {
         // given
         Long projectId = 1L;
 
@@ -205,7 +211,7 @@ class UpdateProjectServiceTest {
 
         verify(projectService).findProjectById(projectId);
 
-        // 실제 구현은 변경 여부와 무관하게 한 번만 히스토리 기록
+        // 변경 전 전체 스냅샷을 한 번만 히스토리에 기록
         ArgumentCaptor<ProjectHistorySnapshot> snapshotCaptor = ArgumentCaptor.forClass(ProjectHistorySnapshot.class);
         verify(historyRecorder, times(1)).recordHistory(
                 eq(HistoryType.PROJECT),
@@ -280,8 +286,8 @@ class UpdateProjectServiceTest {
     }
 
     @Test
-    @DisplayName("프로젝트 제목만 변경 시 제목 히스토리만 기록된다")
-    void givenOnlyTitleChange_whenUpdateProject_thenRecordOnlyTitleHistory() {
+    @DisplayName("프로젝트 제목만 변경 시에도 변경 전 전체 상태를 히스토리에 기록한다")
+    void givenOnlyTitleChange_whenUpdateProject_thenRecordCompleteSnapshot() {
         // given
         Long projectId = 1L;
 
@@ -307,7 +313,7 @@ class UpdateProjectServiceTest {
 
         verify(projectService).findProjectById(projectId);
 
-        // 실제 구현은 한 번만 히스토리 기록 (변경 전 전체 스냅샷)
+        // 변경 전 전체 스냅샷을 한 번만 히스토리에 기록
         ArgumentCaptor<ProjectHistorySnapshot> snapshotCaptor = ArgumentCaptor.forClass(ProjectHistorySnapshot.class);
         verify(historyRecorder, times(1)).recordHistory(
                 eq(HistoryType.PROJECT),
@@ -321,8 +327,8 @@ class UpdateProjectServiceTest {
     }
 
     @Test
-    @DisplayName("계약 기간만 변경 시 시작일과 종료일 히스토리가 기록된다")
-    void givenOnlyDateChange_whenUpdateProject_thenRecordDateHistory() {
+    @DisplayName("계약 기간만 변경 시에도 변경 전 전체 상태를 히스토리에 기록한다")
+    void givenOnlyDateChange_whenUpdateProject_thenRecordCompleteSnapshot() {
         // given
         Long projectId = 1L;
 
@@ -348,7 +354,7 @@ class UpdateProjectServiceTest {
 
         verify(projectService).findProjectById(projectId);
 
-        // 실제 구현은 한 번만 히스토리 기록 (변경 전 전체 스냅샷)
+        // 변경 전 전체 스냅샷을 한 번만 히스토리에 기록
         ArgumentCaptor<ProjectHistorySnapshot> snapshotCaptor = ArgumentCaptor.forClass(ProjectHistorySnapshot.class);
         verify(historyRecorder, times(1)).recordHistory(
                 eq(HistoryType.PROJECT),
@@ -363,8 +369,8 @@ class UpdateProjectServiceTest {
     }
 
     @Test
-    @DisplayName("고객사만 변경 시 고객사 ID 히스토리가 기록된다")
-    void givenOnlyCompanyChange_whenUpdateProject_thenRecordCompanyHistory() {
+    @DisplayName("고객사만 변경 시에도 변경 전 전체 상태를 히스토리에 기록한다")
+    void givenOnlyCompanyChange_whenUpdateProject_thenRecordCompleteSnapshot() {
         // given
         Long projectId = 1L;
 
@@ -389,7 +395,7 @@ class UpdateProjectServiceTest {
 
         verify(projectService).findProjectById(projectId);
 
-        // 실제 구현은 한 번만 히스토리 기록 (변경 전 전체 스냅샷)
+        // 변경 전 전체 스냅샷을 한 번만 히스토리에 기록
         ArgumentCaptor<ProjectHistorySnapshot> snapshotCaptor = ArgumentCaptor.forClass(ProjectHistorySnapshot.class);
         verify(historyRecorder, times(1)).recordHistory(
                 eq(HistoryType.PROJECT),
@@ -398,8 +404,48 @@ class UpdateProjectServiceTest {
                 snapshotCaptor.capture()
         );
 
-        // 변경 전 스냅샷에는 기존 고객사 ID가 포함되어 있지 않음 (ProjectHistorySnapshot에 clientCompanyId 필드 없음)
         ProjectHistorySnapshot capturedSnapshot = snapshotCaptor.getValue();
         assertThat(capturedSnapshot.projectTitle()).isEqualTo("기존 프로젝트");
+        assertThat(capturedSnapshot.company()).isEqualTo(100L); // 변경 전 고객사 ID
+    }
+
+    @Test
+    @DisplayName("프로젝트 업데이트 시 모든 메서드가 순차적으로 호출된다")
+    void givenUpdateRequest_whenUpdateProject_thenAllMethodsCalledInOrder() {
+        // given
+        Long projectId = 1L;
+
+        when(projectService.findProjectById(projectId)).thenReturn(mockProject);
+        lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
+
+        // when
+        updateProjectService.updateProject(projectId, updateRequest);
+
+        // then
+        var inOrder = inOrder(projectService, historyRecorder);
+        inOrder.verify(projectService).findProjectById(projectId);
+        inOrder.verify(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
+    }
+
+    @Test
+    @DisplayName("프로젝트 업데이트 후 반환된 응답에 모든 필드가 포함된다")
+    void givenUpdateRequest_whenUpdateProject_thenReturnCompleteResponse() {
+        // given
+        Long projectId = 1L;
+
+        when(projectService.findProjectById(projectId)).thenReturn(mockProject);
+        lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
+
+        // when
+        ProjectResponse result = updateProjectService.updateProject(projectId, updateRequest);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.projectId()).isEqualTo(projectId);
+        assertThat(result.projectTitle()).isEqualTo("수정된 프로젝트");
+        assertThat(result.projectDescription()).isEqualTo("수정된 설명");
+        assertThat(result.status()).isEqualTo(Status.IN_PROGRESS);
+        assertThat(result.contractStartDate()).isEqualTo(LocalDate.of(2024, 2, 1));
+        assertThat(result.contractEndDate()).isEqualTo(LocalDate.of(2024, 11, 30));
     }
 }
