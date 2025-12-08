@@ -19,7 +19,6 @@ import java.time.LocalDateTime;
 public class CsQnaHistory extends BaseHistoryEntity {
     public static CsQnaHistory of(Long targetId, ActionType actionType, String beforeData,
                                    Long originalCreator) {
-
         return CsQnaHistory.builder()
                 .targetId(targetId)
                 .actionType(actionType)

@@ -1,9 +1,13 @@
 package com.workhub.cs.service.csQna;
 
+import com.workhub.cs.dto.csQna.CsQnaHistorySnapShot;
 import com.workhub.cs.entity.CsQna;
 import com.workhub.cs.repository.csQna.CsQnaRepository;
+import com.workhub.global.entity.ActionType;
+import com.workhub.global.entity.HistoryType;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
+import com.workhub.global.history.HistoryRecorder;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -19,6 +23,7 @@ import java.util.Objects;
 public class CsQnaService {
 
     private final CsQnaRepository csQnaRepository;
+    private final HistoryRecorder historyRecorder;
 
     /**
      * CS QNA 엔티티를 저장한다.
@@ -75,5 +80,16 @@ public class CsQnaService {
      */
     public List<CsQna> findByParentQnaId(Long parentQnaId) {
         return csQnaRepository.findByParentQnaId(parentQnaId);
+    }
+
+    /**
+     * 스냅샷으로 변환 후 히스토리 엔티티에 저장
+     * @param CsQna
+     * @param csPostId
+     * @param actionType
+     */
+    public void snapShotAndRecordHistory(CsQna CsQna, Long csPostId, ActionType actionType) {
+        CsQnaHistorySnapShot snapshot = CsQnaHistorySnapShot.from(CsQna);
+        historyRecorder.recordHistory(HistoryType.CS_QNA, csPostId, actionType, snapshot);
     }
 }

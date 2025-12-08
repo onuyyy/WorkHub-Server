@@ -5,10 +5,8 @@ import com.workhub.cs.dto.csQna.CsQnaResponse;
 import com.workhub.cs.entity.CsQna;
 import com.workhub.cs.service.CsPostAccessValidator;
 import com.workhub.global.entity.ActionType;
-import com.workhub.global.entity.HistoryType;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
-import com.workhub.global.history.HistoryRecorder;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,7 +18,6 @@ public class CreateCsQnaService {
 
     private final CsQnaService csQnaService;
     private final CsPostAccessValidator csPostAccessValidator;
-    private final HistoryRecorder historyRecorder;
 
     public CsQnaResponse create(Long projectId, Long csPostId, Long userId, CsQnaRequest csQnaRequest) {
 
@@ -32,7 +29,7 @@ public class CreateCsQnaService {
         CsQna csQna = CsQna.of(csPostId, userId, parentQnaId, csQnaRequest.qnaContent());
         csQna = csQnaService.save(csQna);
 
-        historyRecorder.recordHistory(HistoryType.CS_QNA, csQna.getCsQnaId(), ActionType.CREATE, csQna.getQnaContent());
+        csQnaService.snapShotAndRecordHistory(csQna, csQna.getCsQnaId(), ActionType.CREATE);
 
         return CsQnaResponse.from(csQna);
     }

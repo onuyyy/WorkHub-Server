@@ -37,6 +37,7 @@ public class CsPost extends BaseTimeEntity {
     @Column(name = "cs_post_status")
     private CsPostStatus csPostStatus;
 
+
     @Column(name = "project_id")
     private Long projectId;
 

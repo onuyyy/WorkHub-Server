@@ -18,8 +18,7 @@ import java.time.LocalDateTime;
 @Entity
 public class CsPostHistory extends BaseHistoryEntity {
     public static CsPostHistory of(Long targetId, ActionType actionType, String beforeData,
-                                    Long originalCreator) {
-
+                                                Long originalCreator) {
         return CsPostHistory.builder()
                 .targetId(targetId)
                 .actionType(actionType)

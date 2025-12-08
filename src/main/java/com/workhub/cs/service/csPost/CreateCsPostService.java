@@ -5,7 +5,6 @@ import com.workhub.cs.dto.csPost.CsPostResponse;
 import com.workhub.cs.entity.CsPost;
 import com.workhub.cs.entity.CsPostFile;
 import com.workhub.global.entity.ActionType;
-import com.workhub.global.entity.HistoryType;
 import com.workhub.global.history.HistoryRecorder;
 import com.workhub.project.service.ProjectService;
 import jakarta.transaction.Transactional;
@@ -47,7 +46,7 @@ public class CreateCsPostService {
             csPostService.saveAllFiles(files);
         }
 
-        historyRecorder.recordHistory(HistoryType.CS_POST, csPost.getCsPostId(), ActionType.CREATE, csPost.getTitle());
+        csPostService.snapShotAndRecordHistory(csPost, csPost.getCsPostId(), ActionType.CREATE);
 
         return CsPostResponse.from(csPost, files);
     }

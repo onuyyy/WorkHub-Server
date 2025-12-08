@@ -3,9 +3,9 @@ package com.workhub.cs.service.csQna;
 import com.workhub.cs.entity.CsPost;
 import com.workhub.cs.entity.CsQna;
 import com.workhub.cs.service.CsPostAccessValidator;
+import com.workhub.global.entity.ActionType;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
-import com.workhub.global.history.HistoryRecorder;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,9 +27,6 @@ class DeleteCsQnaServiceTest {
 
     @Mock
     private CsPostAccessValidator csPostAccessValidator;
-
-    @Mock
-    private HistoryRecorder historyRecorder;
 
     @InjectMocks
     private DeleteCsQnaService deleteCsQnaService;
@@ -68,6 +65,7 @@ class DeleteCsQnaServiceTest {
         verify(csPostAccessValidator).validateProjectAndGetPost(projectId, csPostId);
         verify(csQnaService).findByCsQnaAndMatchedUserId(csQnaId, userId);
         verify(csQnaService).findByParentQnaId(csQnaId);
+        verify(csQnaService).snapShotAndRecordHistory(csQna, csQnaId, ActionType.DELETE);
         assertThat(csQna.isDeleted()).isTrue();
     }
 
@@ -135,6 +133,10 @@ class DeleteCsQnaServiceTest {
         verify(csQnaService).findByParentQnaId(20L);
         verify(csQnaService).findByParentQnaId(21L);
         verify(csQnaService).findByParentQnaId(30L);
+        verify(csQnaService).snapShotAndRecordHistory(parentComment, parentId, ActionType.DELETE);
+        verify(csQnaService).snapShotAndRecordHistory(childComment1, 20L, ActionType.DELETE);
+        verify(csQnaService).snapShotAndRecordHistory(childComment2, 21L, ActionType.DELETE);
+        verify(csQnaService).snapShotAndRecordHistory(grandchildComment, 30L, ActionType.DELETE);
 
         assertThat(parentComment.isDeleted()).isTrue();
         assertThat(childComment1.isDeleted()).isTrue();

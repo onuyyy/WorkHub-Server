@@ -1,12 +1,16 @@
 package com.workhub.cs.service.csPost;
 
+import com.workhub.cs.dto.csPost.CsPostHistorySnapshot;
 import com.workhub.cs.dto.csPost.CsPostSearchRequest;
 import com.workhub.cs.entity.CsPost;
 import com.workhub.cs.entity.CsPostFile;
 import com.workhub.cs.repository.csPost.CsPostFileRepository;
 import com.workhub.cs.repository.csPost.CsPostRepository;
+import com.workhub.global.entity.ActionType;
+import com.workhub.global.entity.HistoryType;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
+import com.workhub.global.history.HistoryRecorder;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -22,6 +26,7 @@ public class CsPostService {
 
     private final CsPostRepository csPostRepository;
     private final CsPostFileRepository csPostFileRepository;
+    private final HistoryRecorder historyRecorder;
 
     /**
      * CS POST 엔티티를 저장한다.
@@ -61,5 +66,16 @@ public class CsPostService {
 
     public Page<CsPost> findCsPosts(CsPostSearchRequest searchType, Pageable pageable) {
         return csPostRepository.findCsPosts(searchType, pageable);
+    }
+
+    /**
+     * 스냅샷으로 변환 후 히스토리 엔티티에 저장
+     * @param csPost
+     * @param csPostId
+     * @param actionType
+     */
+    public void snapShotAndRecordHistory(CsPost csPost, Long csPostId, ActionType actionType) {
+        CsPostHistorySnapshot snapshot = CsPostHistorySnapshot.from(csPost);
+        historyRecorder.recordHistory(HistoryType.CS_POST, csPostId, actionType, snapshot);
     }
 }
