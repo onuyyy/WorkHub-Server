@@ -1,4 +1,4 @@
-package com.workhub.post.record.response;
+package com.workhub.post.dto.post.response;
 
 import com.workhub.post.entity.Post;
 import com.workhub.post.entity.PostType;

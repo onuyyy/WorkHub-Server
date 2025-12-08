@@ -1,4 +1,4 @@
-package com.workhub.post.service;
+package com.workhub.post.service.post;
 
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
@@ -6,10 +6,10 @@ import com.workhub.post.entity.Post;
 import com.workhub.post.entity.PostFile;
 import com.workhub.post.entity.PostLink;
 import com.workhub.post.entity.PostType;
-import com.workhub.post.repository.PostFileRepository;
-import com.workhub.post.repository.PostLinkRepository;
-import com.workhub.post.repository.PostRepository;
-import com.workhub.post.repository.PostSpecifications;
+import com.workhub.post.repository.post.PostFileRepository;
+import com.workhub.post.repository.post.PostLinkRepository;
+import com.workhub.post.repository.post.PostRepository;
+import com.workhub.post.repository.post.PostSpecifications;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

@@ -1,4 +1,4 @@
-package com.workhub.post.record.request;
+package com.workhub.post.dto.post.request;
 
 import jakarta.validation.constraints.NotBlank;
 

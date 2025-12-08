@@ -1,4 +1,4 @@
-package com.workhub.post.record.response;
+package com.workhub.post.dto.post.response;
 
 import org.springframework.data.domain.Page;
 

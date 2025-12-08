@@ -1,4 +1,4 @@
-package com.workhub.post.repository;
+package com.workhub.post.repository.post;
 
 import com.workhub.global.repository.BaseHistoryRepository;
 import com.workhub.post.entity.PostHistory;

@@ -1,8 +1,8 @@
 package com.workhub.post.entity;
 
 import com.workhub.global.entity.BaseTimeEntity;
-import com.workhub.post.record.request.PostRequest;
-import com.workhub.post.record.request.PostUpdateRequest;
+import com.workhub.post.dto.post.request.PostRequest;
+import com.workhub.post.dto.post.request.PostUpdateRequest;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

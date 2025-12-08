@@ -1,4 +1,4 @@
-package com.workhub.post.service;
+package com.workhub.post.service.post;
 
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
@@ -7,7 +7,7 @@ import com.workhub.global.entity.HistoryType;
 import com.workhub.global.history.HistoryRecorder;
 import com.workhub.post.entity.Post;
 import com.workhub.post.entity.PostFile;
-import com.workhub.post.record.history.PostHistorySnapshot;
+import com.workhub.post.dto.post.PostHistorySnapshot;
 import com.workhub.post.entity.PostLink;
 import com.workhub.project.service.ProjectService;
 import jakarta.transaction.Transactional;

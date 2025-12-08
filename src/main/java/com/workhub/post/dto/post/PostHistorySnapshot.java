@@ -1,4 +1,4 @@
-package com.workhub.post.record.history;
+package com.workhub.post.dto.post;
 
 import com.workhub.post.entity.PostType;
 

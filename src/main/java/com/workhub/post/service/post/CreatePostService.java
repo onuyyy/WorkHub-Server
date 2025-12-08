@@ -1,4 +1,4 @@
-package com.workhub.post.service;
+package com.workhub.post.service.post;
 
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
@@ -8,11 +8,11 @@ import com.workhub.global.history.HistoryRecorder;
 import com.workhub.post.entity.Post;
 import com.workhub.post.entity.PostFile;
 import com.workhub.post.entity.PostLink;
-import com.workhub.post.record.history.PostHistorySnapshot;
-import com.workhub.post.record.request.PostFileRequest;
-import com.workhub.post.record.request.PostLinkRequest;
-import com.workhub.post.record.request.PostRequest;
-import com.workhub.post.record.response.PostResponse;
+import com.workhub.post.dto.post.PostHistorySnapshot;
+import com.workhub.post.dto.post.request.PostFileRequest;
+import com.workhub.post.dto.post.request.PostLinkRequest;
+import com.workhub.post.dto.post.request.PostRequest;
+import com.workhub.post.dto.post.response.PostResponse;
 import com.workhub.project.service.ProjectService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;

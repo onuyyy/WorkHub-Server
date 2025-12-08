@@ -7,5 +7,6 @@ public enum HistoryType {
     CS_QNA,
     PROJECT_CLIENT_MEMBER,
     PROJECT_DEV_MEMBER,
-    POST
+    POST,
+    POST_COMMENT
 }

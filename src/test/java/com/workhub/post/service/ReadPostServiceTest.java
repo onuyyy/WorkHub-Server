@@ -2,10 +2,12 @@ package com.workhub.post.service;
 
 import com.workhub.post.entity.Post;
 import com.workhub.post.entity.PostType;
-import com.workhub.post.record.response.PostResponse;
-import com.workhub.post.repository.PostFileRepository;
-import com.workhub.post.repository.PostLinkRepository;
-import com.workhub.post.repository.PostRepository;
+import com.workhub.post.dto.post.response.PostResponse;
+import com.workhub.post.repository.post.PostFileRepository;
+import com.workhub.post.repository.post.PostLinkRepository;
+import com.workhub.post.repository.post.PostRepository;
+import com.workhub.post.service.post.PostService;
+import com.workhub.post.service.post.ReadPostService;
 import com.workhub.project.entity.Project;
 import com.workhub.project.entity.Status;
 import com.workhub.project.service.ProjectService;

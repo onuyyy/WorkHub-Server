@@ -1,12 +1,12 @@
-package com.workhub.post.service;
+package com.workhub.post.service.post;
 
 import com.workhub.post.entity.Post;
 import com.workhub.post.entity.PostFile;
 import com.workhub.post.entity.PostLink;
 import com.workhub.post.entity.PostType;
-import com.workhub.post.record.response.PostPageResponse;
-import com.workhub.post.record.response.PostResponse;
-import com.workhub.post.record.response.PostThreadResponse;
+import com.workhub.post.dto.post.response.PostPageResponse;
+import com.workhub.post.dto.post.response.PostResponse;
+import com.workhub.post.dto.post.response.PostThreadResponse;
 import com.workhub.project.service.ProjectService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;

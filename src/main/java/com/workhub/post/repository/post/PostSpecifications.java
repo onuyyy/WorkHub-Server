@@ -1,4 +1,4 @@
-package com.workhub.post.repository;
+package com.workhub.post.repository.post;
 
 import com.workhub.post.entity.Post;
 import com.workhub.post.entity.PostType;
