@@ -29,7 +29,7 @@ public class ApiResponse<T> {
                 .body(new ApiResponse<>(true, "CREATED", message, data));
     }
 
-    public static ApiResponse<Object> error(String code, String message) {
+    public static ApiResponse<Void> error(String code, String message) {
         return new ApiResponse<>(false, code, message, null);
     }
 
