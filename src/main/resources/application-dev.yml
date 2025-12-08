@@ -1,4 +1,13 @@
 spring:
+  cloud:
+    aws:
+      region:
+        static: ap-northeast-2
+      credentials:
+        access-key: ${AWS_ACCESS_KEY_ID}
+        secret-key: ${AWS_SECRET_ACCESS_KEY}
+      s3:
+        bucket: bucket-workhub
   # Database Configuration
   datasource:
     url: jdbc:postgresql://workhub-rds-dev.che6yu200xcs.ap-northeast-2.rds.amazonaws.com:5432/workhub
