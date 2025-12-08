@@ -1,6 +1,7 @@
 package com.workhub.cs.service.csPost;
 
 import com.workhub.cs.entity.CsPost;
+import com.workhub.cs.entity.CsPostFile;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import com.workhub.global.history.HistoryRecorder;
@@ -14,6 +15,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -35,6 +38,7 @@ class DeleteCsPostServiceTest {
     private DeleteCsPostService deleteCsPostService;
 
     private CsPost mockSaved;
+    private CsPostFile mockFile;
 
     @BeforeEach
     void init() {
@@ -44,6 +48,13 @@ class DeleteCsPostServiceTest {
                 .userId(2L)
                 .title("문의 제목")
                 .content("문의 내용")
+                .build();
+
+        mockFile = CsPostFile.builder()
+                .csPostFileId(10L)
+                .csPostId(mockSaved.getCsPostId())
+                .fileName("첨부파일")
+                .fileOrder(1)
                 .build();
     }
 
@@ -55,12 +66,15 @@ class DeleteCsPostServiceTest {
 
         mockProjectLookup(projectId);
         when(csPostService.findById(csPostId)).thenReturn(mockSaved);
+        when(csPostService.findFilesByCsPostId(csPostId)).thenReturn(List.of(mockFile));
 
         deleteCsPostService.delete(projectId, csPostId);
 
         assertThat(mockSaved.getDeletedAt()).isNotNull();
+        assertThat(mockFile.isDeleted()).isTrue();
         verify(projectService).validateCompletedProject(projectId);
         verify(csPostService).findById(csPostId);
+        verify(csPostService).findFilesByCsPostId(csPostId);
     }
 
     @Test

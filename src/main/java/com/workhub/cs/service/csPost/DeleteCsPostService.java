@@ -1,6 +1,7 @@
 package com.workhub.cs.service.csPost;
 
 import com.workhub.cs.entity.CsPost;
+import com.workhub.cs.entity.CsPostFile;
 import com.workhub.global.entity.ActionType;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
@@ -9,6 +10,8 @@ import com.workhub.project.service.ProjectService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -40,10 +43,21 @@ public class DeleteCsPostService {
 
         csPost.validateProject(projectId);
 
+        List<CsPostFile> csPostFiles = csPostService.findFilesByCsPostId(csPostId);
+
         csPostService.snapShotAndRecordHistory(csPost, csPost.getCsPostId(), ActionType.DELETE);
 
         csPost.markDeleted();
+        markFilesDeleted(csPostFiles);
 
         return csPost.getCsPostId();
+    }
+
+    private void markFilesDeleted(List<CsPostFile> csPostFiles) {
+        for (CsPostFile csPostFile : csPostFiles) {
+            if (!csPostFile.isDeleted()) {
+                csPostFile.markDeleted();
+            }
+        }
     }
 }
