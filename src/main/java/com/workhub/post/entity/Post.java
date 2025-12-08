@@ -38,10 +38,6 @@ public class Post extends BaseTimeEntity {
     @Column(name = "content", columnDefinition = "TEXT")
     private String content;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "hashtag")
-    private HashTag hashtag;
-
     @Column(name = "post_ip", length = 20)
     private String postIp;
 
@@ -63,7 +59,6 @@ public class Post extends BaseTimeEntity {
                 .title(request.title())
                 .content(request.content())
                 .postIp(request.postIp())
-                .hashtag(request.hashTag())
                 .userId(userId)
                 .projectNodeId(projectNodeId)
                 .parentPostId(parentPostId)
@@ -75,7 +70,6 @@ public class Post extends BaseTimeEntity {
         this.content = request.content();
         this.type = request.postType();
         this.postIp = request.postIp();
-        this.hashtag = request.hashTag();
     }
 
     public boolean isDeleted() {

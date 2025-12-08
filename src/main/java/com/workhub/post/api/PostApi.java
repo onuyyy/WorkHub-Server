@@ -2,7 +2,6 @@ package com.workhub.post.api;
 
 import com.workhub.global.response.ApiResponse;
 import com.workhub.global.security.CustomUserDetails;
-import com.workhub.post.entity.HashTag;
 import com.workhub.post.entity.PostType;
 import com.workhub.post.record.request.PostRequest;
 import com.workhub.post.record.request.PostUpdateRequest;
@@ -62,8 +61,7 @@ public interface PostApi {
                     @Parameter(name = "projectId", description = "프로젝트 식별자", in = ParameterIn.PATH, required = true),
                     @Parameter(name = "nodeId", description = "프로젝트 단계 식별자", in = ParameterIn.PATH, required = true),
                     @Parameter(name = "keyword", description = "제목/내용 검색 키워드", in = ParameterIn.QUERY, required = false),
-                    @Parameter(name = "postType", description = "게시글 타입 필터", in = ParameterIn.QUERY, required = false),
-                    @Parameter(name = "hashTag", description = "해시태그 필터", in = ParameterIn.QUERY, required = false)
+                    @Parameter(name = "postType", description = "게시글 타입 필터", in = ParameterIn.QUERY, required = false)
             }
     )
     @ApiResponses({
@@ -82,7 +80,6 @@ public interface PostApi {
             @PathVariable Long nodeId,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) PostType postType,
-            @RequestParam(required = false) HashTag hashTag,
             @ParameterObject @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails
     );

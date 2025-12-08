@@ -1,6 +1,5 @@
 package com.workhub.post.record.response;
 
-import com.workhub.post.entity.HashTag;
 import com.workhub.post.entity.Post;
 import com.workhub.post.entity.PostType;
 
@@ -12,7 +11,6 @@ public record PostThreadResponse(
         Long postId,
         Long parentPostId,
         PostType postType,
-        HashTag hashTag,
         String title,
         String contentPreview,
         LocalDateTime createdAt,
@@ -25,7 +23,6 @@ public record PostThreadResponse(
                 post.getPostId(),
                 post.getParentPostId(),
                 post.getType(),
-                post.getHashtag(),
                 post.getTitle(),
                 buildPreview(post.getContent()),
                 post.getCreatedAt(),

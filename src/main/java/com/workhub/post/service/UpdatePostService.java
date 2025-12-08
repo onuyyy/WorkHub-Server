@@ -209,12 +209,6 @@ public class UpdatePostService {
         if (target == null) {
             throw new BusinessException(ErrorCode.NOT_EXISTS_POST_LINK);
         }
-
-        if (req.deleted()) {
-            target.markDeleted();
-            return null;
-        }
-
         target.update(req.referenceLink(), req.linkDescription());
         return target;
     }

@@ -24,7 +24,6 @@ public class DeletePostService {
      * @param projectId 프로젝트 ID
      * @param nodeId 노드 ID
      * @param postId 게시글 ID
-     * @param userId 요청자 ID
      */
     public void delete(Long projectId, Long nodeId, Long postId, Long userId) {
         projectService.validateProject(projectId);

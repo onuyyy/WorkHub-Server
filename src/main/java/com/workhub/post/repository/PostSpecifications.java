@@ -1,6 +1,5 @@
 package com.workhub.post.repository;
 
-import com.workhub.post.entity.HashTag;
 import com.workhub.post.entity.Post;
 import com.workhub.post.entity.PostType;
 import org.springframework.data.jpa.domain.Specification;
@@ -32,11 +31,6 @@ public final class PostSpecifications {
     /** 게시글 타입 일치 여부를 필터링한다. */
     public static Specification<Post> withPostType(PostType postType) {
         return postType == null ? null : (root, query, builder) -> builder.equal(root.get("type"), postType);
-    }
-
-    /** 해시태그 일치 여부를 필터링한다. */
-    public static Specification<Post> withHashTag(HashTag hashTag) {
-        return hashTag == null ? null : (root, query, builder) -> builder.equal(root.get("hashtag"), hashTag);
     }
 
     /** 부모 게시글(부모 ID가 null)만 필터링한다. */

@@ -1,6 +1,5 @@
 package com.workhub.post.service;
 
-import com.workhub.post.entity.HashTag;
 import com.workhub.post.entity.Post;
 import com.workhub.post.entity.PostFile;
 import com.workhub.post.entity.PostLink;
@@ -35,7 +34,7 @@ public class ReadPostService {
      * @param postId 게시글 ID
      * @return 조회된 게시글
      */
-    public PostResponse findById(Long projectId, Long nodeId, Long userId, Long postId) {
+    public PostResponse findById(Long projectId, Long nodeId, Long postId) {
         projectService.validateProject(projectId);
         Post post = postService.findById(postId);
         postService.validateNode(post, nodeId);
@@ -56,23 +55,19 @@ public class ReadPostService {
      *
      * @param projectId 프로젝트 ID
      * @param nodeId 노드 ID
-     * @param userId 인증 사용자 ID
      * @param keyword 검색 키워드
      * @param postType 게시글 타입
-     * @param hashTag 해시태그 필터
      * @param pageable 페이징 정보
      * @return 검색 결과 페이지
      */
     public PostPageResponse search(Long projectId,
                                    Long nodeId,
-                                   Long userId,
                                    String keyword,
                                    PostType postType,
-                                   HashTag hashTag,
                                    Pageable pageable) {
         projectService.validateProject(projectId);
 
-        Page<Post> parentPage = postService.searchParentPosts(nodeId, keyword, postType, hashTag, pageable);
+        Page<Post> parentPage = postService.searchParentPosts(nodeId, keyword, postType, pageable);
 
         List<Long> parentIds = parentPage.getContent().stream().map(Post::getPostId).toList();
         Map<Long, List<Post>> childrenMap = buildChildrenMap(parentIds);

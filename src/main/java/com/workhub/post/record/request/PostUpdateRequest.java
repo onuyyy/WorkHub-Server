@@ -1,6 +1,5 @@
 package com.workhub.post.record.request;
 
-import com.workhub.post.entity.HashTag;
 import com.workhub.post.entity.PostType;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -13,7 +12,6 @@ public record PostUpdateRequest (
         @NotNull PostType postType,
         @NotBlank String content,
         @NotBlank String postIp,
-        @NotNull HashTag hashTag,
         @Valid List<PostFileUpdateRequest> files,
         @Valid List<PostLinkUpdateRequest> links
 ) { }

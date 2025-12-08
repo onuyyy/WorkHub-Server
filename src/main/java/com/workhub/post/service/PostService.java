@@ -2,7 +2,6 @@ package com.workhub.post.service;
 
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
-import com.workhub.post.entity.HashTag;
 import com.workhub.post.entity.Post;
 import com.workhub.post.entity.PostFile;
 import com.workhub.post.entity.PostLink;
@@ -69,7 +68,6 @@ public class PostService {
      * @param nodeId 프로젝트 노드 ID
      * @param keyword 검색 키워드
      * @param postType 게시글 타입
-     * @param hashTag 해시태그 필터
      * @param pageable 페이지 정보
      * @return 검색 결과 페이지
      */
@@ -77,12 +75,10 @@ public class PostService {
     public Page<Post> searchParentPosts(Long nodeId,
                                         String keyword,
                                         PostType postType,
-                                        HashTag hashTag,
                                         Pageable pageable) {
         Specification<Post> spec = Specification.where(PostSpecifications.withProjectNode(nodeId))
                 .and(PostSpecifications.withKeyword(keyword))
                 .and(PostSpecifications.withPostType(postType))
-                .and(PostSpecifications.withHashTag(hashTag))
                 .and(PostSpecifications.onlyRootPosts());
 
         return postRepository.findAll(spec, pageable);

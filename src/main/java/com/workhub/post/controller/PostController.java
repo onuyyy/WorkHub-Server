@@ -5,7 +5,6 @@ import com.workhub.global.error.exception.BusinessException;
 import com.workhub.global.response.ApiResponse;
 import com.workhub.global.security.CustomUserDetails;
 import com.workhub.post.api.PostApi;
-import com.workhub.post.entity.HashTag;
 import com.workhub.post.entity.PostType;
 import com.workhub.post.record.request.PostRequest;
 import com.workhub.post.record.request.PostUpdateRequest;
@@ -69,14 +68,13 @@ public class PostController implements PostApi {
             @PathVariable Long nodeId,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) PostType postType,
-            @RequestParam(required = false) HashTag hashTag,
             @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         /**
          * 검색 조건과 Pageable 정보를 기반으로 게시글 목록을 조회한다.
          */
-        PostPageResponse response = readPostService.search(projectId, nodeId, getUserId(userDetails), keyword, postType, hashTag, pageable);
+        PostPageResponse response = readPostService.search(projectId, nodeId, keyword, postType, pageable);
 
         return ApiResponse.success(response, "게시글 목록 조회에 성공했습니다.");
     }
@@ -87,7 +85,7 @@ public class PostController implements PostApi {
                                                              @PathVariable Long nodeId,
                                                              @PathVariable Long postId,
                                                              @AuthenticationPrincipal CustomUserDetails userDetails) {
-        PostResponse response = readPostService.findById(projectId, nodeId, getUserId(userDetails), postId);
+        PostResponse response = readPostService.findById(projectId, nodeId, postId);
         return ApiResponse.success(response, "게시글 조회에 성공했습니다.");
     }
 
