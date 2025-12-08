@@ -1,10 +1,14 @@
 package com.workhub.post.service;
 
+import com.workhub.global.entity.ActionType;
+import com.workhub.global.entity.HistoryType;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
+import com.workhub.global.history.HistoryRecorder;
 import com.workhub.post.entity.Post;
 import com.workhub.post.entity.PostFile;
 import com.workhub.post.entity.PostLink;
+import com.workhub.post.record.history.PostHistorySnapshot;
 import com.workhub.post.record.request.PostFileUpdateRequest;
 import com.workhub.post.record.request.PostLinkUpdateRequest;
 import com.workhub.post.record.request.PostUpdateRequest;
@@ -24,6 +28,7 @@ public class UpdatePostService {
 
     private final PostService postService;
     private final ProjectService projectService;
+    private final HistoryRecorder historyRecorder;
 
     /**
      * 프로젝트와 노드 일치 여부, 작성자 권한을 검증한 뒤 게시글을 수정한다.
@@ -35,6 +40,8 @@ public class UpdatePostService {
         if (!target.getUserId().equals(userId)) {
             throw new BusinessException(ErrorCode.FORBIDDEN_POST_UPDATE);
         }
+
+        historyRecorder.recordHistory(HistoryType.POST, postId, ActionType.UPDATE, PostHistorySnapshot.from(target));
 
         target.update(request);
 

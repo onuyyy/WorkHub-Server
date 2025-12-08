@@ -2,9 +2,13 @@ package com.workhub.post.service;
 
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
+import com.workhub.global.entity.ActionType;
+import com.workhub.global.entity.HistoryType;
+import com.workhub.global.history.HistoryRecorder;
 import com.workhub.post.entity.Post;
 import com.workhub.post.entity.PostFile;
 import com.workhub.post.entity.PostLink;
+import com.workhub.post.record.history.PostHistorySnapshot;
 import com.workhub.post.record.request.PostFileRequest;
 import com.workhub.post.record.request.PostLinkRequest;
 import com.workhub.post.record.request.PostRequest;
@@ -23,6 +27,7 @@ public class CreatePostService {
 
     private final PostService postService;
     private final ProjectService projectService;
+    private final HistoryRecorder historyRecorder;
 
     /**
      * 게시글 생성 시 프로젝트 상태와 부모 게시글 유효성을 검증한 뒤 저장한다.
@@ -48,6 +53,8 @@ public class CreatePostService {
         Post savedPost = postService.save(Post.of(projectNodeId, userId, parentPostId, request));
         List<PostFile> savedFiles = savePostFiles(savedPost.getPostId(), request.files());
         List<PostLink> savedLinks = savePostLinks(savedPost.getPostId(), request.links());
+
+        historyRecorder.recordHistory(HistoryType.POST, savedPost.getPostId(), ActionType.CREATE, PostHistorySnapshot.from(savedPost));
 
         return PostResponse.from(savedPost, savedFiles, savedLinks);
     }
