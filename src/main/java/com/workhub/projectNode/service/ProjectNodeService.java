@@ -30,4 +30,9 @@ public class ProjectNodeService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_NODE_NOT_FOUND));
     }
 
+    public ProjectNode findByIdAndProjectId(Long projectNodeId, Long projectId) {
+        return projectNodeRepository.findByProjectNodeIdAndProjectId(projectNodeId, projectId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_NODE_NOT_FOUND));
+    }
+
 }

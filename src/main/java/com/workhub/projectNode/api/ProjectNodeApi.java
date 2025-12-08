@@ -104,6 +104,9 @@ public interface ProjectNodeApi {
     })
     @PatchMapping("{nodeId}/status")
     ResponseEntity<ApiResponse<String>> updateNodeStatus(
+            @Parameter(description = "프로젝트 ID", required = true)
+            @PathVariable("projectId") Long projectId,
+
             @Parameter(description = "노드 ID", required = true)
             @PathVariable("nodeId") Long nodeId,
 

@@ -44,10 +44,11 @@ public class ProjectNodeController implements ProjectNodeApi {
 
     @Override
     @PatchMapping("{nodeId}/status")
-    public ResponseEntity<ApiResponse<String>> updateNodeStatus(@PathVariable("nodeId") Long nodeId,
+    public ResponseEntity<ApiResponse<String>> updateNodeStatus(@PathVariable("projectId") Long projectId,
+                                                                @PathVariable("nodeId") Long nodeId,
                                                                 @RequestBody UpdateNodeStatusRequest request) {
 
-        updateProjectNodeService.updateNodeStatus(nodeId, request);
+        updateProjectNodeService.updateNodeStatus(projectId, nodeId, request);
         return ApiResponse.success("노드 상태 변경 성공");
     }
 

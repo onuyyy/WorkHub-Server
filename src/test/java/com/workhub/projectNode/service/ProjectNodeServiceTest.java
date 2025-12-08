@@ -195,4 +195,35 @@ class ProjectNodeServiceTest {
         assertThat(result).allMatch(node -> node.getProjectId().equals(targetProjectId));
         verify(projectNodeRepository).findByProjectIdAndDeletedAtIsNullOrderByNodeOrderAsc(targetProjectId);
     }
+
+    @Test
+    @DisplayName("노드 ID와 프로젝트 ID로 조회하면 해당 노드를 반환한다.")
+    void givenValidNodeIdAndProjectId_whenFindByIdAndProjectId_thenReturnProjectNode() {
+        Long nodeId = 1L;
+        Long projectId = 100L;
+        when(projectNodeRepository.findByProjectNodeIdAndProjectId(nodeId, projectId))
+                .thenReturn(Optional.of(mockProjectNode));
+
+        ProjectNode result = projectNodeService.findByIdAndProjectId(nodeId, projectId);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getProjectNodeId()).isEqualTo(nodeId);
+        assertThat(result.getProjectId()).isEqualTo(projectId);
+        verify(projectNodeRepository).findByProjectNodeIdAndProjectId(nodeId, projectId);
+    }
+
+    @Test
+    @DisplayName("노드 ID와 프로젝트 ID가 일치하지 않으면 예외를 발생시킨다.")
+    void givenMismatchedNodeIdAndProjectId_whenFindByIdAndProjectId_thenThrowException() {
+        Long nodeId = 1L;
+        Long wrongProjectId = 999L;
+        when(projectNodeRepository.findByProjectNodeIdAndProjectId(nodeId, wrongProjectId))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> projectNodeService.findByIdAndProjectId(nodeId, wrongProjectId))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PROJECT_NODE_NOT_FOUND);
+
+        verify(projectNodeRepository).findByProjectNodeIdAndProjectId(nodeId, wrongProjectId);
+    }
 }

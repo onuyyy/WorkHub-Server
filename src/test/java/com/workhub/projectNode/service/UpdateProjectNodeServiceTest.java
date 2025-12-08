@@ -71,16 +71,17 @@ class UpdateProjectNodeServiceTest {
     @Test
     @DisplayName("프로젝트 노드 상태를 정상적으로 업데이트하고 히스토리를 기록한다.")
     void givenValidNodeIdAndStatus_whenUpdateNodeStatus_thenSuccess() {
+        Long projectId = 100L;
         Long nodeId = 1L;
         UpdateNodeStatusRequest request = new UpdateNodeStatusRequest(NodeStatus.IN_PROGRESS);
 
-        when(projectNodeService.findById(nodeId)).thenReturn(mockProjectNode);
+        when(projectNodeService.findByIdAndProjectId(nodeId, projectId)).thenReturn(mockProjectNode);
         lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
 
-        updateProjectNodeService.updateNodeStatus(nodeId, request);
+        updateProjectNodeService.updateNodeStatus(projectId, nodeId, request);
 
         assertThat(mockProjectNode.getNodeStatus()).isEqualTo(NodeStatus.IN_PROGRESS);
-        verify(projectNodeService).findById(nodeId);
+        verify(projectNodeService).findByIdAndProjectId(nodeId, projectId);
 
         ArgumentCaptor<NodeSnapshot> snapshotCaptor = ArgumentCaptor.forClass(NodeSnapshot.class);
         verify(historyRecorder).recordHistory(
@@ -98,48 +99,51 @@ class UpdateProjectNodeServiceTest {
     @Test
     @DisplayName("존재하지 않는 노드 ID로 상태 업데이트 시 예외 발생")
     void givenInvalidNodeId_whenUpdateNodeStatus_thenThrowException() {
+        Long projectId = 100L;
         Long invalidNodeId = 999L;
         UpdateNodeStatusRequest request = new UpdateNodeStatusRequest(NodeStatus.IN_PROGRESS);
 
-        when(projectNodeService.findById(invalidNodeId))
+        when(projectNodeService.findByIdAndProjectId(invalidNodeId, projectId))
                 .thenThrow(new BusinessException(ErrorCode.PROJECT_NODE_NOT_FOUND));
 
         assertThatThrownBy(() ->
-                updateProjectNodeService.updateNodeStatus(invalidNodeId, request))
+                updateProjectNodeService.updateNodeStatus(projectId, invalidNodeId, request))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PROJECT_NODE_NOT_FOUND);
 
-        verify(projectNodeService).findById(invalidNodeId);
+        verify(projectNodeService).findByIdAndProjectId(invalidNodeId, projectId);
         verify(historyRecorder, never()).recordHistory(any(), any(), any(), any());
     }
 
     @Test
     @DisplayName("현재 상태와 동일한 상태로 변경 시도 시 예외 발생")
     void givenSameStatus_whenUpdateNodeStatus_thenThrowException() {
+        Long projectId = 100L;
         Long nodeId = 1L;
         UpdateNodeStatusRequest request = new UpdateNodeStatusRequest(NodeStatus.NOT_STARTED);
 
-        when(projectNodeService.findById(nodeId)).thenReturn(mockProjectNode);
+        when(projectNodeService.findByIdAndProjectId(nodeId, projectId)).thenReturn(mockProjectNode);
 
         assertThatThrownBy(() ->
-                updateProjectNodeService.updateNodeStatus(nodeId, request))
+                updateProjectNodeService.updateNodeStatus(projectId, nodeId, request))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.STATUS_ALREADY_SET);
 
-        verify(projectNodeService).findById(nodeId);
+        verify(projectNodeService).findByIdAndProjectId(nodeId, projectId);
         verify(historyRecorder, never()).recordHistory(any(), any(), any(), any());
     }
 
     @Test
     @DisplayName("NOT_STARTED에서 PENDING_REVIEW로 상태 변경 시 성공")
     void givenNotStartedStatus_whenUpdateToPendingReview_thenSuccess() {
+        Long projectId = 100L;
         Long nodeId = 1L;
         UpdateNodeStatusRequest request = new UpdateNodeStatusRequest(NodeStatus.PENDING_REVIEW);
 
-        when(projectNodeService.findById(nodeId)).thenReturn(mockProjectNode);
+        when(projectNodeService.findByIdAndProjectId(nodeId, projectId)).thenReturn(mockProjectNode);
         lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
 
-        updateProjectNodeService.updateNodeStatus(nodeId, request);
+        updateProjectNodeService.updateNodeStatus(projectId, nodeId, request);
 
         assertThat(mockProjectNode.getNodeStatus()).isEqualTo(NodeStatus.PENDING_REVIEW);
 
@@ -158,19 +162,21 @@ class UpdateProjectNodeServiceTest {
     @Test
     @DisplayName("IN_PROGRESS에서 PENDING_REVIEW로 상태 변경 시 성공")
     void givenInProgressStatus_whenUpdateToPendingReview_thenSuccess() {
+        Long projectId = 100L;
         Long nodeId = 1L;
         ProjectNode inProgressNode = ProjectNode.builder()
                 .projectNodeId(nodeId)
                 .title("진행중 노드")
                 .nodeStatus(NodeStatus.IN_PROGRESS)
+                .projectId(projectId)
                 .build();
 
         UpdateNodeStatusRequest request = new UpdateNodeStatusRequest(NodeStatus.PENDING_REVIEW);
 
-        when(projectNodeService.findById(nodeId)).thenReturn(inProgressNode);
+        when(projectNodeService.findByIdAndProjectId(nodeId, projectId)).thenReturn(inProgressNode);
         lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
 
-        updateProjectNodeService.updateNodeStatus(nodeId, request);
+        updateProjectNodeService.updateNodeStatus(projectId, nodeId, request);
 
         assertThat(inProgressNode.getNodeStatus()).isEqualTo(NodeStatus.PENDING_REVIEW);
 
@@ -189,19 +195,21 @@ class UpdateProjectNodeServiceTest {
     @Test
     @DisplayName("ON_HOLD에서 IN_PROGRESS로 상태 변경 시 성공")
     void givenOnHoldStatus_whenUpdateToInProgress_thenSuccess() {
+        Long projectId = 100L;
         Long nodeId = 1L;
         ProjectNode onHoldNode = ProjectNode.builder()
                 .projectNodeId(nodeId)
                 .title("보류된 노드")
                 .nodeStatus(NodeStatus.ON_HOLD)
+                .projectId(projectId)
                 .build();
 
         UpdateNodeStatusRequest request = new UpdateNodeStatusRequest(NodeStatus.IN_PROGRESS);
 
-        when(projectNodeService.findById(nodeId)).thenReturn(onHoldNode);
+        when(projectNodeService.findByIdAndProjectId(nodeId, projectId)).thenReturn(onHoldNode);
         lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
 
-        updateProjectNodeService.updateNodeStatus(nodeId, request);
+        updateProjectNodeService.updateNodeStatus(projectId, nodeId, request);
 
         assertThat(onHoldNode.getNodeStatus()).isEqualTo(NodeStatus.IN_PROGRESS);
 
@@ -220,13 +228,14 @@ class UpdateProjectNodeServiceTest {
     @Test
     @DisplayName("상태 업데이트 시 변경 전 상태가 히스토리에 기록된다.")
     void givenStatusChange_whenUpdateNodeStatus_thenRecordPreviousStatus() {
+        Long projectId = 100L;
         Long nodeId = 1L;
         UpdateNodeStatusRequest request = new UpdateNodeStatusRequest(NodeStatus.IN_PROGRESS);
 
-        when(projectNodeService.findById(nodeId)).thenReturn(mockProjectNode);
+        when(projectNodeService.findByIdAndProjectId(nodeId, projectId)).thenReturn(mockProjectNode);
         lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
 
-        updateProjectNodeService.updateNodeStatus(nodeId, request);
+        updateProjectNodeService.updateNodeStatus(projectId, nodeId, request);
 
         ArgumentCaptor<NodeSnapshot> snapshotCaptor = ArgumentCaptor.forClass(NodeSnapshot.class);
         verify(historyRecorder).recordHistory(
@@ -243,30 +252,32 @@ class UpdateProjectNodeServiceTest {
     @Test
     @DisplayName("상태 업데이트 시 모든 메서드가 순차적으로 호출된다.")
     void givenStatusChange_whenUpdateNodeStatus_thenAllMethodsCalledInOrder() {
+        Long projectId = 100L;
         Long nodeId = 1L;
         UpdateNodeStatusRequest request = new UpdateNodeStatusRequest(NodeStatus.IN_PROGRESS);
 
-        when(projectNodeService.findById(nodeId)).thenReturn(mockProjectNode);
+        when(projectNodeService.findByIdAndProjectId(nodeId, projectId)).thenReturn(mockProjectNode);
         lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
 
-        updateProjectNodeService.updateNodeStatus(nodeId, request);
+        updateProjectNodeService.updateNodeStatus(projectId, nodeId, request);
 
         var inOrder = inOrder(projectNodeService, historyRecorder);
-        inOrder.verify(projectNodeService).findById(nodeId);
+        inOrder.verify(projectNodeService).findByIdAndProjectId(nodeId, projectId);
         inOrder.verify(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
     }
 
     @Test
     @DisplayName("여러 번 상태를 변경해도 각각 히스토리가 기록된다.")
     void givenMultipleStatusChanges_whenUpdateNodeStatus_thenEachChangeRecorded() {
+        Long projectId = 100L;
         Long nodeId = 1L;
 
         // 첫 번째 변경: NOT_STARTED -> IN_PROGRESS
         UpdateNodeStatusRequest firstRequest = new UpdateNodeStatusRequest(NodeStatus.IN_PROGRESS);
-        when(projectNodeService.findById(nodeId)).thenReturn(mockProjectNode);
+        when(projectNodeService.findByIdAndProjectId(nodeId, projectId)).thenReturn(mockProjectNode);
         lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
 
-        updateProjectNodeService.updateNodeStatus(nodeId, firstRequest);
+        updateProjectNodeService.updateNodeStatus(projectId, nodeId, firstRequest);
 
         ArgumentCaptor<NodeSnapshot> snapshotCaptor = ArgumentCaptor.forClass(NodeSnapshot.class);
         verify(historyRecorder).recordHistory(
@@ -284,7 +295,7 @@ class UpdateProjectNodeServiceTest {
         reset(historyRecorder);
         lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
 
-        updateProjectNodeService.updateNodeStatus(nodeId, secondRequest);
+        updateProjectNodeService.updateNodeStatus(projectId, nodeId, secondRequest);
 
         ArgumentCaptor<NodeSnapshot> secondSnapshotCaptor = ArgumentCaptor.forClass(NodeSnapshot.class);
         verify(historyRecorder).recordHistory(

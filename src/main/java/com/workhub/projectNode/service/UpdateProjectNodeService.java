@@ -31,12 +31,13 @@ public class UpdateProjectNodeService {
 
     /**
      * 프로젝트 노드 상태를 업데이트하고 변경 이력을 저장.
+     * @param projectId 프로젝트 ID
      * @param nodeId 업데이트할 프로젝트 노드 ID
      * @param request 변경할 상태 정보
      */
-    public void updateNodeStatus(Long nodeId, UpdateNodeStatusRequest request) {
+    public void updateNodeStatus(Long projectId, Long nodeId, UpdateNodeStatusRequest request) {
 
-        ProjectNode original = projectNodeService.findById(nodeId);
+        ProjectNode original = projectNodeService.findByIdAndProjectId(nodeId, projectId);
         NodeSnapshot snapshot = NodeSnapshot.from(original);
 
         StatusValidator.validateStatusChange(original.getNodeStatus(), request.nodeStatus());
