@@ -18,12 +18,14 @@ services:
     env_file:
       - .env
     environment:
-      SPRING_PROFILES_ACTIVE: dev, secret
+      SPRING_PROFILES_ACTIVE: dev
       SPRING_DATASOURCE_URL: ${DB_URL}
       SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: 6379
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY}
     ports:
       - '8080:8080'
     depends_on:
