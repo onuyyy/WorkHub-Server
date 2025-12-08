@@ -27,6 +27,9 @@ public class CheckListItemComment extends BaseTimeEntity {
     @Column(name = "check_list_item_id")
     private Long checkListItemId;
 
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
+
     @Column(name = "parent_cl_comment_id")
     private Long parentClCommentId;
 }

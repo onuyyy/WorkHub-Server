@@ -37,6 +37,10 @@ CREATE INDEX idx_company_name
     ON company(company_name);
 
 -- user_history indexes
+-- 대상별 변경 이력 조회 (최신순)
+CREATE INDEX idx_user_history_target_action_updated
+    ON user_history(target_id, action_type, updated_at DESC);
+
 -- 변경자별 이력 조회
 CREATE INDEX idx_user_history_updated_by
     ON user_history(updated_by, updated_at DESC);
@@ -325,6 +329,12 @@ CREATE INDEX idx_check_list_item_history_target_action_updated
 CREATE INDEX idx_check_list_item_history_updated_by
     ON check_list_item_history(updated_by, updated_at DESC);
 
+-- check_list_item_file indexes
+-- 체크리스트 아이템별 파일 조회 (순서대로, 삭제되지 않은 파일만)
+CREATE INDEX idx_check_list_item_file_item_order
+    ON check_list_item_file(check_list_item_id, file_order)
+    WHERE deleted_at IS NULL;
+
 -- check_list_item_comment indexes
 -- 체크리스트 아이템별 댓글 조회 (최신순, 삭제되지 않은 것만)
 CREATE INDEX idx_check_list_item_comment_item_created
@@ -335,6 +345,17 @@ CREATE INDEX idx_check_list_item_comment_item_created
 CREATE INDEX idx_check_list_item_comment_parent_created
     ON check_list_item_comment(parent_cl_comment_id, created_at DESC)
     WHERE parent_cl_comment_id IS NOT NULL AND deleted_at IS NULL;
+
+-- 사용자별 작성 댓글 조회 (삭제되지 않은 것만)
+CREATE INDEX idx_check_list_item_comment_user
+    ON check_list_item_comment(user_id, created_at DESC)
+    WHERE deleted_at IS NULL;
+
+-- check_list_item_comment_file indexes
+-- 체크리스트 댓글별 파일 조회 (순서대로, 삭제되지 않은 파일만)
+CREATE INDEX idx_check_list_item_comment_file_comment_order
+    ON check_list_item_comment_file(cl_comment_id, file_order)
+    WHERE deleted_at IS NULL;
 
 -- check_list_item_comment_history indexes
 -- 체크리스트 댓글별 변경 이력 조회 (최신순)
