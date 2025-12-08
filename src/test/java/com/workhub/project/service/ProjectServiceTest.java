@@ -35,20 +35,12 @@ class ProjectServiceTest {
     @Mock
     private DevMemberRepository devMemberRepository;
 
-    @Mock
-    private ClientMemberHistoryRepository clientMemberHistoryRepository;
-
-    @Mock
-    private DevMemberHistoryRepository devMemberHistoryRepository;
-
     @InjectMocks
     private ProjectService projectService;
 
     private Project mockProject;
     private ProjectClientMember mockClientMember;
     private ProjectDevMember mockDevMember;
-    private ProjectClientMemberHistory mockClientMemberHistory;
-    private ProjectDevMemberHistory mockDevMemberHistory;
 
     @BeforeEach
     void init() {
@@ -76,22 +68,6 @@ class ProjectServiceTest {
                 .projectId(1L)
                 .devPart(DevPart.BE)
                 .assignedAt(LocalDate.now())
-                .build();
-
-        mockClientMemberHistory = ProjectClientMemberHistory.builder()
-                .targetId(1L)
-                .createdBy(1L)
-                .updatedBy(1L)
-                .ipAddress("127.0.0.1")
-                .userAgent("test-agent")
-                .build();
-
-        mockDevMemberHistory = ProjectDevMemberHistory.builder()
-                .targetId(1L)
-                .createdBy(1L)
-                .updatedBy(1L)
-                .ipAddress("127.0.0.1")
-                .userAgent("test-agent")
                 .build();
     }
 
@@ -161,26 +137,6 @@ class ProjectServiceTest {
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getProjectMemberId()).isEqualTo(1L);
         verify(devMemberRepository).saveAll(devMembers);
-    }
-
-    @Test
-    @DisplayName("클라이언트 멤버 히스토리를 저장한다.")
-    void givenClientMemberHistories_whenSaveProjectClientMemberHistory_thenSaveSuccessfully() {
-        List<ProjectClientMemberHistory> histories = Arrays.asList(mockClientMemberHistory);
-
-        projectService.saveProjectClientMemberHistory(histories);
-
-        verify(clientMemberHistoryRepository).saveAll(histories);
-    }
-
-    @Test
-    @DisplayName("개발 멤버 히스토리를 저장한다.")
-    void givenDevMemberHistories_whenSaveProjectDevMemberHistory_thenSaveSuccessfully() {
-        List<ProjectDevMemberHistory> histories = Arrays.asList(mockDevMemberHistory);
-
-        projectService.saveProjectDevMemberHistory(histories);
-
-        verify(devMemberHistoryRepository).saveAll(histories);
     }
 
     @Test

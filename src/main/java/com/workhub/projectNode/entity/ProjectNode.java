@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
@@ -31,6 +32,12 @@ public class ProjectNode extends BaseTimeEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "node_status")
     private NodeStatus nodeStatus;
+
+    @Column(name = "contract_start_date")
+    private LocalDate contractStartDate;
+
+    @Column(name = "contract_end_date")
+    private LocalDate contractEndDate;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "priority")
@@ -63,11 +70,17 @@ public class ProjectNode extends BaseTimeEntity {
         this.nodeStatus = nodeStatus;
     }
 
+    public void updateNodeOrder(Integer nodeOrder) {
+        this.nodeOrder = nodeOrder;
+    }
+
     public static ProjectNode of(Long projectId, CreateNodeRequest request, Integer nodeOrder) {
         return ProjectNode.builder()
                 .title(request.title())
                 .description(request.description())
                 .nodeStatus(NodeStatus.NOT_STARTED)
+                .contractStartDate(request.starDate())
+                .contractEndDate(request.endDate())
                 .priority(request.priority())
                 .nodeOrder(nodeOrder)
                 .projectId(projectId)

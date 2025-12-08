@@ -17,9 +17,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -29,6 +32,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class CreateProjectNodeServiceTest {
 
     @Mock
@@ -60,6 +64,8 @@ class CreateProjectNodeServiceTest {
         mockRequest = new CreateNodeRequest(
                 "새 노드",
                 "노드 설명",
+                LocalDate.of(2025, 1, 1),
+                LocalDate.of(2025, 12, 31),
                 Priority.MEDIUM
         );
     }
@@ -79,7 +85,7 @@ class CreateProjectNodeServiceTest {
 
         when(projectNodeService.findByProjectIdByNodeOrder(projectId)).thenReturn(Collections.emptyList());
         when(projectNodeService.saveProjectNode(any(ProjectNode.class))).thenReturn(savedNode);
-        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+        lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
 
         CreateNodeResponse result = createProjectNodeService.createNode(projectId, mockRequest);
 
@@ -95,7 +101,7 @@ class CreateProjectNodeServiceTest {
                 eq(HistoryType.PROJECT_NODE),
                 eq(1L),
                 eq(ActionType.CREATE),
-                eq("노드 설명")
+                any(Object.class)
         );
     }
 
@@ -116,6 +122,8 @@ class CreateProjectNodeServiceTest {
         CreateNodeRequest newNodeRequest = new CreateNodeRequest(
                 "새 노드",
                 "새 노드 설명",
+                LocalDate.of(2025, 1, 1),
+                LocalDate.of(2025, 12, 31),
                 Priority.MEDIUM
         );
 
@@ -131,7 +139,7 @@ class CreateProjectNodeServiceTest {
         when(projectNodeService.findByProjectIdByNodeOrder(projectId))
                 .thenReturn(Arrays.asList(existingNode1, existingNode2));
         when(projectNodeService.saveProjectNode(any(ProjectNode.class))).thenReturn(savedNode);
-        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+        lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
 
         CreateNodeResponse result = createProjectNodeService.createNode(projectId, newNodeRequest);
 
@@ -142,7 +150,7 @@ class CreateProjectNodeServiceTest {
 
         verify(projectNodeService).findByProjectIdByNodeOrder(projectId);
         verify(projectNodeService).saveProjectNode(any(ProjectNode.class));
-        verify(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+        verify(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
     }
 
 
@@ -161,7 +169,7 @@ class CreateProjectNodeServiceTest {
 
         when(projectNodeService.findByProjectIdByNodeOrder(projectId)).thenReturn(Collections.emptyList());
         when(projectNodeService.saveProjectNode(any(ProjectNode.class))).thenReturn(savedNode);
-        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+        lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
 
         createProjectNodeService.createNode(projectId, mockRequest);
 
@@ -169,7 +177,7 @@ class CreateProjectNodeServiceTest {
                 eq(HistoryType.PROJECT_NODE),
                 eq(1L),
                 eq(ActionType.CREATE),
-                eq("노드 설명")
+                any(Object.class)
         );
     }
 
@@ -188,7 +196,7 @@ class CreateProjectNodeServiceTest {
 
         when(projectNodeService.findByProjectIdByNodeOrder(projectId)).thenReturn(Collections.emptyList());
         when(projectNodeService.saveProjectNode(any(ProjectNode.class))).thenReturn(savedNode);
-        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+        lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
 
         CreateNodeResponse result = createProjectNodeService.createNode(projectId, mockRequest);
 
@@ -216,13 +224,13 @@ class CreateProjectNodeServiceTest {
 
         when(projectNodeService.findByProjectIdByNodeOrder(projectId)).thenReturn(Collections.emptyList());
         when(projectNodeService.saveProjectNode(any(ProjectNode.class))).thenReturn(savedNode);
-        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+        lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
 
         createProjectNodeService.createNode(projectId, mockRequest);
 
         var inOrder = inOrder(projectNodeService, historyRecorder);
         inOrder.verify(projectNodeService).findByProjectIdByNodeOrder(projectId);
         inOrder.verify(projectNodeService).saveProjectNode(any(ProjectNode.class));
-        inOrder.verify(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+        inOrder.verify(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
     }
 }

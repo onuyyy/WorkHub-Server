@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 
@@ -28,7 +30,8 @@ public abstract class BaseHistoryEntity {
     @Column(name = "action_type")
     private ActionType actionType;
 
-    @Column(name = "before_data", columnDefinition = "TEXT")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "before_data")
     private String beforeData;
 
     @Column(name = "created_by")

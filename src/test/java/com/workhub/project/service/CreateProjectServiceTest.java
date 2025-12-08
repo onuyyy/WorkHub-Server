@@ -5,6 +5,7 @@ import com.workhub.global.entity.HistoryType;
 import com.workhub.global.history.HistoryRecorder;
 import com.workhub.global.security.CustomUserDetails;
 import com.workhub.project.dto.CreateProjectRequest;
+import com.workhub.project.dto.ProjectHistorySnapshot;
 import com.workhub.project.dto.ProjectResponse;
 import com.workhub.project.entity.*;
 import com.workhub.userTable.entity.UserTable;
@@ -28,6 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class CreateProjectServiceTest {
@@ -104,9 +106,7 @@ class CreateProjectServiceTest {
         when(projectService.saveProject(any(Project.class))).thenReturn(mockProject);
         when(projectService.saveProjectClientMember(anyList())).thenReturn(Arrays.asList(mockClientMember));
         when(projectService.saveProjectDevMember(anyList())).thenReturn(Arrays.asList(mockDevMember));
-        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
-        doNothing().when(projectService).saveProjectClientMemberHistory(anyList());
-        doNothing().when(projectService).saveProjectDevMemberHistory(anyList());
+        lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
 
         ProjectResponse result = createProjectService.createProject(mockRequest);
 
@@ -119,7 +119,7 @@ class CreateProjectServiceTest {
         assertThat(result.contractEndDate()).isEqualTo(LocalDate.of(2025, 6, 30));
 
         verify(projectService).saveProject(any(Project.class));
-        verify(historyRecorder).recordHistory(HistoryType.PROJECT, 1L, ActionType.CREATE, "프로젝트 설명입니다");
+        verify(historyRecorder).recordHistory(eq(HistoryType.PROJECT), eq(1L), eq(ActionType.CREATE), any(ProjectHistorySnapshot.class));
     }
 
     @Test
@@ -140,9 +140,7 @@ class CreateProjectServiceTest {
         when(projectService.saveProject(any(Project.class))).thenReturn(mockProject);
         when(projectService.saveProjectClientMember(anyList())).thenReturn(Arrays.asList(clientMember1, clientMember2));
         when(projectService.saveProjectDevMember(anyList())).thenReturn(Arrays.asList(mockDevMember));
-        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
-        doNothing().when(projectService).saveProjectClientMemberHistory(anyList());
-        doNothing().when(projectService).saveProjectDevMemberHistory(anyList());
+        lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
 
         createProjectService.createProject(mockRequest);
 
@@ -151,7 +149,7 @@ class CreateProjectServiceTest {
                 list.stream().anyMatch(m -> m.getUserId().equals(1L)) &&
                 list.stream().anyMatch(m -> m.getUserId().equals(2L))
         ));
-        verify(projectService).saveProjectClientMemberHistory(argThat(list -> list.size() == 2));
+        verify(historyRecorder, times(2)).recordHistory(eq(HistoryType.PROJECT_CLIENT_MEMBER), anyLong(), eq(ActionType.CREATE), any(ProjectClientMember.class));
     }
 
     @Test
@@ -172,9 +170,7 @@ class CreateProjectServiceTest {
         when(projectService.saveProject(any(Project.class))).thenReturn(mockProject);
         when(projectService.saveProjectClientMember(anyList())).thenReturn(Arrays.asList(mockClientMember));
         when(projectService.saveProjectDevMember(anyList())).thenReturn(Arrays.asList(devMember1, devMember2));
-        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
-        doNothing().when(projectService).saveProjectClientMemberHistory(anyList());
-        doNothing().when(projectService).saveProjectDevMemberHistory(anyList());
+        lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
 
         createProjectService.createProject(mockRequest);
 
@@ -183,7 +179,7 @@ class CreateProjectServiceTest {
                 list.stream().anyMatch(m -> m.getUserId().equals(3L)) &&
                 list.stream().anyMatch(m -> m.getUserId().equals(4L))
         ));
-        verify(projectService).saveProjectDevMemberHistory(argThat(list -> list.size() == 2));
+        verify(historyRecorder, times(2)).recordHistory(eq(HistoryType.PROJECT_DEV_MEMBER), anyLong(), eq(ActionType.CREATE), any(ProjectDevMember.class));
     }
 
     @Test
@@ -192,9 +188,7 @@ class CreateProjectServiceTest {
         when(projectService.saveProject(any(Project.class))).thenReturn(mockProject);
         when(projectService.saveProjectClientMember(anyList())).thenReturn(Arrays.asList(mockClientMember));
         when(projectService.saveProjectDevMember(anyList())).thenReturn(Arrays.asList(mockDevMember));
-        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
-        doNothing().when(projectService).saveProjectClientMemberHistory(anyList());
-        doNothing().when(projectService).saveProjectDevMemberHistory(anyList());
+        lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
 
         createProjectService.createProject(mockRequest);
 
@@ -217,7 +211,7 @@ class CreateProjectServiceTest {
                 .hasMessage("프로젝트 저장 실패");
 
         verify(projectService).saveProject(any(Project.class));
-        verify(historyRecorder, never()).recordHistory(any(), anyLong(), any(), anyString());
+        verify(historyRecorder, never()).recordHistory(any(), anyLong(), any(), any());
         verify(projectService, never()).saveProjectClientMember(anyList());
         verify(projectService, never()).saveProjectDevMember(anyList());
     }
@@ -226,15 +220,15 @@ class CreateProjectServiceTest {
     @DisplayName("히스토리 기록 실패 시 예외가 전파된다.")
     void givenCreateProjectRequest_whenHistoryRecordFails_thenThrowException() {
         when(projectService.saveProject(any(Project.class))).thenReturn(mockProject);
-        doThrow(new RuntimeException("히스토리 저장 실패"))
-                .when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+        lenient().doThrow(new RuntimeException("히스토리 저장 실패"))
+                .when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
 
         assertThatThrownBy(() -> createProjectService.createProject(mockRequest))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("히스토리 저장 실패");
 
         verify(projectService).saveProject(any(Project.class));
-        verify(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+        verify(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
         verify(projectService, never()).saveProjectClientMember(anyList());
     }
 
@@ -242,7 +236,7 @@ class CreateProjectServiceTest {
     @DisplayName("클라이언트 멤버 저장 실패 시 예외가 전파된다.")
     void givenCreateProjectRequest_whenSaveClientMemberFails_thenThrowException() {
         when(projectService.saveProject(any(Project.class))).thenReturn(mockProject);
-        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+        lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
         when(projectService.saveProjectClientMember(anyList()))
                 .thenThrow(new RuntimeException("클라이언트 멤버 저장 실패"));
 
@@ -251,18 +245,17 @@ class CreateProjectServiceTest {
                 .hasMessage("클라이언트 멤버 저장 실패");
 
         verify(projectService).saveProject(any(Project.class));
-        verify(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+        verify(historyRecorder).recordHistory(eq(HistoryType.PROJECT), anyLong(), eq(ActionType.CREATE), any(ProjectHistorySnapshot.class));
         verify(projectService).saveProjectClientMember(anyList());
-        verify(projectService, never()).saveProjectClientMemberHistory(anyList());
+        verify(historyRecorder, never()).recordHistory(eq(HistoryType.PROJECT_CLIENT_MEMBER), anyLong(), eq(ActionType.CREATE), any());
     }
 
     @Test
     @DisplayName("개발 멤버 저장 실패 시 예외가 전파된다.")
     void givenCreateProjectRequest_whenSaveDevMemberFails_thenThrowException() {
         when(projectService.saveProject(any(Project.class))).thenReturn(mockProject);
-        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+        lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
         when(projectService.saveProjectClientMember(anyList())).thenReturn(Arrays.asList(mockClientMember));
-        doNothing().when(projectService).saveProjectClientMemberHistory(anyList());
         when(projectService.saveProjectDevMember(anyList()))
                 .thenThrow(new RuntimeException("개발 멤버 저장 실패"));
 
@@ -273,7 +266,7 @@ class CreateProjectServiceTest {
         verify(projectService).saveProject(any(Project.class));
         verify(projectService).saveProjectClientMember(anyList());
         verify(projectService).saveProjectDevMember(anyList());
-        verify(projectService, never()).saveProjectDevMemberHistory(anyList());
+        verify(historyRecorder, never()).recordHistory(eq(HistoryType.PROJECT_DEV_MEMBER), anyLong(), eq(ActionType.CREATE), any());
     }
 
     @Test
@@ -292,15 +285,13 @@ class CreateProjectServiceTest {
         when(projectService.saveProject(any(Project.class))).thenReturn(mockProject);
         when(projectService.saveProjectClientMember(anyList())).thenReturn(Collections.emptyList());
         when(projectService.saveProjectDevMember(anyList())).thenReturn(Arrays.asList(mockDevMember));
-        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
-        doNothing().when(projectService).saveProjectClientMemberHistory(anyList());
-        doNothing().when(projectService).saveProjectDevMemberHistory(anyList());
+        lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
 
         ProjectResponse result = createProjectService.createProject(requestWithEmptyClients);
 
         assertThat(result).isNotNull();
         verify(projectService).saveProjectClientMember(argThat(List::isEmpty));
-        verify(projectService).saveProjectClientMemberHistory(argThat(List::isEmpty));
+        verify(historyRecorder, never()).recordHistory(eq(HistoryType.PROJECT_CLIENT_MEMBER), anyLong(), eq(ActionType.CREATE), any());
     }
 
     @Test
@@ -319,15 +310,13 @@ class CreateProjectServiceTest {
         when(projectService.saveProject(any(Project.class))).thenReturn(mockProject);
         when(projectService.saveProjectClientMember(anyList())).thenReturn(Arrays.asList(mockClientMember));
         when(projectService.saveProjectDevMember(anyList())).thenReturn(Collections.emptyList());
-        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
-        doNothing().when(projectService).saveProjectClientMemberHistory(anyList());
-        doNothing().when(projectService).saveProjectDevMemberHistory(anyList());
+        lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
 
         ProjectResponse result = createProjectService.createProject(requestWithEmptyDevs);
 
         assertThat(result).isNotNull();
         verify(projectService).saveProjectDevMember(argThat(List::isEmpty));
-        verify(projectService).saveProjectDevMemberHistory(argThat(List::isEmpty));
+        verify(historyRecorder, never()).recordHistory(eq(HistoryType.PROJECT_DEV_MEMBER), anyLong(), eq(ActionType.CREATE), any());
     }
 
     @Test
@@ -336,18 +325,16 @@ class CreateProjectServiceTest {
         when(projectService.saveProject(any(Project.class))).thenReturn(mockProject);
         when(projectService.saveProjectClientMember(anyList())).thenReturn(Arrays.asList(mockClientMember));
         when(projectService.saveProjectDevMember(anyList())).thenReturn(Arrays.asList(mockDevMember));
-        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
-        doNothing().when(projectService).saveProjectClientMemberHistory(anyList());
-        doNothing().when(projectService).saveProjectDevMemberHistory(anyList());
+        lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
 
         createProjectService.createProject(mockRequest);
 
         var inOrder = inOrder(projectService, historyRecorder);
         inOrder.verify(projectService).saveProject(any(Project.class));
-        inOrder.verify(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+        inOrder.verify(historyRecorder).recordHistory(eq(HistoryType.PROJECT), anyLong(), eq(ActionType.CREATE), any(ProjectHistorySnapshot.class));
         inOrder.verify(projectService).saveProjectClientMember(anyList());
-        inOrder.verify(projectService).saveProjectClientMemberHistory(anyList());
+        inOrder.verify(historyRecorder).recordHistory(eq(HistoryType.PROJECT_CLIENT_MEMBER), anyLong(), eq(ActionType.CREATE), any(ProjectClientMember.class));
         inOrder.verify(projectService).saveProjectDevMember(anyList());
-        inOrder.verify(projectService).saveProjectDevMemberHistory(anyList());
+        inOrder.verify(historyRecorder).recordHistory(eq(HistoryType.PROJECT_DEV_MEMBER), anyLong(), eq(ActionType.CREATE), any(ProjectDevMember.class));
     }
 }

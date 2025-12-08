@@ -3,6 +3,7 @@ package com.workhub.project.service;
 import com.workhub.global.entity.ActionType;
 import com.workhub.global.entity.HistoryType;
 import com.workhub.global.history.HistoryRecorder;
+import com.workhub.project.dto.ProjectHistorySnapshot;
 import com.workhub.project.entity.Project;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -21,11 +22,10 @@ public class DeleteProjectService {
     public void deleteProject(Long projectId) {
 
         Project project = projectService.findProjectById(projectId);
-        String beforeStatus = project.getStatus().toString();
+        ProjectHistorySnapshot snapshot = ProjectHistorySnapshot.from(project);
 
         project.markDeleted();
-        historyRecorder.recordHistory(HistoryType.PROJECT, projectId, ActionType.DELETE,
-                beforeStatus);
+        historyRecorder.recordHistory(HistoryType.PROJECT, projectId, ActionType.DELETE, snapshot);
 
     }
 

@@ -5,6 +5,8 @@ import com.workhub.projectNode.entity.Priority;
 import com.workhub.projectNode.entity.ProjectNode;
 import lombok.Builder;
 
+import java.time.LocalDate;
+
 @Builder
 public record CreateNodeResponse(
         Long projectNodeId,
@@ -12,6 +14,8 @@ public record CreateNodeResponse(
         String title,
         String description,
         NodeStatus nodeStatus,
+        LocalDate startDate,
+        LocalDate endDate,
         Integer nodeOrder,
         Priority priority
 ) {
@@ -22,6 +26,8 @@ public record CreateNodeResponse(
                 .title(projectNode.getTitle())
                 .description(projectNode.getDescription())
                 .nodeStatus(projectNode.getNodeStatus())
+                .startDate(projectNode.getContractStartDate())
+                .endDate(projectNode.getContractEndDate())
                 .nodeOrder(projectNode.getNodeOrder())
                 .priority(projectNode.getPriority())
                 .build();

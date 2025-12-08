@@ -2,15 +2,16 @@ package com.workhub.projectNode.controller;
 
 import com.workhub.global.response.ApiResponse;
 import com.workhub.projectNode.api.ProjectNodeApi;
-import com.workhub.projectNode.dto.CreateNodeRequest;
-import com.workhub.projectNode.dto.CreateNodeResponse;
-import com.workhub.projectNode.dto.UpdateNodeStatusRequest;
+import com.workhub.projectNode.dto.*;
 import com.workhub.projectNode.service.CreateProjectNodeService;
+import com.workhub.projectNode.service.ReadProjectNodeService;
 import com.workhub.projectNode.service.UpdateProjectNodeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -20,6 +21,17 @@ public class ProjectNodeController implements ProjectNodeApi {
 
     private final CreateProjectNodeService createProjectNodeService;
     private final UpdateProjectNodeService updateProjectNodeService;
+    private final ReadProjectNodeService readProjectNodeService;
+
+    @Override
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<NodeListResponse>>> getNodeList(@PathVariable("projectId") Long projectId){
+
+        List<NodeListResponse> nodeListByProject = readProjectNodeService.getNodeListByProject(projectId);
+
+        return ApiResponse.success(nodeListByProject);
+
+    }
 
     @Override
     @PostMapping
@@ -37,5 +49,15 @@ public class ProjectNodeController implements ProjectNodeApi {
 
         updateProjectNodeService.updateNodeStatus(nodeId, request);
         return ApiResponse.success("노드 상태 변경 성공");
+    }
+
+    @Override
+    @PatchMapping("/order")
+    public ResponseEntity<ApiResponse<String>> updateNodeOrder(@PathVariable("projectId") Long projectId,
+                                                               @RequestBody List<UpdateNodOrderRequest> request) {
+
+        updateProjectNodeService.updateNodeOrder(projectId, request);
+
+        return ApiResponse.success("노드 순서 변경 성공");
     }
 }

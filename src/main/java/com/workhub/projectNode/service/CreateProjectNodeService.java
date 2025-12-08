@@ -5,11 +5,13 @@ import com.workhub.global.entity.HistoryType;
 import com.workhub.global.history.HistoryRecorder;
 import com.workhub.projectNode.dto.CreateNodeRequest;
 import com.workhub.projectNode.dto.CreateNodeResponse;
+import com.workhub.projectNode.dto.NodeSnapshot;
 import com.workhub.projectNode.entity.ProjectNode;
-import jakarta.transaction.Transactional;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -64,9 +66,10 @@ public class CreateProjectNodeService {
     private ProjectNode saveProjectNodeAndHistory(Long projectId, CreateNodeRequest request, Integer nodeOrder) {
 
         ProjectNode savedProjectNode = projectNodeService.saveProjectNode(ProjectNode.of(projectId, request, nodeOrder));
+        NodeSnapshot snapshot = NodeSnapshot.from(savedProjectNode);
 
         historyRecorder.recordHistory(HistoryType.PROJECT_NODE, savedProjectNode.getProjectNodeId(), ActionType.CREATE,
-                savedProjectNode.getDescription());
+                snapshot);
 
         return savedProjectNode;
     }

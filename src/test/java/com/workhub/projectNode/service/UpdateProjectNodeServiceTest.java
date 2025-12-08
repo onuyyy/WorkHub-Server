@@ -6,6 +6,7 @@ import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import com.workhub.global.history.HistoryRecorder;
 import com.workhub.global.security.CustomUserDetails;
+import com.workhub.projectNode.dto.NodeSnapshot;
 import com.workhub.projectNode.dto.UpdateNodeStatusRequest;
 import com.workhub.projectNode.entity.NodeStatus;
 import com.workhub.projectNode.entity.ProjectNode;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -25,6 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class UpdateProjectNodeServiceTest {
@@ -72,18 +75,24 @@ class UpdateProjectNodeServiceTest {
         UpdateNodeStatusRequest request = new UpdateNodeStatusRequest(NodeStatus.IN_PROGRESS);
 
         when(projectNodeService.findById(nodeId)).thenReturn(mockProjectNode);
-        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+        lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
 
         updateProjectNodeService.updateNodeStatus(nodeId, request);
 
         assertThat(mockProjectNode.getNodeStatus()).isEqualTo(NodeStatus.IN_PROGRESS);
         verify(projectNodeService).findById(nodeId);
+
+        ArgumentCaptor<NodeSnapshot> snapshotCaptor = ArgumentCaptor.forClass(NodeSnapshot.class);
         verify(historyRecorder).recordHistory(
                 eq(HistoryType.PROJECT_NODE),
                 eq(nodeId),
                 eq(ActionType.UPDATE),
-                eq("NOT_STARTED")
+                snapshotCaptor.capture()
         );
+
+        NodeSnapshot capturedSnapshot = snapshotCaptor.getValue();
+        assertThat(capturedSnapshot.nodeStatus()).isEqualTo(NodeStatus.NOT_STARTED);
+        assertThat(capturedSnapshot.projectNodeId()).isEqualTo(nodeId);
     }
 
     @Test
@@ -128,17 +137,22 @@ class UpdateProjectNodeServiceTest {
         UpdateNodeStatusRequest request = new UpdateNodeStatusRequest(NodeStatus.PENDING_REVIEW);
 
         when(projectNodeService.findById(nodeId)).thenReturn(mockProjectNode);
-        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+        lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
 
         updateProjectNodeService.updateNodeStatus(nodeId, request);
 
         assertThat(mockProjectNode.getNodeStatus()).isEqualTo(NodeStatus.PENDING_REVIEW);
+
+        ArgumentCaptor<NodeSnapshot> snapshotCaptor = ArgumentCaptor.forClass(NodeSnapshot.class);
         verify(historyRecorder).recordHistory(
                 eq(HistoryType.PROJECT_NODE),
                 eq(nodeId),
                 eq(ActionType.UPDATE),
-                eq("NOT_STARTED")
+                snapshotCaptor.capture()
         );
+
+        NodeSnapshot capturedSnapshot = snapshotCaptor.getValue();
+        assertThat(capturedSnapshot.nodeStatus()).isEqualTo(NodeStatus.NOT_STARTED);
     }
 
     @Test
@@ -154,17 +168,22 @@ class UpdateProjectNodeServiceTest {
         UpdateNodeStatusRequest request = new UpdateNodeStatusRequest(NodeStatus.PENDING_REVIEW);
 
         when(projectNodeService.findById(nodeId)).thenReturn(inProgressNode);
-        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+        lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
 
         updateProjectNodeService.updateNodeStatus(nodeId, request);
 
         assertThat(inProgressNode.getNodeStatus()).isEqualTo(NodeStatus.PENDING_REVIEW);
+
+        ArgumentCaptor<NodeSnapshot> snapshotCaptor = ArgumentCaptor.forClass(NodeSnapshot.class);
         verify(historyRecorder).recordHistory(
                 eq(HistoryType.PROJECT_NODE),
                 eq(nodeId),
                 eq(ActionType.UPDATE),
-                eq("IN_PROGRESS")
+                snapshotCaptor.capture()
         );
+
+        NodeSnapshot capturedSnapshot = snapshotCaptor.getValue();
+        assertThat(capturedSnapshot.nodeStatus()).isEqualTo(NodeStatus.IN_PROGRESS);
     }
 
     @Test
@@ -180,17 +199,22 @@ class UpdateProjectNodeServiceTest {
         UpdateNodeStatusRequest request = new UpdateNodeStatusRequest(NodeStatus.IN_PROGRESS);
 
         when(projectNodeService.findById(nodeId)).thenReturn(onHoldNode);
-        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+        lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
 
         updateProjectNodeService.updateNodeStatus(nodeId, request);
 
         assertThat(onHoldNode.getNodeStatus()).isEqualTo(NodeStatus.IN_PROGRESS);
+
+        ArgumentCaptor<NodeSnapshot> snapshotCaptor = ArgumentCaptor.forClass(NodeSnapshot.class);
         verify(historyRecorder).recordHistory(
                 eq(HistoryType.PROJECT_NODE),
                 eq(nodeId),
                 eq(ActionType.UPDATE),
-                eq("ON_HOLD")
+                snapshotCaptor.capture()
         );
+
+        NodeSnapshot capturedSnapshot = snapshotCaptor.getValue();
+        assertThat(capturedSnapshot.nodeStatus()).isEqualTo(NodeStatus.ON_HOLD);
     }
 
     @Test
@@ -200,16 +224,20 @@ class UpdateProjectNodeServiceTest {
         UpdateNodeStatusRequest request = new UpdateNodeStatusRequest(NodeStatus.IN_PROGRESS);
 
         when(projectNodeService.findById(nodeId)).thenReturn(mockProjectNode);
-        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+        lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
 
         updateProjectNodeService.updateNodeStatus(nodeId, request);
 
+        ArgumentCaptor<NodeSnapshot> snapshotCaptor = ArgumentCaptor.forClass(NodeSnapshot.class);
         verify(historyRecorder).recordHistory(
                 eq(HistoryType.PROJECT_NODE),
                 eq(nodeId),
                 eq(ActionType.UPDATE),
-                eq("NOT_STARTED") // 변경 전 상태
+                snapshotCaptor.capture()
         );
+
+        NodeSnapshot capturedSnapshot = snapshotCaptor.getValue();
+        assertThat(capturedSnapshot.nodeStatus()).isEqualTo(NodeStatus.NOT_STARTED); // 변경 전 상태
     }
 
     @Test
@@ -219,13 +247,13 @@ class UpdateProjectNodeServiceTest {
         UpdateNodeStatusRequest request = new UpdateNodeStatusRequest(NodeStatus.IN_PROGRESS);
 
         when(projectNodeService.findById(nodeId)).thenReturn(mockProjectNode);
-        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+        lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
 
         updateProjectNodeService.updateNodeStatus(nodeId, request);
 
         var inOrder = inOrder(projectNodeService, historyRecorder);
         inOrder.verify(projectNodeService).findById(nodeId);
-        inOrder.verify(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+        inOrder.verify(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
     }
 
     @Test
@@ -236,29 +264,37 @@ class UpdateProjectNodeServiceTest {
         // 첫 번째 변경: NOT_STARTED -> IN_PROGRESS
         UpdateNodeStatusRequest firstRequest = new UpdateNodeStatusRequest(NodeStatus.IN_PROGRESS);
         when(projectNodeService.findById(nodeId)).thenReturn(mockProjectNode);
-        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+        lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
 
         updateProjectNodeService.updateNodeStatus(nodeId, firstRequest);
 
+        ArgumentCaptor<NodeSnapshot> snapshotCaptor = ArgumentCaptor.forClass(NodeSnapshot.class);
         verify(historyRecorder).recordHistory(
                 eq(HistoryType.PROJECT_NODE),
                 eq(nodeId),
                 eq(ActionType.UPDATE),
-                eq("NOT_STARTED")
+                snapshotCaptor.capture()
         );
+
+        NodeSnapshot firstSnapshot = snapshotCaptor.getValue();
+        assertThat(firstSnapshot.nodeStatus()).isEqualTo(NodeStatus.NOT_STARTED);
 
         // 두 번째 변경: IN_PROGRESS -> PENDING_REVIEW
         UpdateNodeStatusRequest secondRequest = new UpdateNodeStatusRequest(NodeStatus.PENDING_REVIEW);
         reset(historyRecorder);
-        doNothing().when(historyRecorder).recordHistory(any(), anyLong(), any(), anyString());
+        lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
 
         updateProjectNodeService.updateNodeStatus(nodeId, secondRequest);
 
+        ArgumentCaptor<NodeSnapshot> secondSnapshotCaptor = ArgumentCaptor.forClass(NodeSnapshot.class);
         verify(historyRecorder).recordHistory(
                 eq(HistoryType.PROJECT_NODE),
                 eq(nodeId),
                 eq(ActionType.UPDATE),
-                eq("IN_PROGRESS")
+                secondSnapshotCaptor.capture()
         );
+
+        NodeSnapshot secondSnapshot = secondSnapshotCaptor.getValue();
+        assertThat(secondSnapshot.nodeStatus()).isEqualTo(NodeStatus.IN_PROGRESS);
     }
 }

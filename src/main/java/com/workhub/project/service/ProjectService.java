@@ -18,8 +18,6 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final ClientMemberRepository clientMemberRepository;
     private final DevMemberRepository devMemberRepository;
-    private final ClientMemberHistoryRepository  clientMemberHistoryRepository;
-    private final DevMemberHistoryRepository devMemberHistoryRepository;
 
     public Project saveProject(Project project){
         return projectRepository.save(project);
@@ -36,14 +34,6 @@ public class ProjectService {
 
     public List<ProjectDevMember> saveProjectDevMember(List<ProjectDevMember> projectDevMembers){
         return devMemberRepository.saveAll(projectDevMembers);
-    }
-
-    public void saveProjectClientMemberHistory(List<ProjectClientMemberHistory> clientMemberHistories){
-        clientMemberHistoryRepository.saveAll(clientMemberHistories);
-    }
-
-    public void saveProjectDevMemberHistory(List<ProjectDevMemberHistory> projectDevMemberHistories){
-        devMemberHistoryRepository.saveAll(projectDevMemberHistories);
     }
 
     public Project validateCompletedProject(Long projectId) {

@@ -4,8 +4,11 @@ import com.workhub.global.entity.ActionType;
 import com.workhub.global.entity.HistoryType;
 import com.workhub.global.history.HistoryRecorder;
 import com.workhub.project.dto.CreateProjectRequest;
+import com.workhub.project.dto.ProjectHistorySnapshot;
 import com.workhub.project.dto.ProjectResponse;
-import com.workhub.project.entity.*;
+import com.workhub.project.entity.Project;
+import com.workhub.project.entity.ProjectClientMember;
+import com.workhub.project.entity.ProjectDevMember;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,8 +47,9 @@ public class CreateProjectService {
     private Project saveProjectAndHistory(CreateProjectRequest request) {
 
         Project savedProject = projectService.saveProject(Project.of(request));
-        historyRecorder.recordHistory(HistoryType.PROJECT, savedProject.getProjectId(), ActionType.CREATE,
-                savedProject.getProjectDescription());
+        ProjectHistorySnapshot snapshot = ProjectHistorySnapshot.from(savedProject);
+
+        historyRecorder.recordHistory(HistoryType.PROJECT, savedProject.getProjectId(), ActionType.CREATE, snapshot);
 
         return savedProject;
     }
@@ -63,12 +67,14 @@ public class CreateProjectService {
 
         List<ProjectClientMember> savedProjectClientMember = projectService.saveProjectClientMember(clientMembers);
 
-        List<ProjectClientMemberHistory> clientMemberHistories = savedProjectClientMember.stream()
-                .map(ProjectClientMember::getProjectClientMemberId)
-                .map(ProjectClientMemberHistory::of)
-                .toList();
-
-        projectService.saveProjectClientMemberHistory(clientMemberHistories);
+        savedProjectClientMember.forEach(member ->
+                historyRecorder.recordHistory(
+                        HistoryType.PROJECT_CLIENT_MEMBER,
+                        member.getProjectClientMemberId(),
+                        ActionType.CREATE,
+                        member
+                )
+        );
     }
 
     /**
@@ -84,11 +90,13 @@ public class CreateProjectService {
 
         List<ProjectDevMember> savedProjectDevMember = projectService.saveProjectDevMember(devMembers);
 
-        List<ProjectDevMemberHistory> devMemberHistories = savedProjectDevMember.stream()
-                .map(ProjectDevMember::getProjectMemberId)
-                .map(ProjectDevMemberHistory::of)
-                .toList();
-
-        projectService.saveProjectDevMemberHistory(devMemberHistories);
+        savedProjectDevMember.forEach(devMember ->
+                historyRecorder.recordHistory(
+                        HistoryType.PROJECT_DEV_MEMBER,
+                        devMember.getProjectMemberId(),
+                        ActionType.CREATE,
+                        devMember
+                )
+        );
     }
 }

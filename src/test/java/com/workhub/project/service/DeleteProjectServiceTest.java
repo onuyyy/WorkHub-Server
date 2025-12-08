@@ -5,12 +5,14 @@ import com.workhub.global.entity.HistoryType;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import com.workhub.global.history.HistoryRecorder;
+import com.workhub.project.dto.ProjectHistorySnapshot;
 import com.workhub.project.entity.Project;
 import com.workhub.project.entity.Status;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -20,6 +22,7 @@ import java.time.LocalDate;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class DeleteProjectServiceTest {
@@ -54,11 +57,11 @@ class DeleteProjectServiceTest {
         // given
         Long projectId = 1L;
         when(projectService.findProjectById(projectId)).thenReturn(mockProject);
-        doNothing().when(historyRecorder).recordHistory(
+        lenient().doNothing().when(historyRecorder).recordHistory(
                 any(HistoryType.class),
                 anyLong(),
                 any(ActionType.class),
-                anyString()
+                any(Object.class)
         );
 
         // when
@@ -67,12 +70,18 @@ class DeleteProjectServiceTest {
         // then
         verify(projectService).findProjectById(projectId);
         assertThat(mockProject.getStatus()).isEqualTo(Status.DELETED);
+
+        ArgumentCaptor<ProjectHistorySnapshot> snapshotCaptor = ArgumentCaptor.forClass(ProjectHistorySnapshot.class);
         verify(historyRecorder).recordHistory(
-                HistoryType.PROJECT,
-                projectId,
-                ActionType.DELETE,
-                Status.IN_PROGRESS.toString()
+                eq(HistoryType.PROJECT),
+                eq(projectId),
+                eq(ActionType.DELETE),
+                snapshotCaptor.capture()
         );
+
+        ProjectHistorySnapshot capturedSnapshot = snapshotCaptor.getValue();
+        assertThat(capturedSnapshot.status()).isEqualTo(Status.IN_PROGRESS);
+        assertThat(capturedSnapshot.projectId()).isEqualTo(projectId);
     }
 
     @Test
@@ -87,11 +96,11 @@ class DeleteProjectServiceTest {
                 .build();
 
         when(projectService.findProjectById(projectId)).thenReturn(contractProject);
-        doNothing().when(historyRecorder).recordHistory(
+        lenient().doNothing().when(historyRecorder).recordHistory(
                 any(HistoryType.class),
                 anyLong(),
                 any(ActionType.class),
-                anyString()
+                any(Object.class)
         );
 
         // when
@@ -100,12 +109,17 @@ class DeleteProjectServiceTest {
         // then
         verify(projectService).findProjectById(projectId);
         assertThat(contractProject.getStatus()).isEqualTo(Status.DELETED);
+
+        ArgumentCaptor<ProjectHistorySnapshot> snapshotCaptor = ArgumentCaptor.forClass(ProjectHistorySnapshot.class);
         verify(historyRecorder).recordHistory(
-                HistoryType.PROJECT,
-                projectId,
-                ActionType.DELETE,
-                Status.CONTRACT.toString()
+                eq(HistoryType.PROJECT),
+                eq(projectId),
+                eq(ActionType.DELETE),
+                snapshotCaptor.capture()
         );
+
+        ProjectHistorySnapshot capturedSnapshot = snapshotCaptor.getValue();
+        assertThat(capturedSnapshot.status()).isEqualTo(Status.CONTRACT);
     }
 
     @Test
@@ -120,11 +134,11 @@ class DeleteProjectServiceTest {
                 .build();
 
         when(projectService.findProjectById(projectId)).thenReturn(completedProject);
-        doNothing().when(historyRecorder).recordHistory(
+        lenient().doNothing().when(historyRecorder).recordHistory(
                 any(HistoryType.class),
                 anyLong(),
                 any(ActionType.class),
-                anyString()
+                any(Object.class)
         );
 
         // when
@@ -133,12 +147,17 @@ class DeleteProjectServiceTest {
         // then
         verify(projectService).findProjectById(projectId);
         assertThat(completedProject.getStatus()).isEqualTo(Status.DELETED);
+
+        ArgumentCaptor<ProjectHistorySnapshot> snapshotCaptor = ArgumentCaptor.forClass(ProjectHistorySnapshot.class);
         verify(historyRecorder).recordHistory(
-                HistoryType.PROJECT,
-                projectId,
-                ActionType.DELETE,
-                Status.COMPLETED.toString()
+                eq(HistoryType.PROJECT),
+                eq(projectId),
+                eq(ActionType.DELETE),
+                snapshotCaptor.capture()
         );
+
+        ProjectHistorySnapshot capturedSnapshot = snapshotCaptor.getValue();
+        assertThat(capturedSnapshot.status()).isEqualTo(Status.COMPLETED);
     }
 
     @Test
@@ -155,12 +174,7 @@ class DeleteProjectServiceTest {
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PROJECT_NOT_FOUND);
 
         verify(projectService).findProjectById(projectId);
-        verify(historyRecorder, never()).recordHistory(
-                any(HistoryType.class),
-                anyLong(),
-                any(ActionType.class),
-                anyString()
-        );
+        verify(historyRecorder, never()).recordHistory(any(), any(), any(), any());
     }
 
     @Test
@@ -170,22 +184,26 @@ class DeleteProjectServiceTest {
         Long projectId = 1L;
         Status beforeStatus = mockProject.getStatus();
         when(projectService.findProjectById(projectId)).thenReturn(mockProject);
-        doNothing().when(historyRecorder).recordHistory(
+        lenient().doNothing().when(historyRecorder).recordHistory(
                 any(HistoryType.class),
                 anyLong(),
                 any(ActionType.class),
-                anyString()
+                any(Object.class)
         );
 
         // when
         deleteProjectService.deleteProject(projectId);
 
         // then
+        ArgumentCaptor<ProjectHistorySnapshot> snapshotCaptor = ArgumentCaptor.forClass(ProjectHistorySnapshot.class);
         verify(historyRecorder).recordHistory(
-                HistoryType.PROJECT,
-                projectId,
-                ActionType.DELETE,
-                beforeStatus.toString()
+                eq(HistoryType.PROJECT),
+                eq(projectId),
+                eq(ActionType.DELETE),
+                snapshotCaptor.capture()
         );
+
+        ProjectHistorySnapshot capturedSnapshot = snapshotCaptor.getValue();
+        assertThat(capturedSnapshot.status()).isEqualTo(beforeStatus);
     }
 }

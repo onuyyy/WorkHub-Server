@@ -16,6 +16,7 @@ public enum ErrorCode {
     INVALID_ENUM_VALUE(HttpStatus.BAD_REQUEST, "E-001", "유효하지 않은 값입니다."),
     INVALID_REQUEST_FORMAT(HttpStatus.BAD_REQUEST, "E-002", "잘못된 요청 형식입니다."),
     STATUS_ALREADY_SET(HttpStatus.BAD_REQUEST, "E-003", "이미 해당 상태입니다."),
+    JSON_SERIALIZATION_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "E-004", "JSON 직렬화 처리 중 오류가 발생했습니다."),
 
     // 인증 && 인가 (세션 기반)
     SESSION_EXPIRED(HttpStatus.UNAUTHORIZED, "A-001", "세션이 만료되었습니다."),

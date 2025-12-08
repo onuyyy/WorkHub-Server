@@ -172,10 +172,6 @@ CREATE INDEX idx_post_created
 CREATE INDEX idx_post_type
     ON post(type);
 
--- 해시태그별 게시글 조회
-CREATE INDEX idx_post_hashtag
-    ON post(hashtag);
-
 -- 특정 게시글의 하위 게시글 조회
 CREATE INDEX idx_post_parent
     ON post(parent_post_id);
@@ -310,11 +306,6 @@ CREATE INDEX idx_cs_qna_history_updated_by
 -- 프로젝트 단계별 체크리스트 조회
 CREATE INDEX idx_check_list_project_node
     ON check_list(project_node_id);
-
--- check_list_template indexes
--- 체크리스트 템플릿 - 해시태그별 조회
-CREATE INDEX idx_check_list_template_hashtag
-    ON check_list_template(template_hashtag);
 
 -- check_list_item indexes
 -- 체크리스트별 아이템 조회 (순서대로)

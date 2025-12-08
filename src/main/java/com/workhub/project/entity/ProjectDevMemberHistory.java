@@ -9,6 +9,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import java.time.LocalDateTime;
+
 @Getter
 @SuperBuilder
 @NoArgsConstructor
@@ -16,13 +18,15 @@ import lombok.experimental.SuperBuilder;
 @Table(name = "project_dev_member_history")
 public class ProjectDevMemberHistory extends BaseHistoryEntity {
 
-    public static ProjectDevMemberHistory of(Long targetId) {
+    public static ProjectDevMemberHistory of(Long targetId, ActionType actionType, String beforeData,
+                                             Long originalCreator) {
         return ProjectDevMemberHistory.builder()
                 .targetId(targetId)
-                .actionType(ActionType.CREATE)
-                .beforeData("프로젝트 최초 투입")  // todo : 프로젝트 멤버 엔티티에 텍스트가 없는데, 이곳에 어떤 내용을 담아야 할 지 정해야 할 거 같습니다.
-                .createdBy(SecurityUtil.getCurrentUserIdOrThrow())
+                .actionType(actionType)
+                .beforeData(beforeData)  // todo : 프로젝트 멤버 엔티티에 텍스트가 없는데, 이곳에 어떤 내용을 담아야 할 지 정해야 할 거 같습니다.
+                .createdBy(originalCreator)
                 .updatedBy(SecurityUtil.getCurrentUserIdOrThrow())
+                .updatedAt(LocalDateTime.now())
                 .ipAddress(SecurityUtil.getRemoteAddr().orElse(null))
                 .userAgent(SecurityUtil.getUserAgent().orElse(null))
                 .build();
