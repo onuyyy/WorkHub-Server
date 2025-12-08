@@ -3,7 +3,7 @@ package com.workhub.projectNode.entity;
 import com.fasterxml.jackson.annotation.JsonCreator;
 
 public enum NodeStatus {
-    NOT_STARTED, IN_PROGRESS, PENDING_REVIEW, DONE, ON_HOLD;
+    NOT_STARTED, IN_PROGRESS, PENDING_REVIEW, DONE, ON_HOLD, DELETED;
 
     @JsonCreator
     public static NodeStatus from(String value) {

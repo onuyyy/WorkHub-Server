@@ -93,6 +93,11 @@ public class ProjectNode extends BaseTimeEntity {
         }
     }
 
+    public void markDeleted() {
+        this.nodeStatus = NodeStatus.DELETED;
+        markDeletedNow();
+    }
+
     public static ProjectNode of(Long projectId, CreateNodeRequest request, Integer nodeOrder) {
         return ProjectNode.builder()
                 .title(request.title())

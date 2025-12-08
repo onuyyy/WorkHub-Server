@@ -55,9 +55,9 @@ public class ProjectController implements ProjectApi {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<String>> deleteProject(@PathVariable("projectId") Long projectId) {
 
-
         deleteProjectService.deleteProject(projectId);
         return ApiResponse.success("프로젝트가 삭제되었습니다.");
     }
+
 
 }

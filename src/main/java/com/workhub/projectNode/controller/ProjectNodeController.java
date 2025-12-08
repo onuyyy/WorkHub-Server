@@ -4,6 +4,7 @@ import com.workhub.global.response.ApiResponse;
 import com.workhub.projectNode.api.ProjectNodeApi;
 import com.workhub.projectNode.dto.*;
 import com.workhub.projectNode.service.CreateProjectNodeService;
+import com.workhub.projectNode.service.DeleteProjectNodeService;
 import com.workhub.projectNode.service.ReadProjectNodeService;
 import com.workhub.projectNode.service.UpdateProjectNodeService;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ public class ProjectNodeController implements ProjectNodeApi {
     private final CreateProjectNodeService createProjectNodeService;
     private final UpdateProjectNodeService updateProjectNodeService;
     private final ReadProjectNodeService readProjectNodeService;
+    private final DeleteProjectNodeService deleteProjectNodeService;
 
     @Override
     @GetMapping
@@ -71,5 +73,14 @@ public class ProjectNodeController implements ProjectNodeApi {
         CreateNodeResponse response = updateProjectNodeService.updateNode(projectId, nodeId, request);
 
         return ApiResponse.success(response);
+    }
+
+    @Override
+    @DeleteMapping("{nodeId}")
+    public ResponseEntity<ApiResponse<String>> deleteNode(@PathVariable Long projectId,
+                                                          @PathVariable Long nodeId) {
+
+        deleteProjectNodeService.deleteProjectNode(projectId, nodeId);
+        return ApiResponse.success("프로젝트 노드 삭제 완료.");
     }
 }
