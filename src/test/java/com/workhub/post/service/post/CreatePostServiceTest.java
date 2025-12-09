@@ -10,9 +10,7 @@ import com.workhub.post.dto.post.response.PostResponse;
 import com.workhub.post.repository.post.PostFileRepository;
 import com.workhub.post.repository.post.PostLinkRepository;
 import com.workhub.post.repository.post.PostRepository;
-import com.workhub.project.entity.Project;
-import com.workhub.project.entity.Status;
-import com.workhub.project.service.ProjectService;
+import com.workhub.post.service.PostValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,6 +27,8 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willDoNothing;
+import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.verify;
 
@@ -44,7 +44,7 @@ class CreatePostServiceTest {
     @InjectMocks
     PostService postService;
     @Mock
-    ProjectService projectService;
+    PostValidator postValidator;
     @Mock
     HistoryRecorder historyRecorder;
 
@@ -52,7 +52,8 @@ class CreatePostServiceTest {
 
     @BeforeEach
     void setUp() {
-        createPostService = new CreatePostService(postService, projectService, historyRecorder);
+        createPostService = new CreatePostService(postService, postValidator, historyRecorder);
+        willDoNothing().given(postValidator).validateNodeAndProject(anyLong(), anyLong());
         given(postRepository.findByParentPostIdAndDeletedAtIsNull(anyLong())).willReturn(Collections.emptyList());
         given(postFileRepository.findByPostId(anyLong())).willReturn(Collections.emptyList());
         given(postLinkRepository.findByPostId(anyLong())).willReturn(Collections.emptyList());
@@ -65,7 +66,6 @@ class CreatePostServiceTest {
                 "title", PostType.NOTICE, "content", "11.1.1", 1L, List.of(), List.of()
         );
         given(postRepository.existsByPostIdAndDeletedAtIsNull(1L)).willReturn(false);
-        given(projectService.validateProject(10L)).willReturn(mockProject(10L));
 
         assertThatThrownBy(() -> createPostService.create(10L, 20L, 30L, request))
                 .isInstanceOf(BusinessException.class)
@@ -79,7 +79,6 @@ class CreatePostServiceTest {
                 "title", PostType.NOTICE, "content", "11.1.1", 1L, List.of(), List.of()
         );
         given(postRepository.existsByPostIdAndDeletedAtIsNull(1L)).willReturn(false);
-        given(projectService.validateProject(10L)).willReturn(mockProject(10L));
 
         assertThatThrownBy(() -> createPostService.create(10L, 20L, 30L, request))
                 .isInstanceOf(BusinessException.class)
@@ -97,7 +96,6 @@ class CreatePostServiceTest {
                 .postIp("127.0.0.1")
                 .build();
         given(postRepository.save(any(Post.class))).willReturn(saved);
-        given(projectService.validateProject(10L)).willReturn(mockProject(10L));
 
         PostRequest request = new PostRequest(
                 "title", PostType.NOTICE, "content", "127.0.0.1", null, List.of(), List.of()
@@ -121,18 +119,12 @@ class CreatePostServiceTest {
         PostRequest request = new PostRequest(
                 "title", PostType.NOTICE, "content", "127.0.0.1", null, List.of(), List.of()
         );
-        given(projectService.validateProject(10L)).willThrow(new BusinessException(ErrorCode.INVALID_PROJECT_STATUS_FOR_POST));
+        willDoNothing().given(postValidator).validateNodeAndProject(anyLong(), anyLong());
+        willThrow(new BusinessException(ErrorCode.INVALID_PROJECT_STATUS_FOR_POST))
+                .given(postValidator).validateNodeAndProject(20L, 10L);
 
         assertThatThrownBy(() -> createPostService.create(10L, 20L, 30L, request))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_PROJECT_STATUS_FOR_POST);
-    }
-
-    private Project mockProject(Long projectId) {
-        return Project.builder()
-                .projectId(projectId)
-                .projectTitle("project")
-                .status(Status.IN_PROGRESS)
-                .build();
     }
 }

@@ -9,6 +9,7 @@ import com.workhub.post.dto.comment.CommentHistorySnapshot;
 import com.workhub.post.dto.comment.request.CommentRequest;
 import com.workhub.post.dto.comment.response.CommentResponse;
 import com.workhub.post.entity.PostComment;
+import com.workhub.post.service.PostValidator;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 public class CreateCommentService {
     private final CommentService commentService;
     private final HistoryRecorder historyRecorder;
+    private final PostValidator postValidator;
 
     /**
      * 댓글을 생성하고 히스토리를 기록한다.
@@ -31,6 +33,7 @@ public class CreateCommentService {
      */
     public CommentResponse create(Long projectId, Long postId, Long userId, CommentRequest commentRequest) {
         validateContent(commentRequest.content());
+        postValidator.validatePostToProject(postId, projectId);
 
         Long parentCommentId = resolveParent(postId, commentRequest.parentCommentId());
         PostComment postComment = PostComment.of(postId, userId, parentCommentId, commentRequest.content());

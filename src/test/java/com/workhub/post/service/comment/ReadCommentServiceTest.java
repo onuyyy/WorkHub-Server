@@ -1,7 +1,10 @@
 package com.workhub.post.service.comment;
 
 import com.workhub.post.dto.comment.response.CommentResponse;
+import com.workhub.post.entity.Post;
 import com.workhub.post.entity.PostComment;
+import com.workhub.post.service.PostValidator;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,9 +28,18 @@ class ReadCommentServiceTest {
 
     @Mock
     CommentService commentService;
+    @Mock
+    PostValidator postValidator;
 
     @InjectMocks
     ReadCommentService readCommentService;
+
+    @BeforeEach
+    void setUp() {
+        readCommentService = new ReadCommentService(commentService, postValidator);
+        given(postValidator.validatePostToProject(anyLong(), anyLong()))
+                .willReturn(Post.builder().build());
+    }
 
     @Test
     @DisplayName("최상위 댓글과 자식 댓글을 계층 구조로 반환한다")

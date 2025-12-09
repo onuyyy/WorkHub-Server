@@ -9,7 +9,7 @@ import com.workhub.post.entity.Post;
 import com.workhub.post.entity.PostFile;
 import com.workhub.post.dto.post.PostHistorySnapshot;
 import com.workhub.post.entity.PostLink;
-import com.workhub.project.service.ProjectService;
+import com.workhub.post.service.PostValidator;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,8 +20,9 @@ import org.springframework.stereotype.Service;
 public class DeletePostService {
 
     private final PostService postService;
-    private final ProjectService projectService;
+    private final PostValidator postValidator;
     private final HistoryRecorder historyRecorder;
+
 
     /**
      * 게시글 삭제 시 프로젝트/노드 검증과 작성자 권한을 체크한다.
@@ -31,7 +32,7 @@ public class DeletePostService {
      * @param postId 게시글 ID
      */
     public void delete(Long projectId, Long nodeId, Long postId, Long userId) {
-        projectService.validateProject(projectId);
+        postValidator.validateNodeAndProject(nodeId, projectId);
         Post target = postService.findById(postId);
         postService.validateNode(target, nodeId);
         if (target.isDeleted()) {

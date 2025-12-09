@@ -5,22 +5,21 @@ import com.workhub.global.error.exception.BusinessException;
 import com.workhub.global.response.ApiResponse;
 import com.workhub.global.security.CustomUserDetails;
 import com.workhub.post.api.PostApi;
-import com.workhub.post.entity.PostType;
 import com.workhub.post.dto.post.request.PostRequest;
 import com.workhub.post.dto.post.request.PostUpdateRequest;
 import com.workhub.post.dto.post.response.PostPageResponse;
 import com.workhub.post.dto.post.response.PostResponse;
+import com.workhub.post.entity.PostType;
 import com.workhub.post.service.post.CreatePostService;
 import com.workhub.post.service.post.DeletePostService;
 import com.workhub.post.service.post.ReadPostService;
 import com.workhub.post.service.post.UpdatePostService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -43,7 +42,6 @@ public class PostController implements PostApi {
      */
     @Override
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<ApiResponse<PostResponse>> createPost(
             @PathVariable Long projectId,
             @PathVariable Long nodeId,
@@ -62,7 +60,6 @@ public class PostController implements PostApi {
      */
     @Override
     @GetMapping
-    @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<ApiResponse<PostPageResponse>> getPosts(
             @PathVariable Long projectId,
             @PathVariable Long nodeId,
@@ -94,7 +91,6 @@ public class PostController implements PostApi {
      */
     @Override
     @PatchMapping("/{postId}")
-    @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<ApiResponse<PostResponse>> updatePost(@PathVariable Long projectId,
                                                                 @PathVariable Long nodeId,
                                                                 @PathVariable Long postId,
@@ -114,7 +110,6 @@ public class PostController implements PostApi {
      */
     @Override
     @DeleteMapping("/{postId}")
-    @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<ApiResponse<Object>> deletePost(@PathVariable Long projectId,
                                                           @PathVariable Long nodeId,
                                                           @PathVariable Long postId,

@@ -1,24 +1,21 @@
 package com.workhub.post.controller;
 
-import com.workhub.global.error.ErrorCode;
-import com.workhub.global.error.exception.BusinessException;
 import com.workhub.global.response.ApiResponse;
+import com.workhub.global.security.CustomUserDetails;
 import com.workhub.post.api.CommentApi;
 import com.workhub.post.dto.comment.request.CommentRequest;
 import com.workhub.post.dto.comment.request.CommentUpdateRequest;
 import com.workhub.post.dto.comment.response.CommentResponse;
-import com.workhub.global.security.CustomUserDetails;
 import com.workhub.post.service.comment.CreateCommentService;
 import com.workhub.post.service.comment.DeleteCommentService;
 import com.workhub.post.service.comment.ReadCommentService;
 import com.workhub.post.service.comment.UpdateCommentService;
-import lombok.RequiredArgsConstructor;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -44,7 +41,6 @@ public class CommentController implements CommentApi {
      */
     @Override
     @GetMapping
-    @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<ApiResponse<Page<CommentResponse>>> readComments(
             @PathVariable Long projectId,
             @PathVariable Long nodeId,
@@ -66,14 +62,13 @@ public class CommentController implements CommentApi {
      */
     @Override
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<ApiResponse<CommentResponse>> create(
             @PathVariable Long projectId,
             @PathVariable Long nodeId,
             @PathVariable Long postId,
             @Valid @RequestBody CommentRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        CommentResponse response = createCommentService.create(projectId, postId, getUserId(userDetails), request);
+        CommentResponse response = createCommentService.create(projectId, postId, userDetails.getUserId(), request);
         return ApiResponse.created(response, "댓글 작성에 성공했습니다.");
     }
 
@@ -90,7 +85,6 @@ public class CommentController implements CommentApi {
      */
     @Override
     @PatchMapping("/{commentId}")
-    @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<ApiResponse<CommentResponse>> update(
             @PathVariable Long projectId,
             @PathVariable Long nodeId,
@@ -98,7 +92,7 @@ public class CommentController implements CommentApi {
             @PathVariable Long commentId,
             @Valid @RequestBody CommentUpdateRequest request,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        CommentResponse response = updateCommentService.update(commentId, postId, getUserId(userDetails), request);
+        CommentResponse response = updateCommentService.update(projectId, commentId, postId, userDetails.getUserId(), request);
         return ApiResponse.success(response, "댓글 수정에 성공했습니다.");
     }
 
@@ -114,21 +108,13 @@ public class CommentController implements CommentApi {
      */
     @Override
     @DeleteMapping("/{commentId}")
-    @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<ApiResponse<Long>> delete(
             @PathVariable Long projectId,
             @PathVariable Long nodeId,
             @PathVariable Long postId,
             @PathVariable Long commentId,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        Long result = deleteCommentService.delete(projectId, postId, commentId, getUserId(userDetails));
+        Long result = deleteCommentService.delete(projectId, postId, commentId, userDetails.getUserId());
         return ApiResponse.success(result, "댓글 삭제에 성공했습니다.");
-    }
-
-    private Long getUserId(CustomUserDetails userDetails) {
-        if (userDetails == null) {
-            throw new BusinessException(ErrorCode.NOT_LOGGED_IN);
-        }
-        return userDetails.getUserId();
     }
 }

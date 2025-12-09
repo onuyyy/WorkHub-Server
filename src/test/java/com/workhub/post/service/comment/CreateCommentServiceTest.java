@@ -8,31 +8,47 @@ import com.workhub.global.history.HistoryRecorder;
 import com.workhub.post.dto.comment.CommentHistorySnapshot;
 import com.workhub.post.dto.comment.request.CommentRequest;
 import com.workhub.post.dto.comment.response.CommentResponse;
+import com.workhub.post.entity.Post;
 import com.workhub.post.entity.PostComment;
+import com.workhub.post.service.PostValidator;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
+import static org.mockito.BDDMockito.willDoNothing;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class CreateCommentServiceTest {
 
     @Mock
     CommentService commentService;
     @Mock
     HistoryRecorder historyRecorder;
+    @Mock
+    PostValidator postValidator;
 
     @InjectMocks
     CreateCommentService createCommentService;
+
+    @BeforeEach
+    void setUp() {
+        given(postValidator.validatePostToProject(anyLong(), anyLong()))
+                .willReturn(Post.builder().build());
+    }
 
     @Test
     @DisplayName("내용이 비어 있으면 예외를 던진다")

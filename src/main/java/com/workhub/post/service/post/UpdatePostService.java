@@ -13,7 +13,7 @@ import com.workhub.post.dto.post.request.PostFileUpdateRequest;
 import com.workhub.post.dto.post.request.PostLinkUpdateRequest;
 import com.workhub.post.dto.post.request.PostUpdateRequest;
 import com.workhub.post.dto.post.response.PostResponse;
-import com.workhub.project.service.ProjectService;
+import com.workhub.post.service.PostValidator;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,14 +27,16 @@ import java.util.stream.Collectors;
 public class UpdatePostService {
 
     private final PostService postService;
-    private final ProjectService projectService;
+    private final PostValidator postValidator;
     private final HistoryRecorder historyRecorder;
+
 
     /**
      * 프로젝트와 노드 일치 여부, 작성자 권한을 검증한 뒤 게시글을 수정한다.
      */
     public PostResponse update(Long projectId, Long nodeId, Long postId, Long userId, PostUpdateRequest request) {
-        projectService.validateProject(projectId);
+        postValidator.validateNodeAndProject(nodeId, projectId);
+
         Post target = postService.findById(postId);
         postService.validateNode(target, nodeId);
         if (!target.getUserId().equals(userId)) {

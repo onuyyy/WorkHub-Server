@@ -7,7 +7,7 @@ import com.workhub.post.entity.PostType;
 import com.workhub.post.dto.post.response.PostPageResponse;
 import com.workhub.post.dto.post.response.PostResponse;
 import com.workhub.post.dto.post.response.PostThreadResponse;
-import com.workhub.project.service.ProjectService;
+import com.workhub.post.service.PostValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,8 +24,7 @@ import java.util.Map;
 public class ReadPostService {
 
     private final PostService postService;
-    private final ProjectService projectService;
-
+    private final PostValidator postValidator;
     /**
      * 프로젝트/노드 범위 내 게시글을 단건 조회한다.
      *
@@ -35,7 +34,7 @@ public class ReadPostService {
      * @return 조회된 게시글
      */
     public PostResponse findById(Long projectId, Long nodeId, Long postId) {
-        projectService.validateProject(projectId);
+        postValidator.validateNodeAndProject(nodeId, projectId);
         Post post = postService.findById(postId);
         postService.validateNode(post, nodeId);
 
@@ -65,7 +64,7 @@ public class ReadPostService {
                                    String keyword,
                                    PostType postType,
                                    Pageable pageable) {
-        projectService.validateProject(projectId);
+        postValidator.validateNodeAndProject(nodeId, projectId);
 
         Page<Post> parentPage = postService.searchParentPosts(nodeId, keyword, postType, pageable);
 

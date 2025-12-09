@@ -6,15 +6,21 @@ import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import com.workhub.global.history.HistoryRecorder;
 import com.workhub.post.dto.comment.CommentHistorySnapshot;
+import com.workhub.post.entity.Post;
 import com.workhub.post.entity.PostComment;
+import com.workhub.post.service.PostValidator;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 import java.util.Collections;
+import static org.mockito.BDDMockito.willDoNothing;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -24,15 +30,25 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class DeleteCommentServiceTest {
 
     @Mock
     CommentService commentService;
     @Mock
     HistoryRecorder historyRecorder;
+    @Mock
+    PostValidator postValidator;
 
     @InjectMocks
     DeleteCommentService deleteCommentService;
+
+    @BeforeEach
+    void setUp() {
+        deleteCommentService = new DeleteCommentService(commentService, historyRecorder, postValidator);
+        given(postValidator.validatePostToProject(anyLong(), anyLong()))
+                .willReturn(Post.builder().build());
+    }
 
     @Test
     @DisplayName("다른 게시글 댓글이면 삭제 시 예외를 던진다")

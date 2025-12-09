@@ -9,6 +9,7 @@ import com.workhub.post.dto.comment.CommentHistorySnapshot;
 import com.workhub.post.dto.comment.request.CommentUpdateRequest;
 import com.workhub.post.dto.comment.response.CommentResponse;
 import com.workhub.post.entity.PostComment;
+import com.workhub.post.service.PostValidator;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,17 +20,20 @@ import org.springframework.stereotype.Service;
 public class UpdateCommentService {
     private final CommentService commentService;
     private final HistoryRecorder historyRecorder;
+    private final PostValidator postValidator;
 
     /**
      * 댓글을 수정하고 변경 전 내용을 히스토리에 저장한다.
      *
      * @param postCommentId 댓글 식별자
+     * @param projectId 프로젝트 식별자
      * @param postId 게시글 식별자
      * @param userId 작성자 식별자
      * @param commentUpdateRequest 수정 요청 본문
      * @return 수정된 댓글 응답
      */
-    public CommentResponse update(Long postCommentId, Long postId, Long userId, CommentUpdateRequest commentUpdateRequest) {
+    public CommentResponse update(Long projectId, Long postCommentId, Long postId, Long userId, CommentUpdateRequest commentUpdateRequest) {
+        postValidator.validatePostToProject(postId, projectId);
         PostComment postComment = commentService.findByCommentAndMatchedUserId(postCommentId, userId);
 
         validateCommentBelongs(postComment, postId);

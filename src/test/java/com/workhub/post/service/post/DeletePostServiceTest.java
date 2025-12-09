@@ -8,9 +8,7 @@ import com.workhub.post.entity.PostType;
 import com.workhub.post.repository.post.PostFileRepository;
 import com.workhub.post.repository.post.PostLinkRepository;
 import com.workhub.post.repository.post.PostRepository;
-import com.workhub.project.entity.Project;
-import com.workhub.project.entity.Status;
-import com.workhub.project.service.ProjectService;
+import com.workhub.post.service.PostValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -25,6 +23,7 @@ import java.util.Optional;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.eq;
@@ -42,7 +41,7 @@ class DeletePostServiceTest {
     @InjectMocks
     PostService postService;
     @Mock
-    ProjectService projectService;
+    PostValidator postValidator;
     @Mock
     HistoryRecorder historyRecorder;
 
@@ -50,10 +49,12 @@ class DeletePostServiceTest {
 
     @BeforeEach
     void setUp() {
-        deletePostService = new DeletePostService(postService, projectService, historyRecorder);
+        deletePostService = new DeletePostService(postService, postValidator, historyRecorder);
         given(postRepository.findByParentPostIdAndDeletedAtIsNull(anyLong())).willReturn(Collections.emptyList());
         given(postFileRepository.findByPostId(anyLong())).willReturn(Collections.emptyList());
         given(postLinkRepository.findByPostId(anyLong())).willReturn(Collections.emptyList());
+        willDoNothing().given(postValidator).validateNodeAndProject(anyLong(), anyLong());
+        willDoNothing().given(postValidator).validateNodeAndProject(anyLong(), anyLong());
     }
 
     @Test
@@ -96,7 +97,6 @@ class DeletePostServiceTest {
                 .projectNodeId(20L)
                 .userId(30L)
                 .build();
-        given(projectService.validateProject(10L)).willReturn(mockProject(10L));
         given(postRepository.findByPostIdAndDeletedAtIsNull(1L)).willReturn(Optional.of(existing));
 
         deletePostService.delete(10L, 20L, 1L, 30L);
@@ -108,13 +108,5 @@ class DeletePostServiceTest {
                 eq(com.workhub.global.entity.ActionType.DELETE),
                 any(Object.class)
         );
-    }
-
-    private Project mockProject(Long projectId) {
-        return Project.builder()
-                .projectId(projectId)
-                .projectTitle("project")
-                .status(Status.IN_PROGRESS)
-                .build();
     }
 }

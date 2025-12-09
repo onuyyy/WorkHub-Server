@@ -39,4 +39,11 @@ public class ProjectNodeService {
     public Map<Long, Long> getProjectNodeCountMapByProjectIdIn(List<Long> projectIds) {
         return projectNodeRepository.countMapByProjectIdIn(projectIds);
     }
+
+    public void validateNodeToProject(Long nodeId, Long projectId){
+        ProjectNode node = findById(nodeId);
+        if (!node.getProjectId().equals(projectId)) {
+            throw new BusinessException(ErrorCode.NOT_MATCHED_PROJECT_POST);
+        }
+    }
 }

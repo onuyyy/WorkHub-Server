@@ -2,6 +2,7 @@ package com.workhub.post.service.comment;
 
 import com.workhub.post.dto.comment.response.CommentResponse;
 import com.workhub.post.entity.PostComment;
+import com.workhub.post.service.PostValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -19,8 +20,11 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class ReadCommentService {
     private final CommentService commentService;
+    private final PostValidator postValidator;
 
     public Page<CommentResponse> findComment(Long projectId, Long postId, Pageable pageable) {
+        postValidator.validatePostToProject(postId, projectId);
+
         List<PostComment> allComments = commentService.findAllByPostId(postId);
 
         Page<PostComment> topLevelComments = commentService.findPostWithReplies(postId, pageable);
