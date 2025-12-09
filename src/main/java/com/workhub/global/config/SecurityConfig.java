@@ -50,6 +50,7 @@ public class SecurityConfig {
                         .deleteCookies("JSESSIONID", "XSRF-TOKEN")
                 )
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/v1/admin/users/login").permitAll()
                         .requestMatchers("/api/v1/projects/list").authenticated()
                         .requestMatchers("/api/v1/projects/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/admin/users/**").hasRole("ADMIN")

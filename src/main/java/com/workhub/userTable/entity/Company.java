@@ -1,6 +1,7 @@
 package com.workhub.userTable.entity;
 
 import com.workhub.global.entity.BaseTimeEntity;
+import com.workhub.userTable.dto.CompanyRegisterRequest;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -32,4 +33,12 @@ public class Company extends BaseTimeEntity {
     @Column(name = "address", nullable = false, length = 100)
     private String address;
 
+    public static Company of(CompanyRegisterRequest register){
+        return Company.builder()
+                .companyName(register.companyName())
+                .companyNumber(register.companyNumber())
+                .tel(register.tel())
+                .address(register.address())
+                .build();
+    }
 }

@@ -2,6 +2,8 @@ package com.workhub.userTable.api;
 
 import com.workhub.global.response.ApiResponse;
 import com.workhub.userTable.dto.AdminPasswordResetRequest;
+import com.workhub.userTable.dto.UserDetailResponse;
+import com.workhub.userTable.dto.UserListResponse;
 import com.workhub.userTable.dto.UserLoginRecord;
 import com.workhub.userTable.dto.UserPasswordChangeRequest;
 import com.workhub.userTable.dto.UserRegisterRecord;
@@ -11,6 +13,7 @@ import com.workhub.userTable.dto.UserRoleUpdateRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -18,9 +21,46 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import java.util.List;
 
 @Tag(name = "사용자 인증 및 관리", description = "로그인 및 비밀번호 관리 API")
 public interface UserTableApi {
+
+    @Operation(
+            summary = "회원 목록 조회",
+            description = "관리자가 모든 회원 정보를 조회합니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "회원 목록 조회 성공",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            array = @ArraySchema(schema = @Schema(implementation = UserListResponse.class)))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 실패"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류 (회원 목록 조회 실패)")
+    })
+    List<UserListResponse> getUserTable();
+
+    @Operation(
+            summary = "회원 상세 조회",
+            description = "관리자가 특정 회원의 상세 정보를 조회합니다.",
+            parameters = {
+                    @Parameter(name = "userId", description = "상세 정보를 확인할 회원 식별자", in = ParameterIn.PATH, required = true)
+            }
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "회원 상세 조회 성공",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = UserDetailResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 실패"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류 (회원 상세 조회 실패)")
+    })
+    UserDetailResponse getUser(Long userId);
 
     @Operation(
             summary = "사용자 로그인",
