@@ -45,7 +45,7 @@ public class ProjectNodeController implements ProjectNodeApi {
     }
 
     @Override
-    @PatchMapping("{nodeId}/status")
+    @PatchMapping("/{nodeId}/status")
     public ResponseEntity<ApiResponse<String>> updateNodeStatus(@PathVariable("projectId") Long projectId,
                                                                 @PathVariable("nodeId") Long nodeId,
                                                                 @RequestBody UpdateNodeStatusRequest request) {
@@ -65,7 +65,7 @@ public class ProjectNodeController implements ProjectNodeApi {
     }
 
     @Override
-    @PutMapping("{nodeId}")
+    @PutMapping("/{nodeId}")
     public ResponseEntity<ApiResponse<CreateNodeResponse>> updateNode(@PathVariable Long projectId,
                                                                       @PathVariable Long nodeId,
                                                                       @RequestBody UpdateNodeRequest request) {
@@ -76,7 +76,7 @@ public class ProjectNodeController implements ProjectNodeApi {
     }
 
     @Override
-    @DeleteMapping("{nodeId}")
+    @DeleteMapping("/{nodeId}")
     public ResponseEntity<ApiResponse<String>> deleteNode(@PathVariable Long projectId,
                                                           @PathVariable Long nodeId) {
 

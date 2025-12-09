@@ -47,7 +47,7 @@ public class ProjectController implements ProjectApi {
         return ApiResponse.success("상태 변경 성공");
     }
 
-    @PutMapping("{projectId}")
+    @PutMapping("/{projectId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<ProjectResponse>> updateProject(@PathVariable("projectId") Long projectId,
                                                                       @RequestBody CreateProjectRequest request) {
@@ -56,7 +56,7 @@ public class ProjectController implements ProjectApi {
         return ApiResponse.success(projectResponse, "프로젝트 수정에 성공했습니다.");
     }
 
-    @DeleteMapping("{projectId}")
+    @DeleteMapping("/{projectId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<String>> deleteProject(@PathVariable("projectId") Long projectId) {
 
@@ -64,7 +64,7 @@ public class ProjectController implements ProjectApi {
         return ApiResponse.success("프로젝트가 삭제되었습니다.");
     }
 
-    @GetMapping("list")
+    @GetMapping("/list")
     public ResponseEntity<ApiResponse<List<ProjectListResponse>>> projectList() {
 
         List<ProjectListResponse> responses = readProjectService.projectList();
