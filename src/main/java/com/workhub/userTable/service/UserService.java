@@ -1,12 +1,12 @@
 package com.workhub.userTable.service;
 
+import com.workhub.global.error.ErrorCode;
+import com.workhub.global.error.exception.BusinessException;
 import com.workhub.userTable.dto.*;
 import com.workhub.userTable.entity.Status;
 import com.workhub.userTable.entity.UserRole;
-import com.workhub.global.error.ErrorCode;
-import com.workhub.global.error.exception.BusinessException;
-import com.workhub.userTable.repository.UserRepository;
 import com.workhub.userTable.entity.UserTable;
+import com.workhub.userTable.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -15,7 +15,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -108,5 +110,9 @@ public class UserService {
         if (userRepository.existsByEmail(email)) {
             throw new BusinessException(ErrorCode.ALREADY_EXISTS__EMAIL);
         }
+    }
+
+    public Map<Long, UserTable> getUserMapByUserIdIn(List<Long> userIds) {
+        return userRepository.findMapByUserIdIn(userIds);
     }
 }

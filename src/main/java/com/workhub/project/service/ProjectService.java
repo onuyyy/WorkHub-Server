@@ -51,4 +51,28 @@ public class ProjectService {
         }
         return project;
     }
+
+    public List<ProjectClientMember> getClientMemberByUserId(Long userId) {
+        return clientMemberRepository.findByUserId(userId);
+    }
+
+    public List<ProjectDevMember> getDevMemberByUserId(Long userId) {
+        return devMemberRepository.findByUserId(userId);
+    }
+
+    public List<Project> findAll() {
+        return projectRepository.findAll();
+    }
+
+    public List<ProjectClientMember> getClientMemberByProjectIdIn(List<Long> projectIds) {
+        return clientMemberRepository.findByProjectIdIn(projectIds);
+    }
+
+    public List<ProjectDevMember> getDevMemberByProjectIdIn(List<Long> projectIds) {
+        return devMemberRepository.findByProjectIdIn(projectIds);
+    }
+
+    public List<Project> findByProjectIdIn(List<Long> projectIds) {
+        return projectRepository.findByProjectIdIn(projectIds);
+    }
 }

@@ -2,6 +2,7 @@ package com.workhub.project.api;
 
 import com.workhub.global.response.ApiResponse;
 import com.workhub.project.dto.CreateProjectRequest;
+import com.workhub.project.dto.ProjectListResponse;
 import com.workhub.project.dto.ProjectResponse;
 import com.workhub.project.dto.UpdateStatusRequest;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,6 +14,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Tag(name = "프로젝트", description = "프로젝트 관리 API")
 public interface ProjectApi {
@@ -148,4 +151,37 @@ public interface ProjectApi {
             @Parameter(description = "삭제할 프로젝트 ID", required = true)
             @PathVariable("projectId") Long projectId
     );
+
+    @Operation(
+            summary = "프로젝트 목록 조회",
+            description = """
+                    사용자의 권한(Role)에 따라 프로젝트 목록을 조회합니다.
+
+                    **조회 권한:**
+                    - CLIENT: 자신이 클라이언트 멤버로 등록된 프로젝트만 조회
+                    - DEVELOPER: 자신이 개발자로 배정된 프로젝트만 조회
+                    - ADMIN: 시스템의 모든 프로젝트 조회
+
+                    **성능 최적화:**
+                    - QueryDSL 배치 조회로 N+1 문제 해결 (181개 쿼리 → 6개 쿼리)
+                    - 프로젝트별 클라이언트 멤버, 개발자 멤버, 워크플로우 단계, 총 인원 정보 포함
+                    """
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "프로젝트 목록 조회 성공",
+                    content = @Content(schema = @Schema(implementation = ProjectListResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401",
+                    description = "인증 오류 (로그인 필요)"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "500",
+                    description = "서버 오류 (프로젝트 목록 조회 실패)"
+            )
+    })
+    @GetMapping("/list")
+    ResponseEntity<ApiResponse<List<ProjectListResponse>>> projectList();
 }

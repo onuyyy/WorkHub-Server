@@ -10,14 +10,12 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Arrays;
 import java.util.List;
@@ -52,6 +50,8 @@ public class SecurityConfig {
                         .deleteCookies("JSESSIONID", "XSRF-TOKEN")
                 )
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/v1/projects/list").authenticated()
+                        .requestMatchers("/api/v1/projects/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/admin/users/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/projects/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/auth/passwordReset/**").authenticated()

@@ -3,16 +3,20 @@ package com.workhub.project.controller;
 import com.workhub.global.response.ApiResponse;
 import com.workhub.project.api.ProjectApi;
 import com.workhub.project.dto.CreateProjectRequest;
+import com.workhub.project.dto.ProjectListResponse;
 import com.workhub.project.dto.ProjectResponse;
 import com.workhub.project.dto.UpdateStatusRequest;
 import com.workhub.project.service.CreateProjectService;
 import com.workhub.project.service.DeleteProjectService;
+import com.workhub.project.service.ReadProjectService;
 import com.workhub.project.service.UpdateProjectService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/projects")
@@ -23,6 +27,7 @@ public class ProjectController implements ProjectApi {
     private final CreateProjectService createProjectService;
     private final UpdateProjectService updateProjectService;
     private final DeleteProjectService deleteProjectService;
+    private final ReadProjectService readProjectService;
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
@@ -59,5 +64,10 @@ public class ProjectController implements ProjectApi {
         return ApiResponse.success("프로젝트가 삭제되었습니다.");
     }
 
+    @GetMapping("list")
+    public ResponseEntity<ApiResponse<List<ProjectListResponse>>> projectList() {
 
+        List<ProjectListResponse> responses = readProjectService.projectList();
+        return ApiResponse.success(responses);
+    }
 }
