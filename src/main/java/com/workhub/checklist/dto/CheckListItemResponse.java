@@ -1,0 +1,28 @@
+package com.workhub.checklist.dto;
+
+import com.workhub.checklist.entity.CheckListItem;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+public record CheckListItemResponse(
+        Long checkListItemId,
+        String itemTitle,
+        Integer itemOrder,
+        Boolean confirm,
+        LocalDateTime confirmedAt,
+        Long templateId,
+        List<CheckListOptionResponse> options
+) {
+    public static CheckListItemResponse from(CheckListItem item, List<CheckListOptionResponse> options) {
+        return new CheckListItemResponse(
+                item.getCheckListItemId(),
+                item.getItemTitle(),
+                item.getItemOrder(),
+                item.getConfirm(),
+                item.getConfirmedAt(),
+                item.getTemplateId(),
+                options
+        );
+    }
+}

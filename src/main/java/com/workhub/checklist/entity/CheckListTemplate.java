@@ -1,6 +1,5 @@
 package com.workhub.checklist.entity;
 
-import com.workhub.post.entity.HashTag;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -25,9 +24,5 @@ public class CheckListTemplate {
 
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "template_hashtag")
-    private HashTag hashTag;
 
 }

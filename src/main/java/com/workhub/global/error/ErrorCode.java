@@ -109,7 +109,13 @@ public enum ErrorCode {
     // 프로젝트 노드
     PROJECT_NODE_NOT_FOUND(HttpStatus.NOT_FOUND, "PN-001", "프로젝트 노드를 찾을 수 없습니다."),
     PROJECT_NODE_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PN-002", "프로젝트 노드 저장에 실패했습니다."),
-    PROJECT_NODE_HISTORY_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PN-003", "프로젝트 노드 히스토리 저장에 실패했습니다.");
+    PROJECT_NODE_HISTORY_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PN-003", "프로젝트 노드 히스토리 저장에 실패했습니다."),
+
+    // 체크리스트
+    NOT_EXISTS_CHECK_LIST(HttpStatus.BAD_REQUEST, "CH-001", "존재하지 않는 체크리스트입니다."),
+    ALREADY_EXISTS_CHECK_LIST(HttpStatus.BAD_REQUEST, "CH-002", "이미 체크리스트가 존재합니다."),
+    INVALID_CHECK_LIST_ITEM_ORDER(HttpStatus.BAD_REQUEST, "CH-003", "항목 순서가 중복될 수 없습니다."),
+    INVALID_CHECK_LIST_OPTION_ORDER(HttpStatus.BAD_REQUEST, "CH-004", "선택지 순서가 중복될 수 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String errorCode;

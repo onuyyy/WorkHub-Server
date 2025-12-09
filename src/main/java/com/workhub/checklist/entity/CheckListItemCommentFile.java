@@ -20,13 +20,13 @@ public class CheckListItemCommentFile extends BaseTimeEntity {
     @Column(name = "comment_file_id")
     private Long commentFileId;
 
-    @Column(name = "file_url", length = 255)
+    @Column(name = "file_url", length = 255, nullable = false)
     private String fileUrl;
 
-    @Column(name = "file_name", length = 255)
+    @Column(name = "file_name", length = 255, nullable = false)
     private String fileName;
 
-    @Column(name = "file_order")
+    @Column(name = "file_order", nullable = false)
     private Integer fileOrder;
 
     @Column(name = "cl_comment_id")
