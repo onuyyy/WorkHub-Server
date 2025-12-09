@@ -3,10 +3,13 @@ package com.workhub.project.service;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import com.workhub.global.util.SecurityUtil;
-import com.workhub.project.dto.ProjectListResponse;
+import com.workhub.project.dto.response.PagedProjectListResponse;
+import com.workhub.project.dto.response.ProjectListRequest;
+import com.workhub.project.dto.response.ProjectListResponse;
 import com.workhub.project.entity.Project;
 import com.workhub.project.entity.ProjectClientMember;
 import com.workhub.project.entity.ProjectDevMember;
+import com.workhub.project.entity.Status;
 import com.workhub.projectNode.service.ProjectNodeService;
 import com.workhub.userTable.entity.Company;
 import com.workhub.userTable.entity.UserRole;
@@ -17,7 +20,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -32,68 +39,78 @@ public class ReadProjectService {
     private final UserService userService;
 
     /**
-     * 사용자 권한(Role)에 따라 프로젝트 목록을 조회.
+     * 페이징, 필터링, 정렬이 적용된 프로젝트 목록 조회 (무한 스크롤용)
      *
-     * @return 프로젝트 목록 응답 (멤버 정보, 워크플로우 단계, 총 인원 포함)
+     * @param startDate 계약 시작일 검색 범위 시작 (Optional, 기본값: 1년 전)
+     * @param endDate 계약 시작일 검색 범위 종료 (Optional, 기본값: 현재 날짜)
+     * @param status 프로젝트 상태 (Optional, 기본값: 전체)
+     * @param sortOrder 정렬 조건 (Optional, 기본값: LATEST)
+     * @param cursor 커서 (마지막 조회한 projectId)
+     * @return 페이징된 프로젝트 목록 응답
      */
-    public List<ProjectListResponse> projectList() {
+    public PagedProjectListResponse projectListWithPaging(LocalDate startDate, LocalDate endDate, Status status,
+                                                          ProjectListRequest.SortOrder sortOrder, Long cursor, Integer size) {
 
-        List<Project> projects = getProjectsByRole();
+        ProjectListRequest request = ProjectListRequest.from(startDate, endDate, status, sortOrder, cursor, size);
+
+        // 날짜 범위 기본값 적용 및 페이지 크기 검증
+        request.applyDefaultDateRange();
+        request.validateAndAdjustSize();
+
+        // 권한 기반 페이징 프로젝트 조회
+        List<Project> projects = getProjectsWithPagingByRole(request);
         if (projects.isEmpty()) {
-            return List.of();
+            return PagedProjectListResponse.emptyResponse();
         }
 
+        // 배치 데이터 로딩
         List<Long> projectIds = extractProjectIds(projects);
         BatchData batchData = loadBatchData(projectIds);
 
-        return buildProjectResponses(projects, batchData);
+        // 프로젝트 응답 생성
+        List<ProjectListResponse> responses = buildProjectResponses(projects, batchData);
+
+        // 페이징 정보와 함께 응답 생성
+        return PagedProjectListResponse.from(responses, request.getSize());
     }
 
     /**
-     * 사용자 Role에 따라 접근 가능한 프로젝트 목록을 조회.
-     * CLIENT/DEVELOPER는 자신이 속한 프로젝트만, ADMIN은 전체 조회.
+     * 사용자 권한에 따라 페이징된 프로젝트 목록 조회
+     * CLIENT/DEVELOPER는 자신이 속한 프로젝트만, ADMIN은 전체 조회 (필터링 적용)
      *
-     * @return 권한에 따른 프로젝트 목록
+     * @param request 검색 조건 및 페이징 정보
+     * @return 페이징된 프로젝트 목록
      */
-    private List<Project> getProjectsByRole() {
+    private List<Project> getProjectsWithPagingByRole(ProjectListRequest request) {
 
         Long userId = SecurityUtil.getCurrentUserId()
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_LOGGED_IN));
         UserTable user = userService.getUserById(userId);
         UserRole role = user.getRole();
 
-        return switch (role) {
+        List<Long> accessibleProjectIds = switch (role) {
             case CLIENT -> {
                 List<ProjectClientMember> clientMembers = projectService.getClientMemberByUserId(userId);
-                List<Long> projectIds = clientMembers.stream()
+                yield clientMembers.stream()
                         .map(ProjectClientMember::getProjectId)
                         .toList();
-                yield getProjectsByIds(projectIds);
             }
             case DEVELOPER -> {
                 List<ProjectDevMember> devMembers = projectService.getDevMemberByUserId(userId);
-                List<Long> projectIds = devMembers.stream()
+                yield devMembers.stream()
                         .map(ProjectDevMember::getProjectId)
                         .toList();
-                yield getProjectsByIds(projectIds);
             }
-            case ADMIN -> projectService.findAll();
-            default -> throw new BusinessException(ErrorCode.INVALID_USER_ROLE);
+            case ADMIN -> null;  // ADMIN은 null (모든 프로젝트 접근 가능)
         };
-    }
 
-    /**
-     * 프로젝트 ID 리스트로 프로젝트 목록을 배치 조회.
-     * 빈 리스트인 경우 불필요한 쿼리 방지.
-     *
-     * @param projectIds 프로젝트 ID 리스트
-     * @return 프로젝트 목록
-     */
-    private List<Project> getProjectsByIds(List<Long> projectIds) {
-        if (projectIds.isEmpty()) {
+        // CLIENT/DEVELOPER가 프로젝트가 없는 경우
+        if (accessibleProjectIds != null && accessibleProjectIds.isEmpty()) {
             return List.of();
         }
-        return projectService.findByProjectIdIn(projectIds);
+
+        return projectService.findProjectsWithPaging(accessibleProjectIds, request.getStartDate(), request.getEndDate(),
+                request.getStatus(), request.getSortOrder(), request.getCursor(), request.getSize());
     }
 
     /**

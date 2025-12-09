@@ -2,7 +2,7 @@ package com.workhub.project.entity;
 
 
 import com.workhub.global.entity.BaseTimeEntity;
-import com.workhub.project.dto.CreateProjectRequest;
+import com.workhub.project.dto.request.CreateProjectRequest;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
