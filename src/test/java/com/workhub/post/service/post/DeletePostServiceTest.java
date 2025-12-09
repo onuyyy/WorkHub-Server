@@ -1,4 +1,4 @@
-package com.workhub.post.service;
+package com.workhub.post.service.post;
 
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
@@ -8,8 +8,6 @@ import com.workhub.post.entity.PostType;
 import com.workhub.post.repository.post.PostFileRepository;
 import com.workhub.post.repository.post.PostLinkRepository;
 import com.workhub.post.repository.post.PostRepository;
-import com.workhub.post.service.post.DeletePostService;
-import com.workhub.post.service.post.PostService;
 import com.workhub.project.entity.Project;
 import com.workhub.project.entity.Status;
 import com.workhub.project.service.ProjectService;
