@@ -39,6 +39,7 @@ public class PostFile extends BaseTimeEntity {
     public static PostFile of(Long postId, PostFileRequest request) {
         return PostFile.builder()
                 .postId(postId)
+                .fileUrl(validateUrl(request.fileUrl()))
                 .fileName(request.fileName())
                 .fileOrder(validateOrder(request.fileOrder()))
                 .build();
@@ -47,6 +48,7 @@ public class PostFile extends BaseTimeEntity {
     public static PostFile of(Long postId, PostFileUpdateRequest request) {
         return PostFile.builder()
                 .postId(postId)
+                .fileUrl(validateUrl(request.fileUrl()))
                 .fileName(request.fileName())
                 .fileOrder(validateOrder(request.fileOrder()))
                 .build();
@@ -61,6 +63,13 @@ public class PostFile extends BaseTimeEntity {
             throw new BusinessException(ErrorCode.INVALID_POST_FILE_ORDER);
         }
         return fileOrder;
+    }
+
+    private static String validateUrl(String url) {
+        if (url == null || url.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_POST_FILE_CREATE);
+        }
+        return url;
     }
 
 }

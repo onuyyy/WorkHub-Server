@@ -66,6 +66,8 @@ public enum ErrorCode {
     INVALID_COMMENT_CONTENT(HttpStatus.BAD_REQUEST, "PO-013", "댓글 내용이 비어있습니다."),
     NOT_EXISTS_COMMENT(HttpStatus.BAD_REQUEST, "PO-014", "존재하지 않는 댓글입니다."),
     NOT_MATCHED_COMMENT_POST(HttpStatus.BAD_REQUEST, "PO-015", "잘못된 게시글의 댓글입니다."),
+    INVALID_POST_FILE_CREATE(HttpStatus.BAD_REQUEST, "PO-010", "파일 URL이 비어있습니다."),
+
 
 
     // CS 게시판
