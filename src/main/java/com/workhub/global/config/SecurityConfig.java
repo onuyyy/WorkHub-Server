@@ -86,7 +86,7 @@ public class SecurityConfig {
                 "http://localhost:3000"
         ));
         configuration.setAllowedMethods(Arrays.asList(
-                "GET", "POST", "PUT", "DELETE", "PATCH"
+                "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"
         ));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
