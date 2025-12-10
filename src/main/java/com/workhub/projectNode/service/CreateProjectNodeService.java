@@ -3,17 +3,17 @@ package com.workhub.projectNode.service;
 import com.workhub.global.entity.ActionType;
 import com.workhub.global.entity.HistoryType;
 import com.workhub.global.history.HistoryRecorder;
+import com.workhub.global.util.SecurityUtil;
+import com.workhub.project.entity.Project;
+import com.workhub.project.entity.Status;
 import com.workhub.projectNode.dto.CreateNodeRequest;
 import com.workhub.projectNode.dto.CreateNodeResponse;
 import com.workhub.projectNode.dto.NodeSnapshot;
 import com.workhub.projectNode.entity.ProjectNode;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Slf4j
 @Service
@@ -22,6 +22,7 @@ import java.util.List;
 public class CreateProjectNodeService {
 
     private final ProjectNodeService projectNodeService;
+    private final ProjectNodeValidator projectNodeValidator;
     private final HistoryRecorder historyRecorder;
 
     /**
@@ -33,26 +34,16 @@ public class CreateProjectNodeService {
      */
     public CreateNodeResponse createNode(Long projectId, CreateNodeRequest request) {
 
-        List<ProjectNode> projectNodeList = projectNodeService.findByProjectIdByNodeOrder(projectId);
+        Long loginUser = SecurityUtil.getCurrentUserIdOrThrow();
+        projectNodeValidator.validateLoginUserPermission(projectId, loginUser);
 
-        Integer nodeOrder = calculateNodeOrder(projectNodeList);
+        Project project = projectNodeValidator.validateProjectAndDevMember(projectId, request.developerUserId());
+        project.updateProjectStatus(Status.IN_PROGRESS);
+
+        Integer nodeOrder = projectNodeService.findMaxNodeOrderByProjectId(projectId) + 1;
         ProjectNode savedProjectNode = saveProjectNodeAndHistory(projectId, request, nodeOrder);
 
         return CreateNodeResponse.from(savedProjectNode);
-    }
-
-    /**
-     * 새로운 노드의 순서를 계산
-     * 프로젝트 노드 리스트가 비어있으면 1, 그렇지 않으면 마지막 노드 순서 + 1
-     *
-     * @param projectNodeList 프로젝트의 노드 리스트
-     * @return 계산된 노드 순서
-     */
-    private Integer calculateNodeOrder(List<ProjectNode> projectNodeList) {
-        if (projectNodeList.isEmpty()) {
-            return 1;
-        }
-        return projectNodeList.getLast().getNodeOrder() + 1;
     }
 
     /**

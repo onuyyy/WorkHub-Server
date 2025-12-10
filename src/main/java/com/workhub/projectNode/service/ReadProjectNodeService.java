@@ -1,14 +1,17 @@
 package com.workhub.projectNode.service;
 
-import com.workhub.global.history.HistoryRecorder;
+import com.workhub.global.util.SecurityUtil;
 import com.workhub.projectNode.dto.NodeListResponse;
 import com.workhub.projectNode.entity.ProjectNode;
+import com.workhub.userTable.entity.UserTable;
+import com.workhub.userTable.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -17,7 +20,8 @@ import java.util.List;
 public class ReadProjectNodeService {
 
     private final ProjectNodeService projectNodeService;
-    private final HistoryRecorder historyRecorder;
+    private final ProjectNodeValidator projectNodeValidator;
+    private final UserService userService;
 
     /**
      * 프로젝트의 모든 노드 리스트를 조회
@@ -28,10 +32,18 @@ public class ReadProjectNodeService {
      */
     public List<NodeListResponse> getNodeListByProject(Long projectId) {
 
+        Long loginUser = SecurityUtil.getCurrentUserIdOrThrow();
+        projectNodeValidator.validateProjectMemberPermission(projectId, loginUser);
+
         List<ProjectNode> nodeList = projectNodeService.findByProjectIdByNodeOrder(projectId);
+        List<Long> devMembers = nodeList.stream()
+                .map(ProjectNode::getDeveloperUserId)
+                .toList();
+
+        Map<Long, UserTable> userMap = userService.getUserMapByUserIdIn(devMembers);
 
         return nodeList.stream()
-                .map(NodeListResponse::from)
+                .map(node -> NodeListResponse.from(node, userMap.get(node.getDeveloperUserId())))
                 .toList();
     }
 }

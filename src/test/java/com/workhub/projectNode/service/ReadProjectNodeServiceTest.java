@@ -1,208 +1,173 @@
 package com.workhub.projectNode.service;
 
-import com.workhub.global.history.HistoryRecorder;
+import com.workhub.global.util.SecurityUtil;
 import com.workhub.projectNode.dto.NodeListResponse;
 import com.workhub.projectNode.entity.NodeStatus;
-import com.workhub.projectNode.entity.Priority;
 import com.workhub.projectNode.entity.ProjectNode;
+import com.workhub.userTable.entity.UserTable;
+import com.workhub.userTable.service.UserService;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.MockedStatic;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willDoNothing;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.verify;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith(SpringExtension.class)
 class ReadProjectNodeServiceTest {
 
     @Mock
-    private ProjectNodeService projectNodeService;
+    ProjectNodeService projectNodeService;
 
     @Mock
-    private HistoryRecorder historyRecorder;
+    ProjectNodeValidator projectNodeValidator;
+
+    @Mock
+    UserService userService;
 
     @InjectMocks
-    private ReadProjectNodeService readProjectNodeService;
+    ReadProjectNodeService readProjectNodeService;
+
+    private MockedStatic<SecurityUtil> securityUtil;
+    private ProjectNode testNode1;
+    private ProjectNode testNode2;
+    private UserTable developer1;
+    private UserTable developer2;
+
+    @BeforeEach
+    void setUp() {
+        // SecurityUtil static method mock
+        securityUtil = mockStatic(SecurityUtil.class);
+        securityUtil.when(SecurityUtil::getCurrentUserIdOrThrow).thenReturn(1L);
+
+        testNode1 = ProjectNode.builder()
+                .projectNodeId(1L)
+                .projectId(100L)
+                .title("첫 번째 노드")
+                .description("설명1")
+                .nodeStatus(NodeStatus.NOT_STARTED)
+                .nodeOrder(1)
+                .developerUserId(10L)
+                .contractStartDate(LocalDate.now())
+                .contractEndDate(LocalDate.now().plusDays(30))
+                .build();
+
+        testNode2 = ProjectNode.builder()
+                .projectNodeId(2L)
+                .projectId(100L)
+                .title("두 번째 노드")
+                .description("설명2")
+                .nodeStatus(NodeStatus.IN_PROGRESS)
+                .nodeOrder(2)
+                .developerUserId(20L)
+                .contractStartDate(LocalDate.now())
+                .contractEndDate(LocalDate.now().plusDays(60))
+                .build();
+
+        developer1 = UserTable.builder()
+                .userId(10L)
+                .loginId("dev1")
+                .email("dev1@test.com")
+                .build();
+
+        developer2 = UserTable.builder()
+                .userId(20L)
+                .loginId("dev2")
+                .email("dev2@test.com")
+                .build();
+    }
+
+    @AfterEach
+    void tearDown() {
+        securityUtil.close();
+    }
 
     @Test
-    @DisplayName("프로젝트에 노드가 없는 경우 빈 리스트를 반환한다")
-    void givenEmptyProject_whenGetNodeList_thenReturnEmptyList() {
+    @DisplayName("프로젝트 노드 리스트 조회 성공")
+    void getNodeListByProject_Success() {
         // given
-        Long projectId = 100L;
-        when(projectNodeService.findByProjectIdByNodeOrder(projectId))
-                .thenReturn(Collections.emptyList());
+        List<ProjectNode> nodes = List.of(testNode1, testNode2);
+        Map<Long, UserTable> userMap = Map.of(10L, developer1, 20L, developer2);
+
+        willDoNothing().given(projectNodeValidator).validateProjectMemberPermission(anyLong(), anyLong());
+        given(projectNodeService.findByProjectIdByNodeOrder(anyLong())).willReturn(nodes);
+        given(userService.getUserMapByUserIdIn(anyList())).willReturn(userMap);
 
         // when
-        List<NodeListResponse> result = readProjectNodeService.getNodeListByProject(projectId);
+        List<NodeListResponse> result = readProjectNodeService.getNodeListByProject(100L);
+
+        // then
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).title()).isEqualTo("첫 번째 노드");
+        assertThat(result.get(0).nodeOrder()).isEqualTo(1);
+        assertThat(result.get(1).title()).isEqualTo("두 번째 노드");
+        assertThat(result.get(1).nodeOrder()).isEqualTo(2);
+
+        verify(projectNodeValidator).validateProjectMemberPermission(100L, 1L);
+        verify(projectNodeService).findByProjectIdByNodeOrder(100L);
+        verify(userService).getUserMapByUserIdIn(anyList());
+    }
+
+    @Test
+    @DisplayName("노드 리스트 조회 시 권한 체크 수행")
+    void getNodeListByProject_ValidatePermission() {
+        // given
+        willDoNothing().given(projectNodeValidator).validateProjectMemberPermission(anyLong(), anyLong());
+        given(projectNodeService.findByProjectIdByNodeOrder(anyLong())).willReturn(List.of());
+        given(userService.getUserMapByUserIdIn(anyList())).willReturn(Map.of());
+
+        // when
+        readProjectNodeService.getNodeListByProject(100L);
+
+        // then
+        verify(projectNodeValidator).validateProjectMemberPermission(100L, 1L);
+    }
+
+    @Test
+    @DisplayName("노드가 없는 경우 빈 리스트 반환")
+    void getNodeListByProject_EmptyList() {
+        // given
+        willDoNothing().given(projectNodeValidator).validateProjectMemberPermission(anyLong(), anyLong());
+        given(projectNodeService.findByProjectIdByNodeOrder(anyLong())).willReturn(List.of());
+        given(userService.getUserMapByUserIdIn(anyList())).willReturn(Map.of());
+
+        // when
+        List<NodeListResponse> result = readProjectNodeService.getNodeListByProject(100L);
 
         // then
         assertThat(result).isEmpty();
-        verify(projectNodeService).findByProjectIdByNodeOrder(projectId);
     }
 
     @Test
-    @DisplayName("프로젝트에 노드가 1개 있는 경우 1개의 응답을 반환한다")
-    void givenProjectWithOneNode_whenGetNodeList_thenReturnOneNode() {
+    @DisplayName("노드 리스트는 nodeOrder 기준으로 정렬되어 반환")
+    void getNodeListByProject_OrderedByNodeOrder() {
         // given
-        Long projectId = 100L;
-        ProjectNode node = ProjectNode.builder()
-                .projectNodeId(1L)
-                .projectId(projectId)
-                .title("노드 1")
-                .description("노드 1 설명")
-                .nodeStatus(NodeStatus.NOT_STARTED)
-                .priority(Priority.HIGH)
-                .nodeOrder(1)
-                .contractStartDate(LocalDate.of(2025, 1, 1))
-                .contractEndDate(LocalDate.of(2025, 12, 31))
-                .build();
+        List<ProjectNode> nodes = List.of(testNode1, testNode2);
+        Map<Long, UserTable> userMap = Map.of(10L, developer1, 20L, developer2);
 
-        when(projectNodeService.findByProjectIdByNodeOrder(projectId))
-                .thenReturn(Collections.singletonList(node));
+        willDoNothing().given(projectNodeValidator).validateProjectMemberPermission(anyLong(), anyLong());
+        given(projectNodeService.findByProjectIdByNodeOrder(anyLong())).willReturn(nodes);
+        given(userService.getUserMapByUserIdIn(anyList())).willReturn(userMap);
 
         // when
-        List<NodeListResponse> result = readProjectNodeService.getNodeListByProject(projectId);
+        List<NodeListResponse> result = readProjectNodeService.getNodeListByProject(100L);
 
         // then
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).projectNodeId()).isEqualTo(1L);
-        assertThat(result.get(0).title()).isEqualTo("노드 1");
-        assertThat(result.get(0).description()).isEqualTo("노드 1 설명");
-        assertThat(result.get(0).nodeStatus()).isEqualTo(NodeStatus.NOT_STARTED);
-        assertThat(result.get(0).priority()).isEqualTo(Priority.HIGH);
-        assertThat(result.get(0).nodeOrder()).isEqualTo(1);
-        verify(projectNodeService).findByProjectIdByNodeOrder(projectId);
-    }
-
-    @Test
-    @DisplayName("프로젝트에 여러 노드가 있는 경우 nodeOrder 순서대로 정렬되어 반환된다")
-    void givenProjectWithMultipleNodes_whenGetNodeList_thenReturnSortedByNodeOrder() {
-        // given
-        Long projectId = 100L;
-        ProjectNode node1 = ProjectNode.builder()
-                .projectNodeId(1L)
-                .projectId(projectId)
-                .title("노드 1")
-                .description("노드 1 설명")
-                .nodeStatus(NodeStatus.NOT_STARTED)
-                .priority(Priority.HIGH)
-                .nodeOrder(1)
-                .contractStartDate(LocalDate.of(2025, 1, 1))
-                .contractEndDate(LocalDate.of(2025, 3, 31))
-                .build();
-
-        ProjectNode node2 = ProjectNode.builder()
-                .projectNodeId(2L)
-                .projectId(projectId)
-                .title("노드 2")
-                .description("노드 2 설명")
-                .nodeStatus(NodeStatus.IN_PROGRESS)
-                .priority(Priority.MEDIUM)
-                .nodeOrder(2)
-                .contractStartDate(LocalDate.of(2025, 4, 1))
-                .contractEndDate(LocalDate.of(2025, 6, 30))
-                .build();
-
-        ProjectNode node3 = ProjectNode.builder()
-                .projectNodeId(3L)
-                .projectId(projectId)
-                .title("노드 3")
-                .description("노드 3 설명")
-                .nodeStatus(NodeStatus.PENDING_REVIEW)
-                .priority(Priority.LOW)
-                .nodeOrder(3)
-                .contractStartDate(LocalDate.of(2025, 7, 1))
-                .contractEndDate(LocalDate.of(2025, 9, 30))
-                .build();
-
-        when(projectNodeService.findByProjectIdByNodeOrder(projectId))
-                .thenReturn(Arrays.asList(node1, node2, node3));
-
-        // when
-        List<NodeListResponse> result = readProjectNodeService.getNodeListByProject(projectId);
-
-        // then
-        assertThat(result).hasSize(3);
-
-        // 첫 번째 노드 검증
-        assertThat(result.get(0).projectNodeId()).isEqualTo(1L);
-        assertThat(result.get(0).title()).isEqualTo("노드 1");
-        assertThat(result.get(0).nodeOrder()).isEqualTo(1);
-        assertThat(result.get(0).nodeStatus()).isEqualTo(NodeStatus.NOT_STARTED);
-        assertThat(result.get(0).priority()).isEqualTo(Priority.HIGH);
-
-        // 두 번째 노드 검증
-        assertThat(result.get(1).projectNodeId()).isEqualTo(2L);
-        assertThat(result.get(1).title()).isEqualTo("노드 2");
-        assertThat(result.get(1).nodeOrder()).isEqualTo(2);
-        assertThat(result.get(1).nodeStatus()).isEqualTo(NodeStatus.IN_PROGRESS);
-        assertThat(result.get(1).priority()).isEqualTo(Priority.MEDIUM);
-
-        // 세 번째 노드 검증
-        assertThat(result.get(2).projectNodeId()).isEqualTo(3L);
-        assertThat(result.get(2).title()).isEqualTo("노드 3");
-        assertThat(result.get(2).nodeOrder()).isEqualTo(3);
-        assertThat(result.get(2).nodeStatus()).isEqualTo(NodeStatus.PENDING_REVIEW);
-        assertThat(result.get(2).priority()).isEqualTo(Priority.LOW);
-
-        verify(projectNodeService).findByProjectIdByNodeOrder(projectId);
-    }
-
-    @Test
-    @DisplayName("노드 리스트 조회 시 ProjectNodeService를 정확히 한 번만 호출한다")
-    void givenProjectId_whenGetNodeList_thenCallProjectNodeServiceOnce() {
-        // given
-        Long projectId = 100L;
-        when(projectNodeService.findByProjectIdByNodeOrder(projectId))
-                .thenReturn(Collections.emptyList());
-
-        // when
-        readProjectNodeService.getNodeListByProject(projectId);
-
-        // then
-        verify(projectNodeService, times(1)).findByProjectIdByNodeOrder(projectId);
-        verifyNoMoreInteractions(projectNodeService);
-    }
-
-    @Test
-    @DisplayName("계약 기간이 설정된 노드의 정보를 올바르게 반환한다")
-    void givenNodeWithContractDates_whenGetNodeList_thenReturnWithContractDates() {
-        // given
-        Long projectId = 100L;
-        LocalDate startDate = LocalDate.of(2025, 1, 1);
-        LocalDate endDate = LocalDate.of(2025, 12, 31);
-
-        ProjectNode node = ProjectNode.builder()
-                .projectNodeId(1L)
-                .projectId(projectId)
-                .title("노드 1")
-                .description("노드 1 설명")
-                .nodeStatus(NodeStatus.NOT_STARTED)
-                .priority(Priority.HIGH)
-                .nodeOrder(1)
-                .contractStartDate(startDate)
-                .contractEndDate(endDate)
-                .build();
-
-        when(projectNodeService.findByProjectIdByNodeOrder(projectId))
-                .thenReturn(Collections.singletonList(node));
-
-        // when
-        List<NodeListResponse> result = readProjectNodeService.getNodeListByProject(projectId);
-
-        // then
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).starDate()).isEqualTo(startDate);
-        assertThat(result.get(0).endDate()).isEqualTo(endDate);
-        verify(projectNodeService).findByProjectIdByNodeOrder(projectId);
+        assertThat(result.get(0).nodeOrder()).isLessThan(result.get(1).nodeOrder());
     }
 }

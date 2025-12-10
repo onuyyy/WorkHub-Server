@@ -10,4 +10,5 @@ import java.util.List;
 public interface ClientMemberRepository extends JpaRepository<ProjectClientMember,Long>, ClientMemberRepositoryCustom {
 
     List<ProjectClientMember> findByUserId(Long userId);
+    boolean existsByProjectIdAndUserId(Long projectId, Long devMemberId);
 }

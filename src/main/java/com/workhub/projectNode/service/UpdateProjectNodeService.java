@@ -5,6 +5,7 @@ import com.workhub.global.entity.HistoryType;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import com.workhub.global.history.HistoryRecorder;
+import com.workhub.global.util.SecurityUtil;
 import com.workhub.global.util.StatusValidator;
 import com.workhub.projectNode.dto.*;
 import com.workhub.projectNode.entity.ProjectNode;
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
 public class UpdateProjectNodeService {
 
     private final ProjectNodeService projectNodeService;
+    private final ProjectNodeValidator projectNodeValidator;
     private final HistoryRecorder historyRecorder;
 
     /**
@@ -34,6 +36,9 @@ public class UpdateProjectNodeService {
      * @param request 변경할 상태 정보
      */
     public void updateNodeStatus(Long projectId, Long nodeId, UpdateNodeStatusRequest request) {
+
+        Long loginUser = SecurityUtil.getCurrentUserIdOrThrow();
+        projectNodeValidator.validateLoginUserPermission(projectId, loginUser);
 
         ProjectNode original = projectNodeService.findByIdAndProjectId(nodeId, projectId);
         NodeSnapshot snapshot = NodeSnapshot.from(original);
@@ -51,6 +56,9 @@ public class UpdateProjectNodeService {
      * @param request 노드 순서 변경 요청 리스트
      */
     public void updateNodeOrder(Long projectId, List<UpdateNodOrderRequest> request) {
+
+        Long loginUser = SecurityUtil.getCurrentUserIdOrThrow();
+        projectNodeValidator.validateLoginUserPermission(projectId, loginUser);
 
         List<ProjectNode> projectNodes = projectNodeService.findByProjectIdByNodeOrder(projectId);
         Map<Long, ProjectNode> nodeMap = projectNodes.stream()
@@ -84,6 +92,9 @@ public class UpdateProjectNodeService {
      * @param request  수정 요청 정보
      */
     public CreateNodeResponse updateNode(Long projectId, Long nodeId, UpdateNodeRequest request) {
+
+        Long loginUser = SecurityUtil.getCurrentUserIdOrThrow();
+        projectNodeValidator.validateLoginUserPermission(projectId, loginUser);
 
         ProjectNode original = projectNodeService.findByIdAndProjectId(nodeId, projectId);
         NodeSnapshot snapshot = NodeSnapshot.from(original);

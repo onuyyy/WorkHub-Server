@@ -46,4 +46,10 @@ public class ProjectNodeService {
             throw new BusinessException(ErrorCode.NOT_MATCHED_PROJECT_POST);
         }
     }
+
+    public Integer findMaxNodeOrderByProjectId(Long projectId) {
+        return projectNodeRepository.findTopByProjectIdAndDeletedAtIsNullOrderByNodeOrderDesc(projectId)
+                .map(ProjectNode::getNodeOrder)
+                .orElse(0);
+    }
 }

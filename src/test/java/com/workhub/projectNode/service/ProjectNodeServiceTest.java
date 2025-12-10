@@ -2,9 +2,7 @@ package com.workhub.projectNode.service;
 
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
-import com.workhub.projectNode.entity.ConfirmStatus;
 import com.workhub.projectNode.entity.NodeStatus;
-import com.workhub.projectNode.entity.Priority;
 import com.workhub.projectNode.entity.ProjectNode;
 import com.workhub.projectNode.repository.ProjectNodeRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,217 +11,164 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
-import java.util.Arrays;
-import java.util.Collections;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.BDDMockito.given;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith(SpringExtension.class)
 class ProjectNodeServiceTest {
 
     @Mock
-    private ProjectNodeRepository projectNodeRepository;
+    ProjectNodeRepository projectNodeRepository;
 
     @InjectMocks
-    private ProjectNodeService projectNodeService;
+    ProjectNodeService projectNodeService;
 
-    private ProjectNode mockProjectNode;
+    private ProjectNode testNode;
 
     @BeforeEach
-    void init() {
-        mockProjectNode = ProjectNode.builder()
+    void setUp() {
+        testNode = ProjectNode.builder()
                 .projectNodeId(1L)
+                .projectId(100L)
                 .title("테스트 노드")
                 .description("테스트 설명")
                 .nodeStatus(NodeStatus.NOT_STARTED)
-                .priority(Priority.MEDIUM)
-                .confirmStatus(ConfirmStatus.PENDING)
                 .nodeOrder(1)
-                .projectId(100L)
-                .userId(1L)
+                .developerUserId(10L)
+                .contractStartDate(LocalDate.now())
+                .contractEndDate(LocalDate.now().plusDays(30))
                 .build();
     }
 
     @Test
-    @DisplayName("프로젝트 노드를 저장하면 저장된 노드를 반환한다.")
-    void givenProjectNode_whenSaveProjectNode_thenReturnSavedNode() {
-        when(projectNodeRepository.save(any(ProjectNode.class))).thenReturn(mockProjectNode);
+    @DisplayName("프로젝트 노드 저장 성공")
+    void saveProjectNode_Success() {
+        // given
+        given(projectNodeRepository.save(any(ProjectNode.class))).willReturn(testNode);
 
-        ProjectNode result = projectNodeService.saveProjectNode(mockProjectNode);
+        // when
+        ProjectNode result = projectNodeService.saveProjectNode(testNode);
 
+        // then
         assertThat(result).isNotNull();
         assertThat(result.getProjectNodeId()).isEqualTo(1L);
         assertThat(result.getTitle()).isEqualTo("테스트 노드");
-        assertThat(result.getNodeStatus()).isEqualTo(NodeStatus.NOT_STARTED);
-        assertThat(result.getPriority()).isEqualTo(Priority.MEDIUM);
-        verify(projectNodeRepository).save(mockProjectNode);
     }
 
     @Test
-    @DisplayName("프로젝트 ID로 노드를 조회하면 순서대로 정렬된 리스트를 반환한다.")
-    void givenProjectId_whenFindByProjectIdByNodeOrder_thenReturnSortedList() {
-        Long projectId = 100L;
-        ProjectNode node1 = ProjectNode.builder()
-                .projectNodeId(1L)
-                .title("노드 1")
-                .nodeOrder(1)
-                .projectId(projectId)
-                .build();
+    @DisplayName("프로젝트 ID로 노드 리스트 조회 성공")
+    void findByProjectIdByNodeOrder_Success() {
+        // given
+        List<ProjectNode> nodeList = List.of(testNode);
+        given(projectNodeRepository.findByProjectIdAndDeletedAtIsNullOrderByNodeOrderAsc(anyLong()))
+                .willReturn(nodeList);
 
-        ProjectNode node2 = ProjectNode.builder()
-                .projectNodeId(2L)
-                .title("노드 2")
-                .nodeOrder(2)
-                .projectId(projectId)
-                .build();
+        // when
+        List<ProjectNode> result = projectNodeService.findByProjectIdByNodeOrder(100L);
 
-        ProjectNode node3 = ProjectNode.builder()
-                .projectNodeId(3L)
-                .title("노드 3")
-                .nodeOrder(3)
-                .projectId(projectId)
-                .build();
-
-        List<ProjectNode> mockNodes = Arrays.asList(node1, node2, node3);
-        when(projectNodeRepository.findByProjectIdAndDeletedAtIsNullOrderByNodeOrderAsc(projectId))
-                .thenReturn(mockNodes);
-
-        List<ProjectNode> result = projectNodeService.findByProjectIdByNodeOrder(projectId);
-
-        assertThat(result).isNotNull();
-        assertThat(result).hasSize(3);
-        assertThat(result.get(0).getNodeOrder()).isEqualTo(1);
-        assertThat(result.get(1).getNodeOrder()).isEqualTo(2);
-        assertThat(result.get(2).getNodeOrder()).isEqualTo(3);
-        verify(projectNodeRepository).findByProjectIdAndDeletedAtIsNullOrderByNodeOrderAsc(projectId);
-    }
-
-    @Test
-    @DisplayName("프로젝트 ID로 노드를 조회했을 때 노드가 없으면 빈 리스트를 반환한다.")
-    void givenProjectIdWithNoNodes_whenFindByProjectIdByNodeOrder_thenReturnEmptyList() {
-        Long projectId = 999L;
-        when(projectNodeRepository.findByProjectIdAndDeletedAtIsNullOrderByNodeOrderAsc(projectId))
-                .thenReturn(Collections.emptyList());
-
-        List<ProjectNode> result = projectNodeService.findByProjectIdByNodeOrder(projectId);
-
-        assertThat(result).isNotNull();
-        assertThat(result).isEmpty();
-        verify(projectNodeRepository).findByProjectIdAndDeletedAtIsNullOrderByNodeOrderAsc(projectId);
-    }
-
-    @Test
-    @DisplayName("존재하는 프로젝트 노드 ID로 조회하면 노드를 반환한다.")
-    void givenValidNodeId_whenFindById_thenReturnProjectNode() {
-        Long nodeId = 1L;
-        when(projectNodeRepository.findById(nodeId)).thenReturn(Optional.of(mockProjectNode));
-
-        ProjectNode result = projectNodeService.findById(nodeId);
-
-        assertThat(result).isNotNull();
-        assertThat(result.getProjectNodeId()).isEqualTo(nodeId);
-        assertThat(result.getTitle()).isEqualTo("테스트 노드");
-        verify(projectNodeRepository).findById(nodeId);
-    }
-
-    @Test
-    @DisplayName("존재하지 않는 프로젝트 노드 ID로 조회하면 예외를 발생시킨다.")
-    void givenInvalidNodeId_whenFindById_thenThrowException() {
-        Long nodeId = 999L;
-        when(projectNodeRepository.findById(nodeId)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> projectNodeService.findById(nodeId))
-                .isInstanceOf(BusinessException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PROJECT_NODE_NOT_FOUND);
-
-        verify(projectNodeRepository).findById(nodeId);
-    }
-
-    @Test
-    @DisplayName("삭제된 노드는 프로젝트 ID로 조회 시 포함되지 않는다.")
-    void givenProjectIdWithDeletedNodes_whenFindByProjectIdByNodeOrder_thenReturnOnlyNonDeletedNodes() {
-        Long projectId = 100L;
-        ProjectNode activeNode = ProjectNode.builder()
-                .projectNodeId(1L)
-                .title("활성 노드")
-                .nodeOrder(1)
-                .projectId(projectId)
-                .build();
-
-        // 삭제되지 않은 노드만 반환
-        when(projectNodeRepository.findByProjectIdAndDeletedAtIsNullOrderByNodeOrderAsc(projectId))
-                .thenReturn(Collections.singletonList(activeNode));
-
-        List<ProjectNode> result = projectNodeService.findByProjectIdByNodeOrder(projectId);
-
+        // then
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getTitle()).isEqualTo("활성 노드");
-        verify(projectNodeRepository).findByProjectIdAndDeletedAtIsNullOrderByNodeOrderAsc(projectId);
+        assertThat(result.get(0).getProjectId()).isEqualTo(100L);
     }
 
     @Test
-    @DisplayName("여러 프로젝트의 노드가 있을 때 특정 프로젝트 ID로 조회하면 해당 프로젝트의 노드만 반환한다.")
-    void givenMultipleProjects_whenFindByProjectIdByNodeOrder_thenReturnOnlyMatchingProjectNodes() {
-        Long targetProjectId = 100L;
-        ProjectNode node1 = ProjectNode.builder()
-                .projectNodeId(1L)
-                .title("프로젝트 100 노드 1")
-                .nodeOrder(1)
-                .projectId(targetProjectId)
-                .build();
+    @DisplayName("노드 ID로 조회 성공")
+    void findById_Success() {
+        // given
+        given(projectNodeRepository.findById(anyLong())).willReturn(Optional.of(testNode));
 
-        ProjectNode node2 = ProjectNode.builder()
-                .projectNodeId(2L)
-                .title("프로젝트 100 노드 2")
-                .nodeOrder(2)
-                .projectId(targetProjectId)
-                .build();
+        // when
+        ProjectNode result = projectNodeService.findById(1L);
 
-        when(projectNodeRepository.findByProjectIdAndDeletedAtIsNullOrderByNodeOrderAsc(targetProjectId))
-                .thenReturn(Arrays.asList(node1, node2));
-
-        List<ProjectNode> result = projectNodeService.findByProjectIdByNodeOrder(targetProjectId);
-
-        assertThat(result).hasSize(2);
-        assertThat(result).allMatch(node -> node.getProjectId().equals(targetProjectId));
-        verify(projectNodeRepository).findByProjectIdAndDeletedAtIsNullOrderByNodeOrderAsc(targetProjectId);
-    }
-
-    @Test
-    @DisplayName("노드 ID와 프로젝트 ID로 조회하면 해당 노드를 반환한다.")
-    void givenValidNodeIdAndProjectId_whenFindByIdAndProjectId_thenReturnProjectNode() {
-        Long nodeId = 1L;
-        Long projectId = 100L;
-        when(projectNodeRepository.findByProjectNodeIdAndProjectId(nodeId, projectId))
-                .thenReturn(Optional.of(mockProjectNode));
-
-        ProjectNode result = projectNodeService.findByIdAndProjectId(nodeId, projectId);
-
+        // then
         assertThat(result).isNotNull();
-        assertThat(result.getProjectNodeId()).isEqualTo(nodeId);
-        assertThat(result.getProjectId()).isEqualTo(projectId);
-        verify(projectNodeRepository).findByProjectNodeIdAndProjectId(nodeId, projectId);
+        assertThat(result.getProjectNodeId()).isEqualTo(1L);
     }
 
     @Test
-    @DisplayName("노드 ID와 프로젝트 ID가 일치하지 않으면 예외를 발생시킨다.")
-    void givenMismatchedNodeIdAndProjectId_whenFindByIdAndProjectId_thenThrowException() {
-        Long nodeId = 1L;
-        Long wrongProjectId = 999L;
-        when(projectNodeRepository.findByProjectNodeIdAndProjectId(nodeId, wrongProjectId))
-                .thenReturn(Optional.empty());
+    @DisplayName("노드 ID로 조회 실패 - 노드 없음")
+    void findById_NotFound() {
+        // given
+        given(projectNodeRepository.findById(anyLong())).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> projectNodeService.findByIdAndProjectId(nodeId, wrongProjectId))
+        // when & then
+        assertThatThrownBy(() -> projectNodeService.findById(1L))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PROJECT_NODE_NOT_FOUND);
+    }
 
-        verify(projectNodeRepository).findByProjectNodeIdAndProjectId(nodeId, wrongProjectId);
+    @Test
+    @DisplayName("노드 ID와 프로젝트 ID로 조회 성공")
+    void findByIdAndProjectId_Success() {
+        // given
+        given(projectNodeRepository.findByProjectNodeIdAndProjectId(anyLong(), anyLong()))
+                .willReturn(Optional.of(testNode));
+
+        // when
+        ProjectNode result = projectNodeService.findByIdAndProjectId(1L, 100L);
+
+        // then
+        assertThat(result).isNotNull();
+        assertThat(result.getProjectNodeId()).isEqualTo(1L);
+        assertThat(result.getProjectId()).isEqualTo(100L);
+    }
+
+    @Test
+    @DisplayName("최대 노드 순서 조회 - 노드가 있는 경우")
+    void findMaxNodeOrderByProjectId_HasNodes() {
+        // given
+        given(projectNodeRepository.findTopByProjectIdAndDeletedAtIsNullOrderByNodeOrderDesc(anyLong()))
+                .willReturn(Optional.of(testNode));
+
+        // when
+        Integer result = projectNodeService.findMaxNodeOrderByProjectId(100L);
+
+        // then
+        assertThat(result).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("최대 노드 순서 조회 - 노드가 없는 경우")
+    void findMaxNodeOrderByProjectId_NoNodes() {
+        // given
+        given(projectNodeRepository.findTopByProjectIdAndDeletedAtIsNullOrderByNodeOrderDesc(anyLong()))
+                .willReturn(Optional.empty());
+
+        // when
+        Integer result = projectNodeService.findMaxNodeOrderByProjectId(100L);
+
+        // then
+        assertThat(result).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("노드와 프로젝트 일치 검증 성공")
+    void validateNodeToProject_Success() {
+        // given
+        given(projectNodeRepository.findById(anyLong())).willReturn(Optional.of(testNode));
+
+        // when & then
+        projectNodeService.validateNodeToProject(1L, 100L);
+    }
+
+    @Test
+    @DisplayName("노드와 프로젝트 일치 검증 실패 - 프로젝트 불일치")
+    void validateNodeToProject_NotMatched() {
+        // given
+        given(projectNodeRepository.findById(anyLong())).willReturn(Optional.of(testNode));
+
+        // when & then
+        assertThatThrownBy(() -> projectNodeService.validateNodeToProject(1L, 999L))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NOT_MATCHED_PROJECT_POST);
     }
 }

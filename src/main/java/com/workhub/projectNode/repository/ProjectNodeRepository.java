@@ -15,4 +15,6 @@ public interface ProjectNodeRepository extends JpaRepository<ProjectNode,Long>, 
     Optional<ProjectNode> findByProjectNodeIdAndProjectId(Long projectNodeId, Long projectId);
 
     List<ProjectNode> findByProjectIdAndDeletedAtIsNull(Long projectId);
+
+    Optional<ProjectNode> findTopByProjectIdAndDeletedAtIsNullOrderByNodeOrderDesc(Long projectId);
 }

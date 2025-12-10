@@ -126,12 +126,12 @@ CREATE TABLE project_node (
     confirm_status VARCHAR(20) NULL,
     contract_start_date DATE NULL,
     contract_end_date DATE NULL,
-    priority VARCHAR(20) NOT NULL,
     confirmed_at TIMESTAMP NULL,
     reject_text VARCHAR(255) NULL,
     node_order INTEGER NOT NULL,
     project_id BIGINT NOT NULL,
-    user_id BIGINT NULL,
+    developer_user_id BIGINT NULL,
+    confirm_user_id BIGINT NULL,
     created_at TIMESTAMP NULL,
     updated_at TIMESTAMP NULL,
     deleted_at TIMESTAMP NULL
@@ -291,8 +291,9 @@ CREATE TABLE cs_qna_history (
 
 CREATE TABLE check_list (
     check_list_id BIGSERIAL PRIMARY KEY,
-    check_list_title VARCHAR(50) NOT NULL,
-    project_node_id BIGINT NOT NULL
+    check_list_description VARCHAR(500) NOT NULL,
+    project_node_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL
 );
 
 CREATE TABLE check_list_template (
@@ -305,7 +306,6 @@ CREATE TABLE check_list_item (
     check_list_item_id BIGSERIAL PRIMARY KEY,
     item_title VARCHAR(50) NOT NULL,
     item_order INTEGER NOT NULL,
-    comment TEXT NOT NULL,
     confirm BOOLEAN NULL,
     confirmed_at TIMESTAMP NULL,
     check_list_id BIGINT NOT NULL,
@@ -328,12 +328,22 @@ CREATE TABLE check_list_item_history (
     user_agent VARCHAR(255) NOT NULL
 );
 
-CREATE TABLE check_list_item_file (
-    check_list_item_file_id BIGSERIAL PRIMARY KEY,
+CREATE TABLE check_list_option (
+    check_list_option_id BIGSERIAL PRIMARY KEY,
+    option_content VARCHAR(300) NOT NULL,
+    option_order INTEGER NOT NULL,
+    check_list_item_id BIGINT NOT NULL,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL,
+    deleted_at TIMESTAMP NULL
+);
+
+CREATE TABLE check_list_option_file (
+    check_list_option_file_id BIGSERIAL PRIMARY KEY,
     file_url VARCHAR(255) NOT NULL,
     file_name VARCHAR(255) NOT NULL,
     file_order INTEGER NOT NULL,
-    check_list_item_id BIGINT NOT NULL,
+    check_list_option_id BIGINT NOT NULL,
     created_at TIMESTAMP NULL,
     updated_at TIMESTAMP NULL,
     deleted_at TIMESTAMP NULL

@@ -1,7 +1,6 @@
 package com.workhub.projectNode.dto;
 
 import com.workhub.projectNode.entity.NodeStatus;
-import com.workhub.projectNode.entity.Priority;
 import com.workhub.projectNode.entity.ProjectNode;
 import lombok.Builder;
 
@@ -16,8 +15,7 @@ public record CreateNodeResponse(
         NodeStatus nodeStatus,
         LocalDate startDate,
         LocalDate endDate,
-        Integer nodeOrder,
-        Priority priority
+        Integer nodeOrder
 ) {
     public static CreateNodeResponse from(ProjectNode projectNode) {
         return CreateNodeResponse.builder()
@@ -29,7 +27,6 @@ public record CreateNodeResponse(
                 .startDate(projectNode.getContractStartDate())
                 .endDate(projectNode.getContractEndDate())
                 .nodeOrder(projectNode.getNodeOrder())
-                .priority(projectNode.getPriority())
                 .build();
     }
 }

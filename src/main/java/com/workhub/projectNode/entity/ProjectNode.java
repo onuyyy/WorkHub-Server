@@ -40,9 +40,9 @@ public class ProjectNode extends BaseTimeEntity {
     @Column(name = "contract_end_date")
     private LocalDate contractEndDate;
 
-    @Enumerated(EnumType.STRING)
+    /*@Enumerated(EnumType.STRING)
     @Column(name = "priority")
-    private Priority priority;
+    private Priority priority;*/
 
     @Enumerated(EnumType.STRING)
     @Column(name = "confirm_status")
@@ -60,8 +60,11 @@ public class ProjectNode extends BaseTimeEntity {
     @Column(name = "project_id")
     private Long projectId;
 
-    @Column(name = "user_id")
-    private Long userId;
+    @Column(name = "confirm_user_id")
+    private Long confirmUserId;
+
+    @Column(name = "developer_user_id")
+    private Long developerUserId;
 
     public void incrementNodeOrder() {
         this.nodeOrder++;
@@ -88,8 +91,8 @@ public class ProjectNode extends BaseTimeEntity {
         if(request.endDate() != null){
             this.contractEndDate = request.endDate();
         }
-        if(request.priority() != null){
-            this.priority = request.priority();
+        if(request.developerUserId() != null){
+            this.developerUserId = request.developerUserId();
         }
     }
 
@@ -105,7 +108,7 @@ public class ProjectNode extends BaseTimeEntity {
                 .nodeStatus(NodeStatus.NOT_STARTED)
                 .contractStartDate(request.starDate())
                 .contractEndDate(request.endDate())
-                .priority(request.priority())
+                .developerUserId(request.developerUserId())
                 .nodeOrder(nodeOrder)
                 .projectId(projectId)
                 .build();

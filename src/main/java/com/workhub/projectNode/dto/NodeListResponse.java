@@ -2,8 +2,8 @@ package com.workhub.projectNode.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.workhub.projectNode.entity.NodeStatus;
-import com.workhub.projectNode.entity.Priority;
 import com.workhub.projectNode.entity.ProjectNode;
+import com.workhub.userTable.entity.UserTable;
 import lombok.Builder;
 
 import java.time.LocalDate;
@@ -18,15 +18,28 @@ public record NodeListResponse(
         String description,
         NodeStatus nodeStatus,
         Integer nodeOrder,
-        Priority priority,
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
         LocalDateTime updatedAt,
         LocalDate starDate,
-        LocalDate endDate
+        LocalDate endDate,
+        DevMembers devMembers
         // todo : 추후 체크리스트, 게시판의 첨부파일과 링크 총 게수를 담아서 응답해야합니다.
 
 ) {
-    public static NodeListResponse from(ProjectNode projectNode) {
+    @Builder
+    public static record DevMembers (
+            Long devMemberId,
+            String devMemberName
+    ){
+        public static DevMembers from(UserTable user) {
+            return DevMembers.builder()
+                    .devMemberId(user.getUserId())
+                    .devMemberName("김개발자")  // todo : 추후 UserTable에서 사용자 이름 컬럼 추가 후 변경.
+                    .build();
+        }
+    }
+
+    public static NodeListResponse from(ProjectNode projectNode, UserTable user) {
         return NodeListResponse.builder()
                 .projectId(projectNode.getProjectId())
                 .projectNodeId(projectNode.getProjectNodeId())
@@ -34,7 +47,7 @@ public record NodeListResponse(
                 .description(projectNode.getDescription())
                 .nodeStatus(projectNode.getNodeStatus())
                 .nodeOrder(projectNode.getNodeOrder())
-                .priority(projectNode.getPriority())
+                .devMembers(DevMembers.from(user))
                 .updatedAt(projectNode.getUpdatedAt())
                 .starDate(projectNode.getContractStartDate())
                 .endDate(projectNode.getContractEndDate())

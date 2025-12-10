@@ -136,9 +136,14 @@ CREATE INDEX idx_project_node_pending
     ON project_node(project_id, confirm_status, node_order)
     WHERE deleted_at IS NULL AND confirm_status = 'PENDING';
 
--- 유저가 담당한 프로젝트 노드 조회
-CREATE INDEX idx_project_node_user_project_created
-    ON project_node(user_id, project_id, created_at DESC)
+-- 개발자가 담당한 프로젝트 노드 조회
+CREATE INDEX idx_project_node_developer_project_created
+    ON project_node(developer_user_id, project_id, created_at DESC)
+    WHERE deleted_at IS NULL;
+
+-- 확인자가 담당한 프로젝트 노드 조회
+CREATE INDEX idx_project_node_confirm_user_project_created
+    ON project_node(confirm_user_id, project_id, created_at DESC)
     WHERE deleted_at IS NULL;
 
 -- 삭제된 프로젝트 노드 조회
@@ -311,6 +316,10 @@ CREATE INDEX idx_cs_qna_history_updated_by
 CREATE INDEX idx_check_list_project_node
     ON check_list(project_node_id);
 
+-- 사용자별 체크리스트 조회
+CREATE INDEX idx_check_list_user
+    ON check_list(user_id);
+
 -- check_list_item indexes
 -- 체크리스트별 아이템 조회 (순서대로)
 CREATE INDEX idx_check_list_item_list_order
@@ -329,10 +338,16 @@ CREATE INDEX idx_check_list_item_history_target_action_updated
 CREATE INDEX idx_check_list_item_history_updated_by
     ON check_list_item_history(updated_by, updated_at DESC);
 
--- check_list_item_file indexes
--- 체크리스트 아이템별 파일 조회 (순서대로, 삭제되지 않은 파일만)
-CREATE INDEX idx_check_list_item_file_item_order
-    ON check_list_item_file(check_list_item_id, file_order)
+-- check_list_option indexes
+-- 체크리스트 아이템별 옵션 조회 (순서대로, 삭제되지 않은 옵션만)
+CREATE INDEX idx_check_list_option_item_order
+    ON check_list_option(check_list_item_id, option_order)
+    WHERE deleted_at IS NULL;
+
+-- check_list_option_file indexes
+-- 체크리스트 옵션별 파일 조회 (순서대로, 삭제되지 않은 파일만)
+CREATE INDEX idx_check_list_option_file_option_order
+    ON check_list_option_file(check_list_option_id, file_order)
     WHERE deleted_at IS NULL;
 
 -- check_list_item_comment indexes

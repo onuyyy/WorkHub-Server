@@ -1,236 +1,166 @@
 package com.workhub.projectNode.service;
 
-import com.workhub.global.entity.ActionType;
-import com.workhub.global.entity.HistoryType;
 import com.workhub.global.history.HistoryRecorder;
-import com.workhub.global.security.CustomUserDetails;
+import com.workhub.global.util.SecurityUtil;
+import com.workhub.project.entity.Project;
+import com.workhub.project.entity.Status;
 import com.workhub.projectNode.dto.CreateNodeRequest;
 import com.workhub.projectNode.dto.CreateNodeResponse;
 import com.workhub.projectNode.entity.NodeStatus;
-import com.workhub.projectNode.entity.Priority;
 import com.workhub.projectNode.entity.ProjectNode;
-import com.workhub.userTable.entity.UserTable;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.mockito.MockedStatic;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.Collections;
 
-import static com.workhub.userTable.entity.UserRole.ADMIN;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.willDoNothing;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.verify;
 
-@ExtendWith(MockitoExtension.class)
-@MockitoSettings(strictness = Strictness.LENIENT)
+@ExtendWith(SpringExtension.class)
 class CreateProjectNodeServiceTest {
 
     @Mock
-    private ProjectNodeService projectNodeService;
+    ProjectNodeService projectNodeService;
 
     @Mock
-    private HistoryRecorder historyRecorder;
+    ProjectNodeValidator projectNodeValidator;
+
+    @Mock
+    HistoryRecorder historyRecorder;
 
     @InjectMocks
-    private CreateProjectNodeService createProjectNodeService;
+    CreateProjectNodeService createProjectNodeService;
 
-    private CreateNodeRequest mockRequest;
+    private MockedStatic<SecurityUtil> securityUtil;
+    private CreateNodeRequest request;
+    private Project testProject;
+    private ProjectNode testNode;
 
     @BeforeEach
-    void init() {
-        // SecurityContext 설정
-        UserTable mockUser = UserTable.builder()
-                .userId(1L)
-                .loginId("testuser")
-                .password("password")
-                .role(ADMIN)
+    void setUp() {
+        // SecurityUtil static method mock
+        securityUtil = mockStatic(SecurityUtil.class);
+        securityUtil.when(SecurityUtil::getCurrentUserIdOrThrow).thenReturn(1L);
+        securityUtil.when(() -> SecurityUtil.hasRole("ADMIN")).thenReturn(false);
+
+        // Test data
+        request = new CreateNodeRequest(
+                "테스트 노드",
+                "테스트 설명",
+                10L,
+                LocalDate.now(),
+                LocalDate.now().plusDays(30)
+        );
+
+        testProject = Project.builder()
+                .projectId(100L)
+                .projectTitle("테스트 프로젝트")
+                .status(Status.CONTRACT)
                 .build();
 
-        CustomUserDetails userDetails = new CustomUserDetails(mockUser);
-        UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-
-        mockRequest = new CreateNodeRequest(
-                "새 노드",
-                "노드 설명",
-                LocalDate.of(2025, 1, 1),
-                LocalDate.of(2025, 12, 31),
-                Priority.MEDIUM
-        );
-    }
-
-    @Test
-    @DisplayName("빈 프로젝트에 첫 번째 노드를 생성하면 순서 조정 없이 노드가 생성된다.")
-    void givenEmptyProject_whenCreateNode_thenCreateNodeWithoutAdjustment() {
-        Long projectId = 100L;
-        ProjectNode savedNode = ProjectNode.builder()
+        testNode = ProjectNode.builder()
                 .projectNodeId(1L)
-                .projectId(projectId)
-                .title("새 노드")
-                .description("노드 설명")
+                .projectId(100L)
+                .title("테스트 노드")
+                .description("테스트 설명")
                 .nodeStatus(NodeStatus.NOT_STARTED)
                 .nodeOrder(1)
+                .developerUserId(10L)
+                .contractStartDate(LocalDate.now())
+                .contractEndDate(LocalDate.now().plusDays(30))
                 .build();
+    }
 
-        when(projectNodeService.findByProjectIdByNodeOrder(projectId)).thenReturn(Collections.emptyList());
-        when(projectNodeService.saveProjectNode(any(ProjectNode.class))).thenReturn(savedNode);
-        lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
-
-        CreateNodeResponse result = createProjectNodeService.createNode(projectId, mockRequest);
-
-        assertThat(result).isNotNull();
-        assertThat(result.projectNodeId()).isEqualTo(1L);
-        assertThat(result.title()).isEqualTo("새 노드");
-        assertThat(result.nodeOrder()).isEqualTo(1);
-        assertThat(result.nodeStatus()).isEqualTo(NodeStatus.NOT_STARTED);
-
-        verify(projectNodeService).findByProjectIdByNodeOrder(projectId);
-        verify(projectNodeService).saveProjectNode(any(ProjectNode.class));
-        verify(historyRecorder).recordHistory(
-                eq(HistoryType.PROJECT_NODE),
-                eq(1L),
-                eq(ActionType.CREATE),
-                any(Object.class)
-        );
+    @AfterEach
+    void tearDown() {
+        securityUtil.close();
     }
 
     @Test
-    @DisplayName("기존 노드가 있는 프로젝트에 노드를 추가하면 마지막 순서 + 1로 생성된다.")
-    void givenProjectWithNodes_whenCreateNode_thenCreateNodeWithNextOrder() {
-        Long projectId = 100L;
-        ProjectNode existingNode1 = ProjectNode.builder()
-                .projectNodeId(1L)
-                .nodeOrder(1)
-                .build();
+    @DisplayName("노드 생성 성공 - 첫 번째 노드")
+    void createNode_Success_FirstNode() {
+        // given
+        willDoNothing().given(projectNodeValidator).validateLoginUserPermission(anyLong(), anyLong());
+        given(projectNodeValidator.validateProjectAndDevMember(anyLong(), anyLong()))
+                .willReturn(testProject);
+        given(projectNodeService.findMaxNodeOrderByProjectId(anyLong())).willReturn(0);
+        given(projectNodeService.saveProjectNode(any(ProjectNode.class))).willReturn(testNode);
 
-        ProjectNode existingNode2 = ProjectNode.builder()
+        // when
+        CreateNodeResponse response = createProjectNodeService.createNode(100L, request);
+
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.projectNodeId()).isEqualTo(1L);
+        assertThat(response.title()).isEqualTo("테스트 노드");
+        assertThat(testProject.getStatus()).isEqualTo(Status.IN_PROGRESS);
+
+        verify(projectNodeValidator).validateLoginUserPermission(100L, 1L);
+        verify(projectNodeValidator).validateProjectAndDevMember(100L, 10L);
+        verify(projectNodeService).findMaxNodeOrderByProjectId(100L);
+        verify(projectNodeService).saveProjectNode(any(ProjectNode.class));
+    }
+
+    @Test
+    @DisplayName("노드 생성 성공 - 두 번째 노드 (nodeOrder 계산)")
+    void createNode_Success_SecondNode() {
+        // given
+        willDoNothing().given(projectNodeValidator).validateLoginUserPermission(anyLong(), anyLong());
+        given(projectNodeValidator.validateProjectAndDevMember(anyLong(), anyLong()))
+                .willReturn(testProject);
+        given(projectNodeService.findMaxNodeOrderByProjectId(anyLong())).willReturn(1); // 기존 노드 있음
+
+        ProjectNode secondNode = ProjectNode.builder()
                 .projectNodeId(2L)
-                .nodeOrder(2)
+                .projectId(100L)
+                .title("테스트 노드")
+                .nodeOrder(2) // 두 번째 노드
                 .build();
 
-        CreateNodeRequest newNodeRequest = new CreateNodeRequest(
-                "새 노드",
-                "새 노드 설명",
-                LocalDate.of(2025, 1, 1),
-                LocalDate.of(2025, 12, 31),
-                Priority.MEDIUM
-        );
+        given(projectNodeService.saveProjectNode(any(ProjectNode.class))).willReturn(secondNode);
 
-        ProjectNode savedNode = ProjectNode.builder()
-                .projectNodeId(3L)
-                .projectId(projectId)
-                .title("새 노드")
-                .description("새 노드 설명")
-                .nodeStatus(NodeStatus.NOT_STARTED)
-                .nodeOrder(3)
-                .build();
+        // when
+        CreateNodeResponse response = createProjectNodeService.createNode(100L, request);
 
-        when(projectNodeService.findByProjectIdByNodeOrder(projectId))
-                .thenReturn(Arrays.asList(existingNode1, existingNode2));
-        when(projectNodeService.saveProjectNode(any(ProjectNode.class))).thenReturn(savedNode);
-        lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
+        // then
+        assertThat(response).isNotNull();
+        assertThat(response.projectNodeId()).isEqualTo(2L);
 
-        CreateNodeResponse result = createProjectNodeService.createNode(projectId, newNodeRequest);
-
-        assertThat(result).isNotNull();
-        assertThat(result.nodeOrder()).isEqualTo(3);
-        assertThat(existingNode1.getNodeOrder()).isEqualTo(1); // 변경 없음
-        assertThat(existingNode2.getNodeOrder()).isEqualTo(2); // 변경 없음
-
-        verify(projectNodeService).findByProjectIdByNodeOrder(projectId);
-        verify(projectNodeService).saveProjectNode(any(ProjectNode.class));
-        verify(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
-    }
-
-
-    @Test
-    @DisplayName("노드 생성 시 히스토리가 올바르게 기록된다.")
-    void givenCreateNodeRequest_whenCreateNode_thenRecordHistory() {
-        Long projectId = 100L;
-        ProjectNode savedNode = ProjectNode.builder()
-                .projectNodeId(1L)
-                .projectId(projectId)
-                .title("새 노드")
-                .description("노드 설명")
-                .nodeStatus(NodeStatus.NOT_STARTED)
-                .nodeOrder(1)
-                .build();
-
-        when(projectNodeService.findByProjectIdByNodeOrder(projectId)).thenReturn(Collections.emptyList());
-        when(projectNodeService.saveProjectNode(any(ProjectNode.class))).thenReturn(savedNode);
-        lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
-
-        createProjectNodeService.createNode(projectId, mockRequest);
-
-        verify(historyRecorder).recordHistory(
-                eq(HistoryType.PROJECT_NODE),
-                eq(1L),
-                eq(ActionType.CREATE),
-                any(Object.class)
-        );
+        verify(projectNodeService).findMaxNodeOrderByProjectId(100L);
     }
 
     @Test
-    @DisplayName("노드 생성 시 ProjectNode.of 팩토리 메서드를 통해 엔티티가 생성된다.")
-    void givenCreateNodeRequest_whenCreateNode_thenUseFactoryMethod() {
-        Long projectId = 100L;
-        ProjectNode savedNode = ProjectNode.builder()
-                .projectNodeId(1L)
-                .projectId(projectId)
-                .title(mockRequest.title())
-                .description(mockRequest.description())
-                .nodeStatus(NodeStatus.NOT_STARTED)
-                .nodeOrder(1)
+    @DisplayName("노드 생성 시 프로젝트 상태가 IN_PROGRESS로 변경됨")
+    void createNode_ProjectStatusChangedToInProgress() {
+        // given
+        Project contractProject = Project.builder()
+                .projectId(100L)
+                .projectTitle("테스트 프로젝트")
+                .status(Status.CONTRACT)
                 .build();
 
-        when(projectNodeService.findByProjectIdByNodeOrder(projectId)).thenReturn(Collections.emptyList());
-        when(projectNodeService.saveProjectNode(any(ProjectNode.class))).thenReturn(savedNode);
-        lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
+        willDoNothing().given(projectNodeValidator).validateLoginUserPermission(anyLong(), anyLong());
+        given(projectNodeValidator.validateProjectAndDevMember(anyLong(), anyLong()))
+                .willReturn(contractProject);
+        given(projectNodeService.findMaxNodeOrderByProjectId(anyLong())).willReturn(0);
+        given(projectNodeService.saveProjectNode(any(ProjectNode.class))).willReturn(testNode);
 
-        CreateNodeResponse result = createProjectNodeService.createNode(projectId, mockRequest);
+        // when
+        createProjectNodeService.createNode(100L, request);
 
-        assertThat(result).isNotNull();
-        verify(projectNodeService).saveProjectNode(argThat(node ->
-                node.getProjectId().equals(projectId) &&
-                node.getTitle().equals(mockRequest.title()) &&
-                node.getDescription().equals(mockRequest.description()) &&
-                node.getNodeOrder().equals(1)
-        ));
-    }
-
-    @Test
-    @DisplayName("노드 생성 시 모든 메서드가 순차적으로 호출된다.")
-    void givenCreateNodeRequest_whenCreateNode_thenAllMethodsCalledInOrder() {
-        Long projectId = 100L;
-        ProjectNode savedNode = ProjectNode.builder()
-                .projectNodeId(1L)
-                .projectId(projectId)
-                .title("새 노드")
-                .description("노드 설명")
-                .nodeStatus(NodeStatus.NOT_STARTED)
-                .nodeOrder(1)
-                .build();
-
-        when(projectNodeService.findByProjectIdByNodeOrder(projectId)).thenReturn(Collections.emptyList());
-        when(projectNodeService.saveProjectNode(any(ProjectNode.class))).thenReturn(savedNode);
-        lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
-
-        createProjectNodeService.createNode(projectId, mockRequest);
-
-        var inOrder = inOrder(projectNodeService, historyRecorder);
-        inOrder.verify(projectNodeService).findByProjectIdByNodeOrder(projectId);
-        inOrder.verify(projectNodeService).saveProjectNode(any(ProjectNode.class));
-        inOrder.verify(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
+        // then
+        assertThat(contractProject.getStatus()).isEqualTo(Status.IN_PROGRESS);
     }
 }

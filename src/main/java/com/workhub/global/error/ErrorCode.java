@@ -107,6 +107,8 @@ public enum ErrorCode {
     DEV_MEMBER_HISTORY_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PR-006", "개발사 멤버 히스토리 저장에 실패했습니다."),
     PROJECT_NOT_FOUND(HttpStatus.BAD_REQUEST, "PR-007", "프로젝트를 찾을 수 없습니다."),
     PROJECT_HISTORY_NOT_FOUND(HttpStatus.BAD_REQUEST, "PR-008", "프로젝트 히스토리를 찾을 수 없습니다."),
+    NOT_EXISTS_DEV_MEMBER(HttpStatus.BAD_REQUEST, "PR-009", "해당 프로젝트를 담당하는 개발자가 아닙니다."),
+    NOT_PROJECT_MEMBER(HttpStatus.FORBIDDEN, "PR-010", "해당 프로젝트의 멤버가 아닙니다."),
 
     // 프로젝트 노드
     PROJECT_NODE_NOT_FOUND(HttpStatus.NOT_FOUND, "PN-001", "프로젝트 노드를 찾을 수 없습니다."),

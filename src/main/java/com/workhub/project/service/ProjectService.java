@@ -92,4 +92,19 @@ public class ProjectService {
         return projectRepository.findProjectsWithPaging(projectIds, startDate, endDate,
                 status, sortOrder, cursor, size);
     }
+
+    public void validateDevMemberForProject(Long projectId, Long devMemberId) {
+        if(!devMemberRepository.existsByProjectIdAndUserId(projectId, devMemberId)) {
+            throw new BusinessException(ErrorCode.NOT_EXISTS_DEV_MEMBER);
+        }
+    }
+
+    public void validateProjectMember(Long projectId, Long userId) {
+        boolean isDevMember = devMemberRepository.existsByProjectIdAndUserId(projectId, userId);
+        boolean isClientMember = clientMemberRepository.existsByProjectIdAndUserId(projectId, userId);
+
+        if (!isDevMember && !isClientMember) {
+            throw new BusinessException(ErrorCode.NOT_PROJECT_MEMBER);
+        }
+    }
 }

@@ -2,7 +2,6 @@ package com.workhub.projectNode.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.workhub.projectNode.entity.NodeStatus;
-import com.workhub.projectNode.entity.Priority;
 import com.workhub.projectNode.entity.ProjectNode;
 import lombok.Builder;
 
@@ -18,7 +17,7 @@ public record NodeSnapshot(
         String description,
         NodeStatus nodeStatus,
         Integer nodeOrder,
-        Priority priority,
+        Long developerUserId,
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
         LocalDateTime updatedAt,
         LocalDate starDate,
@@ -34,7 +33,7 @@ public record NodeSnapshot(
                 .description(projectNode.getDescription())
                 .nodeStatus(projectNode.getNodeStatus())
                 .nodeOrder(projectNode.getNodeOrder())
-                .priority(projectNode.getPriority())
+                .developerUserId(projectNode.getDeveloperUserId())
                 .updatedAt(projectNode.getUpdatedAt())
                 .starDate(projectNode.getContractStartDate())
                 .endDate(projectNode.getContractEndDate())
