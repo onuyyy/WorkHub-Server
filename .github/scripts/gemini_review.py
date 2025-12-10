@@ -46,7 +46,7 @@ def call_gemini_for_review(diff: str):
     Markdown 형식으로, 핵심만 간결하게 bullet point로 작성해주세요.
     """).strip()
 
-    model = genai.GenerativeModel("gemini-1.5-flash")
+    model = genai.GenerativeModel("gemini-1.5-flash-latest")
     response = model.generate_content(prompt)
     return response.text
 
