@@ -30,10 +30,6 @@ public class UserController implements UserTableApi {
     public List<UserListResponse> getUserTable(){
         return userService.getUsers();
     }
-    @GetMapping("/{userId}")
-    public UserDetailResponse getUser(@PathVariable Long userId){
-        return userService.getUser(userId);
-    }
 
     @PostMapping("/login")
     @Override
@@ -56,6 +52,11 @@ public class UserController implements UserTableApi {
         );
 
         return ApiResponse.success("로그인 성공");
+    }
+
+    @GetMapping("/{userId}")
+    public UserDetailResponse getUser(@PathVariable Long userId){
+        return userService.getUser(userId);
     }
 
     @PostMapping("/add/user")
