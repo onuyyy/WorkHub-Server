@@ -11,6 +11,7 @@ CREATE TABLE company (
     company_number VARCHAR(20) NOT NULL,
     tel VARCHAR(20) NOT NULL,
     address VARCHAR(100) NOT NULL,
+    company_status VARCHAR(20) NOT NULL,
     created_at TIMESTAMP NULL,
     updated_at TIMESTAMP NULL,
     deleted_at TIMESTAMP NULL
@@ -23,6 +24,7 @@ CREATE TABLE user_table (
     email VARCHAR(50) NOT NULL,
     phone VARCHAR(12) NOT NULL,
     user_role VARCHAR(20) NOT NULL,
+    user_name VARCHAR(20) NOT NULL,
     status VARCHAR(20) NOT NULL,
     created_at TIMESTAMP NULL,
     updated_at TIMESTAMP NULL,

@@ -39,7 +39,7 @@ public class SecurityConfig {
                 // 세션 관리 정책
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
-                        .maximumSessions(1)
+                        .maximumSessions(10)
                         .maxSessionsPreventsLogin(false)
                 )
                 // 로그아웃 설정
