@@ -3,8 +3,13 @@ package com.workhub.project.service;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import com.workhub.project.dto.response.ProjectListRequest;
-import com.workhub.project.entity.*;
-import com.workhub.project.repository.*;
+import com.workhub.project.entity.Project;
+import com.workhub.project.entity.ProjectClientMember;
+import com.workhub.project.entity.ProjectDevMember;
+import com.workhub.project.entity.Status;
+import com.workhub.project.repository.ClientMemberRepository;
+import com.workhub.project.repository.DevMemberRepository;
+import com.workhub.project.repository.ProjectRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -74,23 +79,12 @@ public class ProjectService {
         return devMemberRepository.findByProjectIdIn(projectIds);
     }
 
-    /**
-     * 페이징, 필터링, 정렬이 적용된 프로젝트 조회
-     *
-     * @param projectIds 조회할 프로젝트 ID 리스트 (권한에 따라 필터링됨, null이면 전체)
-     * @param startDate 계약 시작일 검색 범위 시작
-     * @param endDate 계약 시작일 검색 범위 종료
-     * @param status 프로젝트 상태
-     * @param sortOrder 정렬 조건
-     * @param cursor 커서
-     * @param size 페이지 크기
-     * @return 페이징된 프로젝트 목록
-     */
-    public List<Project> findProjectsWithPaging(List<Long> projectIds, LocalDate startDate, LocalDate endDate,
-            Status status, ProjectListRequest.SortOrder sortOrder, Long cursor, int size) {
+    public List<ProjectClientMember> getClientMemberByProjectId(Long projectId) {
+        return clientMemberRepository.findByProjectIdIn(List.of(projectId));
+    }
 
-        return projectRepository.findProjectsWithPaging(projectIds, startDate, endDate,
-                status, sortOrder, cursor, size);
+    public List<ProjectDevMember> getDevMemberByProjectId(Long projectId) {
+        return devMemberRepository.findByProjectIdIn(List.of(projectId));
     }
 
     public void validateDevMemberForProject(Long projectId, Long devMemberId) {
@@ -106,5 +100,50 @@ public class ProjectService {
         if (!isDevMember && !isClientMember) {
             throw new BusinessException(ErrorCode.NOT_PROJECT_MEMBER);
         }
+    }
+
+    /**
+     * 클라이언트 멤버를 저장
+     * @param userIds 클라이언트 멤버 사용자 ID 리스트
+     * @param projectId 프로젝트 ID
+     * @return 저장된 클라이언트 멤버 리스트
+     */
+    public List<ProjectClientMember> saveClientMembers(List<Long> userIds, Long projectId) {
+        List<ProjectClientMember> clientMembers = userIds.stream()
+                .map(userId -> ProjectClientMember.of(userId, projectId))
+                .toList();
+        return saveProjectClientMember(clientMembers);
+    }
+
+    /**
+     * 개발사 멤버를 저장
+     * @param userIds 개발사 멤버 사용자 ID 리스트
+     * @param projectId 프로젝트 ID
+     * @return 저장된 개발사 멤버 리스트
+     */
+    public List<ProjectDevMember> saveDevMembers(List<Long> userIds, Long projectId) {
+        List<ProjectDevMember> devMembers = userIds.stream()
+                .map(userId -> ProjectDevMember.of(userId, projectId))
+                .toList();
+        return saveProjectDevMember(devMembers);
+    }
+
+    /**
+     * 페이징, 필터링, 정렬이 적용된 프로젝트 조회
+     *
+     * @param projectIds 조회할 프로젝트 ID 리스트 (권한에 따라 필터링됨, null이면 전체)
+     * @param startDate 계약 시작일 검색 범위 시작
+     * @param endDate 계약 시작일 검색 범위 종료
+     * @param status 프로젝트 상태
+     * @param sortOrder 정렬 조건
+     * @param cursor 커서
+     * @param size 페이지 크기
+     * @return 페이징된 프로젝트 목록
+     */
+    public List<Project> findProjectsWithPaging(List<Long> projectIds, LocalDate startDate, LocalDate endDate,
+                                                Status status, ProjectListRequest.SortOrder sortOrder, Long cursor, int size) {
+
+        return projectRepository.findProjectsWithPaging(projectIds, startDate, endDate,
+                status, sortOrder, cursor, size);
     }
 }

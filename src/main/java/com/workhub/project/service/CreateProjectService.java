@@ -3,8 +3,8 @@ package com.workhub.project.service;
 import com.workhub.global.entity.ActionType;
 import com.workhub.global.entity.HistoryType;
 import com.workhub.global.history.HistoryRecorder;
-import com.workhub.project.dto.request.CreateProjectRequest;
 import com.workhub.project.dto.ProjectHistorySnapshot;
+import com.workhub.project.dto.request.CreateProjectRequest;
 import com.workhub.project.dto.response.ProjectResponse;
 import com.workhub.project.entity.Project;
 import com.workhub.project.entity.ProjectClientMember;
@@ -33,8 +33,8 @@ public class CreateProjectService {
     public ProjectResponse createProject(CreateProjectRequest request) {
 
         Project savedProject = saveProjectAndHistory(request);
-        saveClientMembersAndHistory(request.managerNames(), savedProject.getProjectId());
-        saveDevMembersAndHistory(request.developerNames(), savedProject.getProjectId());
+        saveClientMembersAndHistory(request.managerIds(), savedProject.getProjectId());
+        saveDevMembersAndHistory(request.developerIds(), savedProject.getProjectId());
 
         return ProjectResponse.from(savedProject);
     }
@@ -55,19 +55,15 @@ public class CreateProjectService {
     }
 
     /**
-     * 프로젝트 고객사 멤버를 저장하고 멤버 히스토리를 함께 저장.
-     * @param memberIds 고객사 멤버 ID 리스트
-     * @param projectId 프로젝트 ID
+     * 프로젝트에 배정된 고객사 멤버를 저장하고, 히스토리를 함께 저장
+     * @param clientIds 고객사 멤버 PK
+     * @param projectId 프로젝트 PK
      */
-    private void saveClientMembersAndHistory(List<Long> memberIds, Long projectId) {
+    private void saveClientMembersAndHistory(List<Long> clientIds, Long projectId) {
 
-        List<ProjectClientMember> clientMembers = memberIds.stream()
-                .map(client -> ProjectClientMember.of(client, projectId))
-                .toList();
+        List<ProjectClientMember> savedClientMembers = projectService.saveClientMembers(clientIds, projectId);
 
-        List<ProjectClientMember> savedProjectClientMember = projectService.saveProjectClientMember(clientMembers);
-
-        savedProjectClientMember.forEach(member ->
+        savedClientMembers.forEach(member ->
                 historyRecorder.recordHistory(
                         HistoryType.PROJECT_CLIENT_MEMBER,
                         member.getProjectClientMemberId(),
@@ -78,24 +74,20 @@ public class CreateProjectService {
     }
 
     /**
-     * 프로젝트 개발사 멤버를 저장하고 멤버 히스토리를 함께 저장.
-     * @param developerIds 개발사 멤버 ID 리스트
-     * @param projectId 프로젝트 ID
+     * 프로젝트에 배정된 개발자 멤버를 저장하고, 히스토리를 함께 저장
+     * @param devIds 개발자 멤버 PK
+     * @param projectId 프로젝트 PK
      */
-    private void saveDevMembersAndHistory(List<Long> developerIds, Long projectId) {
+    private void saveDevMembersAndHistory(List<Long> devIds, Long projectId) {
 
-        List<ProjectDevMember> devMembers = developerIds.stream()
-                .map(developer -> ProjectDevMember.of(developer, projectId))
-                .toList();
+        List<ProjectDevMember> savedDevMembers = projectService.saveDevMembers(devIds, projectId);
 
-        List<ProjectDevMember> savedProjectDevMember = projectService.saveProjectDevMember(devMembers);
-
-        savedProjectDevMember.forEach(devMember ->
+        savedDevMembers.forEach(member ->
                 historyRecorder.recordHistory(
                         HistoryType.PROJECT_DEV_MEMBER,
-                        devMember.getProjectMemberId(),
+                        member.getProjectMemberId(),
                         ActionType.CREATE,
-                        devMember
+                        member
                 )
         );
     }

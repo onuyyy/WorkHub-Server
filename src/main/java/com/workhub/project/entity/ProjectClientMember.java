@@ -36,6 +36,10 @@ public class ProjectClientMember {
     @Column(name = "project_id")
     private Long projectId;
 
+    public void removeMember() {
+        this.removedAt = LocalDate.now();
+    }
+
     public static ProjectClientMember of(Long userId, Long projectId) {
         return ProjectClientMember.builder()
                 .assignedAt(LocalDate.now())

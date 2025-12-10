@@ -15,9 +15,9 @@ public record CreateProjectRequest(
         @NotEmpty
         Long company,
         @NotEmpty
-        List<Long> managerNames,
+        List<Long> managerIds,
         @NotEmpty
-        List<Long> developerNames,
+        List<Long> developerIds,
         @NotEmpty
         LocalDate starDate,
         @NotEmpty

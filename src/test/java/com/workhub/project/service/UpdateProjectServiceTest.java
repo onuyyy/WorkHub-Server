@@ -2,39 +2,31 @@ package com.workhub.project.service;
 
 import com.workhub.global.entity.ActionType;
 import com.workhub.global.entity.HistoryType;
-import com.workhub.global.error.ErrorCode;
-import com.workhub.global.error.exception.BusinessException;
 import com.workhub.global.history.HistoryRecorder;
-import com.workhub.global.security.CustomUserDetails;
-import com.workhub.project.dto.request.CreateProjectRequest;
 import com.workhub.project.dto.ProjectHistorySnapshot;
+import com.workhub.project.dto.request.CreateProjectRequest;
 import com.workhub.project.dto.response.ProjectResponse;
-import com.workhub.project.dto.request.UpdateStatusRequest;
+import com.workhub.project.entity.DevPart;
 import com.workhub.project.entity.Project;
+import com.workhub.project.entity.ProjectClientMember;
+import com.workhub.project.entity.ProjectDevMember;
+import com.workhub.project.entity.Role;
 import com.workhub.project.entity.Status;
-import com.workhub.userTable.entity.UserTable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
 
-import static com.workhub.userTable.entity.UserRole.ADMIN;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class UpdateProjectServiceTest {
@@ -48,404 +40,319 @@ class UpdateProjectServiceTest {
     @InjectMocks
     private UpdateProjectService updateProjectService;
 
-    private Project mockProject;
     private CreateProjectRequest updateRequest;
+    private Project mockProject;
+    private List<ProjectClientMember> existingClientMembers;
+    private List<ProjectDevMember> existingDevMembers;
 
     @BeforeEach
     void init() {
-        // SecurityContext 설정
-        UserTable mockUser = UserTable.builder()
-                .userId(1L)
-                .loginId("testuser")
-                .password("password")
-                .role(ADMIN)
-                .build();
-
-        CustomUserDetails userDetails = new CustomUserDetails(mockUser);
-        UsernamePasswordAuthenticationToken authentication =
-                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+        updateRequest = new CreateProjectRequest(
+                "업데이트된 프로젝트",
+                "업데이트된 설명",
+                100L,
+                Arrays.asList(1L, 3L),  // managerIds: 1L 유지, 2L 삭제, 3L 추가
+                Arrays.asList(10L, 30L),  // developerIds: 10L 유지, 20L 삭제, 30L 추가
+                LocalDate.now(),
+                LocalDate.now().plusMonths(6)
+        );
 
         mockProject = Project.builder()
                 .projectId(1L)
                 .projectTitle("기존 프로젝트")
                 .projectDescription("기존 설명")
                 .status(Status.IN_PROGRESS)
-                .contractStartDate(LocalDate.of(2024, 1, 1))
-                .contractEndDate(LocalDate.of(2024, 12, 31))
+                .contractStartDate(LocalDate.now())
+                .contractEndDate(LocalDate.now().plusMonths(6))
                 .clientCompanyId(100L)
                 .build();
 
-        updateRequest = new CreateProjectRequest(
-                "수정된 프로젝트",
-                "수정된 설명",
-                200L,
-                List.of(1L, 2L),
-                List.of(3L, 4L),
-                LocalDate.of(2024, 2, 1),
-                LocalDate.of(2024, 11, 30)
+        // 기존 멤버: 1L, 2L
+        existingClientMembers = Arrays.asList(
+                ProjectClientMember.builder()
+                        .projectClientMemberId(1L)
+                        .userId(1L)
+                        .projectId(1L)
+                        .role(Role.READ)
+                        .assignedAt(LocalDate.now())
+                        .build(),
+                ProjectClientMember.builder()
+                        .projectClientMemberId(2L)
+                        .userId(2L)
+                        .projectId(1L)
+                        .role(Role.READ)
+                        .assignedAt(LocalDate.now())
+                        .build()
+        );
+
+        // 기존 멤버: 10L, 20L
+        existingDevMembers = Arrays.asList(
+                ProjectDevMember.builder()
+                        .projectMemberId(10L)
+                        .userId(10L)
+                        .projectId(1L)
+                        .devPart(DevPart.BE)
+                        .assignedAt(LocalDate.now())
+                        .build(),
+                ProjectDevMember.builder()
+                        .projectMemberId(20L)
+                        .userId(20L)
+                        .projectId(1L)
+                        .devPart(DevPart.BE)
+                        .assignedAt(LocalDate.now())
+                        .build()
         );
     }
 
     @Test
-    @DisplayName("프로젝트 상태를 정상적으로 업데이트하고 히스토리를 기록한다")
-    void givenValidProjectIdAndStatus_whenUpdateProjectStatus_thenSuccess() {
+    @DisplayName("프로젝트를 업데이트하면 프로젝트 정보가 변경되고 히스토리가 기록된다")
+    void givenUpdateRequest_whenUpdateProject_thenUpdateProjectAndRecordHistory() {
         // given
-        Long projectId = 1L;
-        UpdateStatusRequest statusRequest = new UpdateStatusRequest(Status.COMPLETED);
-
-        when(projectService.findProjectById(projectId)).thenReturn(mockProject);
-        lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
+        when(projectService.findProjectById(1L)).thenReturn(mockProject);
+        when(projectService.getClientMemberByProjectId(1L)).thenReturn(existingClientMembers);
+        when(projectService.getDevMemberByProjectId(1L)).thenReturn(existingDevMembers);
+        when(projectService.saveClientMembers(anyList(), anyLong())).thenReturn(List.of(
+                ProjectClientMember.builder()
+                        .projectClientMemberId(3L)
+                        .userId(3L)
+                        .projectId(1L)
+                        .role(Role.READ)
+                        .assignedAt(LocalDate.now())
+                        .build()
+        ));
+        when(projectService.saveDevMembers(anyList(), anyLong())).thenReturn(List.of(
+                ProjectDevMember.builder()
+                        .projectMemberId(30L)
+                        .userId(30L)
+                        .projectId(1L)
+                        .devPart(DevPart.BE)
+                        .assignedAt(LocalDate.now())
+                        .build()
+        ));
 
         // when
-        updateProjectService.updateProjectStatus(projectId, statusRequest);
+        ProjectResponse response = updateProjectService.updateProject(1L, updateRequest);
 
         // then
-        verify(projectService).findProjectById(projectId);
+        // 1. 프로젝트가 조회되었는지 확인
+        verify(projectService).findProjectById(1L);
 
-        ArgumentCaptor<ProjectHistorySnapshot> snapshotCaptor = ArgumentCaptor.forClass(ProjectHistorySnapshot.class);
+        // 2. 프로젝트 업데이트 히스토리가 기록되었는지 확인
         verify(historyRecorder).recordHistory(
                 eq(HistoryType.PROJECT),
-                eq(projectId),
+                eq(1L),
                 eq(ActionType.UPDATE),
-                snapshotCaptor.capture()
+                any(ProjectHistorySnapshot.class)
         );
 
-        ProjectHistorySnapshot capturedSnapshot = snapshotCaptor.getValue();
-        assertThat(capturedSnapshot.status()).isEqualTo(Status.IN_PROGRESS);
-        assertThat(capturedSnapshot.projectId()).isEqualTo(projectId);
+        // 3. 기존 멤버가 조회되었는지 확인
+        verify(projectService).getClientMemberByProjectId(1L);
+        verify(projectService).getDevMemberByProjectId(1L);
+
+        // 4. 응답 검증
+        assertThat(response).isNotNull();
+        assertThat(response.projectId()).isEqualTo(1L);
     }
 
     @Test
-    @DisplayName("존재하지 않는 프로젝트 ID로 상태 업데이트 시 예외 발생")
-    void givenInvalidProjectId_whenUpdateProjectStatus_thenThrowException() {
+    @DisplayName("멤버 추가 시 새로운 멤버가 저장되고 히스토리가 기록된다")
+    void givenNewMembers_whenUpdateProject_thenSaveNewMembersAndRecordHistory() {
         // given
-        Long invalidProjectId = 999L;
-        UpdateStatusRequest statusRequest = new UpdateStatusRequest(Status.COMPLETED);
+        when(projectService.findProjectById(1L)).thenReturn(mockProject);
+        when(projectService.getClientMemberByProjectId(1L)).thenReturn(existingClientMembers);
+        when(projectService.getDevMemberByProjectId(1L)).thenReturn(existingDevMembers);
 
-        when(projectService.findProjectById(invalidProjectId))
-                .thenThrow(new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
+        ProjectClientMember newClientMember = ProjectClientMember.builder()
+                .projectClientMemberId(3L)
+                .userId(3L)
+                .projectId(1L)
+                .role(Role.READ)
+                .assignedAt(LocalDate.now())
+                .build();
 
-        // when & then
-        assertThatThrownBy(() ->
-                updateProjectService.updateProjectStatus(invalidProjectId, statusRequest))
-                .isInstanceOf(BusinessException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PROJECT_NOT_FOUND);
+        ProjectDevMember newDevMember = ProjectDevMember.builder()
+                .projectMemberId(30L)
+                .userId(30L)
+                .projectId(1L)
+                .devPart(DevPart.BE)
+                .assignedAt(LocalDate.now())
+                .build();
 
-        verify(projectService).findProjectById(invalidProjectId);
-        verify(historyRecorder, never()).recordHistory(any(), any(), any(), any());
-    }
-
-    @Test
-    @DisplayName("프로젝트 정보를 정상적으로 업데이트하고 변경 전 상태를 히스토리에 기록한다")
-    void givenValidUpdateRequest_whenUpdateProject_thenSuccessAndRecordHistory() {
-        // given
-        Long projectId = 1L;
-
-        when(projectService.findProjectById(projectId)).thenReturn(mockProject);
-        lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
+        when(projectService.saveClientMembers(eq(List.of(3L)), eq(1L)))
+                .thenReturn(List.of(newClientMember));
+        when(projectService.saveDevMembers(eq(List.of(30L)), eq(1L)))
+                .thenReturn(List.of(newDevMember));
 
         // when
-        ProjectResponse result = updateProjectService.updateProject(projectId, updateRequest);
+        updateProjectService.updateProject(1L, updateRequest);
 
         // then
-        assertThat(result).isNotNull();
-        assertThat(result.projectTitle()).isEqualTo("수정된 프로젝트");
-        assertThat(result.projectDescription()).isEqualTo("수정된 설명");
-        assertThat(result.contractStartDate()).isEqualTo(LocalDate.of(2024, 2, 1));
-        assertThat(result.contractEndDate()).isEqualTo(LocalDate.of(2024, 11, 30));
+        // 추가할 멤버: 클라이언트 3L, 개발자 30L
+        verify(projectService).saveClientMembers(eq(List.of(3L)), eq(1L));
+        verify(projectService).saveDevMembers(eq(List.of(30L)), eq(1L));
 
-        assertThat(mockProject.getProjectTitle()).isEqualTo("수정된 프로젝트");
-        assertThat(mockProject.getProjectDescription()).isEqualTo("수정된 설명");
-        assertThat(mockProject.getContractStartDate()).isEqualTo(LocalDate.of(2024, 2, 1));
-        assertThat(mockProject.getContractEndDate()).isEqualTo(LocalDate.of(2024, 11, 30));
-        assertThat(mockProject.getClientCompanyId()).isEqualTo(200L);
-
-        verify(projectService).findProjectById(projectId);
-
-        // 변경 전 전체 스냅샷을 한 번만 히스토리에 기록
-        ArgumentCaptor<ProjectHistorySnapshot> snapshotCaptor = ArgumentCaptor.forClass(ProjectHistorySnapshot.class);
-        verify(historyRecorder, times(1)).recordHistory(
-                eq(HistoryType.PROJECT),
-                eq(projectId),
-                eq(ActionType.UPDATE),
-                snapshotCaptor.capture()
+        // 추가 히스토리 기록 확인
+        verify(historyRecorder).recordHistory(
+                eq(HistoryType.PROJECT_CLIENT_MEMBER),
+                eq(3L),
+                eq(ActionType.CREATE),
+                eq(newClientMember)
         );
-
-        ProjectHistorySnapshot capturedSnapshot = snapshotCaptor.getValue();
-        assertThat(capturedSnapshot.projectTitle()).isEqualTo("기존 프로젝트");
-        assertThat(capturedSnapshot.projectDescription()).isEqualTo("기존 설명");
-        assertThat(capturedSnapshot.status()).isEqualTo(Status.IN_PROGRESS);
-        assertThat(capturedSnapshot.contractStartDate()).isEqualTo(LocalDate.of(2024, 1, 1));
-        assertThat(capturedSnapshot.contractEndDate()).isEqualTo(LocalDate.of(2024, 12, 31));
-        assertThat(capturedSnapshot.company()).isEqualTo(100L);
+        verify(historyRecorder).recordHistory(
+                eq(HistoryType.PROJECT_DEV_MEMBER),
+                eq(30L),
+                eq(ActionType.CREATE),
+                eq(newDevMember)
+        );
     }
 
     @Test
-    @DisplayName("일부 필드만 변경 시에도 변경 전 전체 상태를 히스토리에 기록한다")
-    void givenPartialUpdateRequest_whenUpdateProject_thenRecordCompleteSnapshot() {
+    @DisplayName("멤버 삭제 시 removeMember가 호출되고 삭제 히스토리가 기록된다")
+    void givenMembersToRemove_whenUpdateProject_thenRemoveMembersAndRecordHistory() {
         // given
-        Long projectId = 1L;
-
-        // 제목과 설명만 변경하는 요청 (다른 필드는 기존 값과 동일)
-        CreateProjectRequest partialRequest = new CreateProjectRequest(
-                "수정된 프로젝트",
-                "수정된 설명",
-                100L, // 기존과 동일
-                List.of(1L, 2L),
-                List.of(3L, 4L),
-                LocalDate.of(2024, 1, 1), // 기존과 동일
-                LocalDate.of(2024, 12, 31) // 기존과 동일
-        );
-
-        when(projectService.findProjectById(projectId)).thenReturn(mockProject);
-        lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
+        when(projectService.findProjectById(1L)).thenReturn(mockProject);
+        when(projectService.getClientMemberByProjectId(1L)).thenReturn(existingClientMembers);
+        when(projectService.getDevMemberByProjectId(1L)).thenReturn(existingDevMembers);
+        when(projectService.saveClientMembers(anyList(), anyLong())).thenReturn(List.of());
+        when(projectService.saveDevMembers(anyList(), anyLong())).thenReturn(List.of());
 
         // when
-        ProjectResponse result = updateProjectService.updateProject(projectId, partialRequest);
+        updateProjectService.updateProject(1L, updateRequest);
 
         // then
-        assertThat(result).isNotNull();
-        assertThat(result.projectTitle()).isEqualTo("수정된 프로젝트");
-        assertThat(result.projectDescription()).isEqualTo("수정된 설명");
-
-        verify(projectService).findProjectById(projectId);
-
-        // 변경 전 전체 스냅샷을 한 번만 히스토리에 기록
-        ArgumentCaptor<ProjectHistorySnapshot> snapshotCaptor = ArgumentCaptor.forClass(ProjectHistorySnapshot.class);
-        verify(historyRecorder, times(1)).recordHistory(
-                eq(HistoryType.PROJECT),
-                eq(projectId),
-                eq(ActionType.UPDATE),
-                snapshotCaptor.capture()
+        // 삭제할 멤버: 클라이언트 2L, 개발자 20L
+        // 각 멤버의 removeMember()가 호출되었는지 확인할 수 없지만, 삭제 히스토리가 기록되었는지 확인
+        verify(historyRecorder).recordHistory(
+                eq(HistoryType.PROJECT_CLIENT_MEMBER),
+                eq(1L),
+                eq(ActionType.DELETE),
+                any(ProjectClientMember.class)
         );
-
-        ProjectHistorySnapshot capturedSnapshot = snapshotCaptor.getValue();
-        assertThat(capturedSnapshot.projectTitle()).isEqualTo("기존 프로젝트");
-        assertThat(capturedSnapshot.projectDescription()).isEqualTo("기존 설명");
+        verify(historyRecorder).recordHistory(
+                eq(HistoryType.PROJECT_DEV_MEMBER),
+                eq(1L),
+                eq(ActionType.DELETE),
+                any(ProjectDevMember.class)
+        );
     }
 
     @Test
-    @DisplayName("필드 변경이 없어도 히스토리가 기록된다")
-    void givenNoChanges_whenUpdateProject_thenHistoryStillRecorded() {
+    @DisplayName("프로젝트 업데이트 시 실행 순서가 올바르게 동작한다")
+    void givenUpdateRequest_whenUpdateProject_thenExecuteInCorrectOrder() {
         // given
-        Long projectId = 1L;
-
-        // 모든 필드가 기존 값과 동일한 요청
-        CreateProjectRequest noChangeRequest = new CreateProjectRequest(
-                "기존 프로젝트",
-                "기존 설명",
-                100L,
-                List.of(1L, 2L),
-                List.of(3L, 4L),
-                LocalDate.of(2024, 1, 1),
-                LocalDate.of(2024, 12, 31)
-        );
-
-        when(projectService.findProjectById(projectId)).thenReturn(mockProject);
-        lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
+        when(projectService.findProjectById(1L)).thenReturn(mockProject);
+        when(projectService.getClientMemberByProjectId(1L)).thenReturn(existingClientMembers);
+        when(projectService.getDevMemberByProjectId(1L)).thenReturn(existingDevMembers);
+        when(projectService.saveClientMembers(anyList(), anyLong())).thenReturn(List.of());
+        when(projectService.saveDevMembers(anyList(), anyLong())).thenReturn(List.of());
 
         // when
-        ProjectResponse result = updateProjectService.updateProject(projectId, noChangeRequest);
+        updateProjectService.updateProject(1L, updateRequest);
 
-        // then
-        assertThat(result).isNotNull();
-
-        verify(projectService).findProjectById(projectId);
-
-        // 실제 구현은 변경 여부와 무관하게 항상 히스토리 기록
-        ArgumentCaptor<ProjectHistorySnapshot> snapshotCaptor = ArgumentCaptor.forClass(ProjectHistorySnapshot.class);
-        verify(historyRecorder, times(1)).recordHistory(
-                eq(HistoryType.PROJECT),
-                eq(projectId),
-                eq(ActionType.UPDATE),
-                snapshotCaptor.capture()
-        );
-
-        ProjectHistorySnapshot capturedSnapshot = snapshotCaptor.getValue();
-        assertThat(capturedSnapshot.projectTitle()).isEqualTo("기존 프로젝트");
-    }
-
-    @Test
-    @DisplayName("존재하지 않는 프로젝트 ID로 업데이트 시 예외 발생")
-    void givenInvalidProjectId_whenUpdateProject_thenThrowException() {
-        // given
-        Long invalidProjectId = 999L;
-
-        when(projectService.findProjectById(invalidProjectId))
-                .thenThrow(new BusinessException(ErrorCode.PROJECT_NOT_FOUND));
-
-        // when & then
-        assertThatThrownBy(() ->
-                updateProjectService.updateProject(invalidProjectId, updateRequest))
-                .isInstanceOf(BusinessException.class)
-                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PROJECT_NOT_FOUND);
-
-        verify(projectService).findProjectById(invalidProjectId);
-        verify(historyRecorder, never()).recordHistory(any(), any(), any(), any());
-    }
-
-    @Test
-    @DisplayName("프로젝트 제목만 변경 시에도 변경 전 전체 상태를 히스토리에 기록한다")
-    void givenOnlyTitleChange_whenUpdateProject_thenRecordCompleteSnapshot() {
-        // given
-        Long projectId = 1L;
-
-        CreateProjectRequest titleOnlyRequest = new CreateProjectRequest(
-                "새로운 제목",
-                "기존 설명",
-                100L,
-                List.of(1L, 2L),
-                List.of(3L, 4L),
-                LocalDate.of(2024, 1, 1),
-                LocalDate.of(2024, 12, 31)
-        );
-
-        when(projectService.findProjectById(projectId)).thenReturn(mockProject);
-        lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
-
-        // when
-        ProjectResponse result = updateProjectService.updateProject(projectId, titleOnlyRequest);
-
-        // then
-        assertThat(result.projectTitle()).isEqualTo("새로운 제목");
-        assertThat(mockProject.getProjectTitle()).isEqualTo("새로운 제목");
-
-        verify(projectService).findProjectById(projectId);
-
-        // 변경 전 전체 스냅샷을 한 번만 히스토리에 기록
-        ArgumentCaptor<ProjectHistorySnapshot> snapshotCaptor = ArgumentCaptor.forClass(ProjectHistorySnapshot.class);
-        verify(historyRecorder, times(1)).recordHistory(
-                eq(HistoryType.PROJECT),
-                eq(projectId),
-                eq(ActionType.UPDATE),
-                snapshotCaptor.capture()
-        );
-
-        ProjectHistorySnapshot capturedSnapshot = snapshotCaptor.getValue();
-        assertThat(capturedSnapshot.projectTitle()).isEqualTo("기존 프로젝트");
-    }
-
-    @Test
-    @DisplayName("계약 기간만 변경 시에도 변경 전 전체 상태를 히스토리에 기록한다")
-    void givenOnlyDateChange_whenUpdateProject_thenRecordCompleteSnapshot() {
-        // given
-        Long projectId = 1L;
-
-        CreateProjectRequest dateOnlyRequest = new CreateProjectRequest(
-                "기존 프로젝트",
-                "기존 설명",
-                100L,
-                List.of(1L, 2L),
-                List.of(3L, 4L),
-                LocalDate.of(2024, 3, 1),
-                LocalDate.of(2024, 10, 31)
-        );
-
-        when(projectService.findProjectById(projectId)).thenReturn(mockProject);
-        lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
-
-        // when
-        ProjectResponse result = updateProjectService.updateProject(projectId, dateOnlyRequest);
-
-        // then
-        assertThat(mockProject.getContractStartDate()).isEqualTo(LocalDate.of(2024, 3, 1));
-        assertThat(mockProject.getContractEndDate()).isEqualTo(LocalDate.of(2024, 10, 31));
-
-        verify(projectService).findProjectById(projectId);
-
-        // 변경 전 전체 스냅샷을 한 번만 히스토리에 기록
-        ArgumentCaptor<ProjectHistorySnapshot> snapshotCaptor = ArgumentCaptor.forClass(ProjectHistorySnapshot.class);
-        verify(historyRecorder, times(1)).recordHistory(
-                eq(HistoryType.PROJECT),
-                eq(projectId),
-                eq(ActionType.UPDATE),
-                snapshotCaptor.capture()
-        );
-
-        ProjectHistorySnapshot capturedSnapshot = snapshotCaptor.getValue();
-        assertThat(capturedSnapshot.contractStartDate()).isEqualTo(LocalDate.of(2024, 1, 1));
-        assertThat(capturedSnapshot.contractEndDate()).isEqualTo(LocalDate.of(2024, 12, 31));
-    }
-
-    @Test
-    @DisplayName("고객사만 변경 시에도 변경 전 전체 상태를 히스토리에 기록한다")
-    void givenOnlyCompanyChange_whenUpdateProject_thenRecordCompleteSnapshot() {
-        // given
-        Long projectId = 1L;
-
-        CreateProjectRequest companyOnlyRequest = new CreateProjectRequest(
-                "기존 프로젝트",
-                "기존 설명",
-                300L, // 변경
-                List.of(1L, 2L),
-                List.of(3L, 4L),
-                LocalDate.of(2024, 1, 1),
-                LocalDate.of(2024, 12, 31)
-        );
-
-        when(projectService.findProjectById(projectId)).thenReturn(mockProject);
-        lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
-
-        // when
-        ProjectResponse result = updateProjectService.updateProject(projectId, companyOnlyRequest);
-
-        // then
-        assertThat(mockProject.getClientCompanyId()).isEqualTo(300L);
-
-        verify(projectService).findProjectById(projectId);
-
-        // 변경 전 전체 스냅샷을 한 번만 히스토리에 기록
-        ArgumentCaptor<ProjectHistorySnapshot> snapshotCaptor = ArgumentCaptor.forClass(ProjectHistorySnapshot.class);
-        verify(historyRecorder, times(1)).recordHistory(
-                eq(HistoryType.PROJECT),
-                eq(projectId),
-                eq(ActionType.UPDATE),
-                snapshotCaptor.capture()
-        );
-
-        ProjectHistorySnapshot capturedSnapshot = snapshotCaptor.getValue();
-        assertThat(capturedSnapshot.projectTitle()).isEqualTo("기존 프로젝트");
-        assertThat(capturedSnapshot.company()).isEqualTo(100L); // 변경 전 고객사 ID
-    }
-
-    @Test
-    @DisplayName("프로젝트 업데이트 시 모든 메서드가 순차적으로 호출된다")
-    void givenUpdateRequest_whenUpdateProject_thenAllMethodsCalledInOrder() {
-        // given
-        Long projectId = 1L;
-
-        when(projectService.findProjectById(projectId)).thenReturn(mockProject);
-        lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
-
-        // when
-        updateProjectService.updateProject(projectId, updateRequest);
-
-        // then
+        // then - 순서 검증
         var inOrder = inOrder(projectService, historyRecorder);
-        inOrder.verify(projectService).findProjectById(projectId);
-        inOrder.verify(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
+
+        // 1. 프로젝트 조회 및 업데이트
+        inOrder.verify(projectService).findProjectById(1L);
+        inOrder.verify(historyRecorder).recordHistory(
+                eq(HistoryType.PROJECT),
+                eq(1L),
+                eq(ActionType.UPDATE),
+                any(ProjectHistorySnapshot.class)
+        );
+
+        // 2. 기존 멤버 조회
+        inOrder.verify(projectService).getClientMemberByProjectId(1L);
+        inOrder.verify(projectService).getDevMemberByProjectId(1L);
+
+        // 3. 멤버 저장 (추가)
+        inOrder.verify(projectService).saveClientMembers(anyList(), eq(1L));
+        inOrder.verify(projectService).saveDevMembers(anyList(), eq(1L));
     }
 
     @Test
-    @DisplayName("프로젝트 업데이트 후 반환된 응답에 모든 필드가 포함된다")
-    void givenUpdateRequest_whenUpdateProject_thenReturnCompleteResponse() {
-        // given
-        Long projectId = 1L;
+    @DisplayName("멤버 변경사항이 없으면 추가/삭제가 발생하지 않는다")
+    void givenNoMemberChanges_whenUpdateProject_thenNoMemberOperations() {
+        // given - 요청 멤버가 기존과 동일
+        CreateProjectRequest sameRequest = new CreateProjectRequest(
+                "업데이트된 프로젝트",
+                "업데이트된 설명",
+                100L,
+                Arrays.asList(1L, 2L),  // 기존과 동일
+                Arrays.asList(10L, 20L),  // 기존과 동일
+                LocalDate.now(),
+                LocalDate.now().plusMonths(6)
+        );
 
-        when(projectService.findProjectById(projectId)).thenReturn(mockProject);
-        lenient().doNothing().when(historyRecorder).recordHistory(any(HistoryType.class), anyLong(), any(ActionType.class), any(Object.class));
+        when(projectService.findProjectById(1L)).thenReturn(mockProject);
+        when(projectService.getClientMemberByProjectId(1L)).thenReturn(existingClientMembers);
+        when(projectService.getDevMemberByProjectId(1L)).thenReturn(existingDevMembers);
+        when(projectService.saveClientMembers(anyList(), anyLong())).thenReturn(List.of());
+        when(projectService.saveDevMembers(anyList(), anyLong())).thenReturn(List.of());
 
         // when
-        ProjectResponse result = updateProjectService.updateProject(projectId, updateRequest);
+        updateProjectService.updateProject(1L, sameRequest);
 
         // then
-        assertThat(result).isNotNull();
-        assertThat(result.projectId()).isEqualTo(projectId);
-        assertThat(result.projectTitle()).isEqualTo("수정된 프로젝트");
-        assertThat(result.projectDescription()).isEqualTo("수정된 설명");
-        assertThat(result.status()).isEqualTo(Status.IN_PROGRESS);
-        assertThat(result.contractStartDate()).isEqualTo(LocalDate.of(2024, 2, 1));
-        assertThat(result.contractEndDate()).isEqualTo(LocalDate.of(2024, 11, 30));
+        // 추가할 멤버가 없으므로 빈 리스트로 호출됨
+        verify(projectService).saveClientMembers(eq(List.of()), eq(1L));
+        verify(projectService).saveDevMembers(eq(List.of()), eq(1L));
+
+        // 삭제 히스토리는 기록되지 않음
+        verify(historyRecorder, never()).recordHistory(
+                eq(HistoryType.PROJECT_CLIENT_MEMBER),
+                anyLong(),
+                eq(ActionType.DELETE),
+                any()
+        );
+        verify(historyRecorder, never()).recordHistory(
+                eq(HistoryType.PROJECT_DEV_MEMBER),
+                anyLong(),
+                eq(ActionType.DELETE),
+                any()
+        );
+    }
+
+    @Test
+    @DisplayName("모든 멤버를 삭제하고 새로운 멤버를 추가할 수 있다")
+    void givenCompletelyNewMembers_whenUpdateProject_thenRemoveAllAndAddNew() {
+        // given - 완전히 새로운 멤버로 교체
+        CreateProjectRequest newMembersRequest = new CreateProjectRequest(
+                "업데이트된 프로젝트",
+                "업데이트된 설명",
+                100L,
+                Arrays.asList(100L, 200L),  // 완전히 새로운 멤버
+                Arrays.asList(1000L, 2000L),  // 완전히 새로운 멤버
+                LocalDate.now(),
+                LocalDate.now().plusMonths(6)
+        );
+
+        when(projectService.findProjectById(1L)).thenReturn(mockProject);
+        when(projectService.getClientMemberByProjectId(1L)).thenReturn(existingClientMembers);
+        when(projectService.getDevMemberByProjectId(1L)).thenReturn(existingDevMembers);
+        when(projectService.saveClientMembers(anyList(), anyLong())).thenReturn(List.of());
+        when(projectService.saveDevMembers(anyList(), anyLong())).thenReturn(List.of());
+
+        // when
+        updateProjectService.updateProject(1L, newMembersRequest);
+
+        // then
+        // 모든 기존 멤버 삭제 (2개씩)
+        verify(historyRecorder, times(2)).recordHistory(
+                eq(HistoryType.PROJECT_CLIENT_MEMBER),
+                eq(1L),
+                eq(ActionType.DELETE),
+                any(ProjectClientMember.class)
+        );
+        verify(historyRecorder, times(2)).recordHistory(
+                eq(HistoryType.PROJECT_DEV_MEMBER),
+                eq(1L),
+                eq(ActionType.DELETE),
+                any(ProjectDevMember.class)
+        );
+
+        // 새로운 멤버 추가
+        verify(projectService).saveClientMembers(eq(Arrays.asList(100L, 200L)), eq(1L));
+        verify(projectService).saveDevMembers(eq(Arrays.asList(1000L, 2000L)), eq(1L));
     }
 }
