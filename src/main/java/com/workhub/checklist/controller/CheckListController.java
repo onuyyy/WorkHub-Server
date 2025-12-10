@@ -4,6 +4,7 @@ import com.workhub.checklist.api.CheckListApi;
 import com.workhub.checklist.dto.CheckListCreateRequest;
 import com.workhub.checklist.dto.CheckListResponse;
 import com.workhub.checklist.service.CreateCheckListService;
+import com.workhub.checklist.service.ReadCheckListService;
 import com.workhub.global.response.ApiResponse;
 import com.workhub.global.security.CustomUserDetails;
 import jakarta.validation.Valid;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 public class CheckListController implements CheckListApi {
 
     private final CreateCheckListService createCheckListService;
+    private final ReadCheckListService readCheckListService;
 
     @Override
     @PostMapping("/checkLists")
@@ -34,6 +36,18 @@ public class CheckListController implements CheckListApi {
                 createCheckListService.create(projectId, nodeId, userDetails.getUserId(), request);
 
         return ApiResponse.created(response, "체크리스트가 생성되었습니다.");
+    }
+
+    @Override
+    @GetMapping("/checkLists")
+    public ResponseEntity<ApiResponse<CheckListResponse>> findCheckList(
+            @PathVariable Long projectId,
+            @PathVariable Long nodeId
+    ) {
+
+        CheckListResponse response = readCheckListService.findCheckList(projectId, nodeId);
+
+        return ApiResponse.success(response, "체크리스트가 조회되었습니다.");
     }
 
 }
