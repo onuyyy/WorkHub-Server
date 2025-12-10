@@ -82,8 +82,7 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         configuration.setAllowedOriginPatterns(List.of(
-                "https://work-hub-fe.vercel.app",
-                "http://localhost:3000"
+                "https://work-hub-fe.vercel.app"
         ));
         configuration.setAllowedMethods(Arrays.asList(
                 "GET", "POST", "PUT", "DELETE", "PATCH"
