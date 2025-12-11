@@ -9,11 +9,9 @@ import com.workhub.post.entity.PostType;
 import com.workhub.post.repository.post.PostFileRepository;
 import com.workhub.post.repository.post.PostLinkRepository;
 import com.workhub.post.repository.post.PostRepository;
-import com.workhub.post.repository.post.PostSpecifications;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -72,16 +70,8 @@ public class PostService {
      * @return 검색 결과 페이지
      */
     @Transactional(readOnly = true)
-    public Page<Post> searchParentPosts(Long nodeId,
-                                        String keyword,
-                                        PostType postType,
-                                        Pageable pageable) {
-        Specification<Post> spec = Specification.where(PostSpecifications.withProjectNode(nodeId))
-                .and(PostSpecifications.withKeyword(keyword))
-                .and(PostSpecifications.withPostType(postType))
-                .and(PostSpecifications.onlyRootPosts());
-
-        return postRepository.findAll(spec, pageable);
+    public Page<Post> searchParentPosts(Long nodeId, String keyword, PostType postType, Pageable pageable) {
+        return postRepository.searchParentPosts(nodeId, keyword, postType, pageable);
     }
 
     /**
