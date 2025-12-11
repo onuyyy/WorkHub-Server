@@ -49,6 +49,12 @@ public class CompanyService {
         return CompanyDetailResponse.from(company);
     }
 
+    @Transactional(readOnly = true)
+    public Company findById(Long companyId) {
+        return companyRepository.findByCompanyIdAndCompanystatus(companyId, CompanyStatus.ACTIVE)
+                .orElseThrow(() -> new BusinessException(ErrorCode.Company_NOT_EXISTS));
+    }
+
     @Transactional
     public void deleteCompany(Long companyId) {
         Company company = companyRepository.findById(companyId)

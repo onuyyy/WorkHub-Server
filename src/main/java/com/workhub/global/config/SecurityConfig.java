@@ -1,5 +1,7 @@
 package com.workhub.global.config;
 
+import com.workhub.global.security.CustomAccessDeniedHandler;
+import com.workhub.global.security.CustomAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,6 +28,9 @@ import java.util.List;
 @EnableMethodSecurity
 public class SecurityConfig {
 
+    private final CustomAuthenticationEntryPoint authenticationEntryPoint;
+    private final CustomAccessDeniedHandler accessDeniedHandler;
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -48,6 +53,11 @@ public class SecurityConfig {
                         .logoutSuccessUrl("/")
                         .invalidateHttpSession(true)
                         .deleteCookies("JSESSIONID", "XSRF-TOKEN")
+                )
+                // 예외 처리 설정
+                .exceptionHandling(exception -> exception
+                        .authenticationEntryPoint(authenticationEntryPoint)  // 인증되지 않은 경우 401
+                        .accessDeniedHandler(accessDeniedHandler)  // 권한이 없는 경우 403
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/admin/users/login").permitAll()

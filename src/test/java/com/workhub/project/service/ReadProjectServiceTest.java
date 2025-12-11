@@ -8,6 +8,9 @@ import com.workhub.project.entity.*;
 import com.workhub.projectNode.service.ProjectNodeService;
 import com.workhub.userTable.entity.UserRole;
 import com.workhub.userTable.entity.UserTable;
+import com.workhub.userTable.entity.Company;
+import com.workhub.userTable.entity.CompanyStatus;
+import com.workhub.userTable.service.CompanyService;
 import com.workhub.userTable.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -30,6 +33,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class ReadProjectServiceTest {
@@ -39,6 +43,9 @@ class ReadProjectServiceTest {
 
     @Mock
     private ProjectNodeService projectNodeService;
+
+    @Mock
+    private CompanyService companyService;
 
     @Mock
     private UserService userService;
@@ -55,6 +62,7 @@ class ReadProjectServiceTest {
     private ProjectDevMember devMember1;
     private UserTable user1;
     private UserTable user2;
+    private Company company;
 
     @BeforeEach
     void init() {
@@ -88,7 +96,7 @@ class ReadProjectServiceTest {
                 .status(Status.IN_PROGRESS)
                 .contractStartDate(LocalDate.of(2025, 1, 1))
                 .contractEndDate(LocalDate.of(2025, 12, 31))
-                .clientCompanyId(100L)
+                .clientCompanyId(1L)
                 .build();
 
         project2 = Project.builder()
@@ -98,7 +106,7 @@ class ReadProjectServiceTest {
                 .status(Status.CONTRACT)
                 .contractStartDate(LocalDate.of(2025, 2, 1))
                 .contractEndDate(LocalDate.of(2025, 11, 30))
-                .clientCompanyId(100L)
+                .clientCompanyId(1L)
                 .build();
 
         // 멤버 엔티티 생성
@@ -132,6 +140,17 @@ class ReadProjectServiceTest {
                 .password("password")
                 .role(UserRole.DEVELOPER)
                 .build();
+
+        company = Company.builder()
+                .companyId(1L)
+                .companyName("멍뭉이")
+                .companyNumber("123-45-67890")
+                .tel("010-1234-5678")
+                .address("서울시 어딘가")
+                .companystatus(CompanyStatus.ACTIVE)
+                .build();
+
+        lenient().when(companyService.findById(anyLong())).thenReturn(company);
     }
 
     @Test

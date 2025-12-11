@@ -3,6 +3,7 @@ package com.workhub.project.service;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import com.workhub.global.util.SecurityUtil;
+import com.workhub.project.dto.request.ProjectListRequest;
 import com.workhub.project.dto.response.PagedProjectListResponse;
 import com.workhub.project.dto.request.ProjectListRequest;
 import com.workhub.project.dto.response.ProjectListResponse;
@@ -14,6 +15,7 @@ import com.workhub.projectNode.service.ProjectNodeService;
 import com.workhub.userTable.entity.Company;
 import com.workhub.userTable.entity.UserRole;
 import com.workhub.userTable.entity.UserTable;
+import com.workhub.userTable.service.CompanyService;
 import com.workhub.userTable.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +39,7 @@ public class ReadProjectService {
     private final ProjectService projectService;
     private final ProjectNodeService projectNodeService;
     private final UserService userService;
+    private final CompanyService companyService;
 
     /**
      * 페이징, 필터링, 정렬이 적용된 프로젝트 목록 조회 (무한 스크롤용)
@@ -245,26 +248,10 @@ public class ReadProjectService {
                 .filter(Objects::nonNull)
                 .toList();
 
-        Company company = getTempCompany();
+        Long companyId = project.getClientCompanyId();
+        Company company = companyService.findById(companyId);
 
         return ProjectListResponse.from(project, clientList, devList, workflowCount, company);
-    }
-
-    /**
-     * 임시 고객사 정보 생성.
-     * TODO: 고객사 기능 완성 시 실제 데이터로 교체.
-     *
-     * @return 더미 고객사 객체
-     */
-    private Company getTempCompany() {
-        // todo : 고객사 기능 완성 시 실제 데이터로 교체
-        return Company.builder()
-                .companyId(1L)
-                .companyName("멍뭉이")
-                .companyNumber("1231212345")
-                .tel("1212312312")
-                .address("서울시 강남구")
-                .build();
     }
 
     /**
