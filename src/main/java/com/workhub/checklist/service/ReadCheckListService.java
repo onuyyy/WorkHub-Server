@@ -5,9 +5,9 @@ import com.workhub.checklist.entity.CheckList;
 import com.workhub.checklist.entity.CheckListItem;
 import com.workhub.checklist.entity.CheckListOption;
 import com.workhub.checklist.entity.CheckListOptionFile;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class ReadCheckListService {
 
     private final CheckListService checkListService;

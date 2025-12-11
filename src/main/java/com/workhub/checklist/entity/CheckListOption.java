@@ -36,4 +36,29 @@ public class CheckListOption {
                 .checkListItemId(checkListItemId)
                 .build();
     }
+
+    /**
+     * 체크리스트 선택지 생성 (업데이트용)
+     *
+     * @param checkListItemId 체크리스트 항목 ID
+     * @param optionContent 선택지 내용
+     * @param optionOrder 선택지 순서
+     * @return 생성된 체크리스트 선택지
+     */
+    public static CheckListOption of(Long checkListItemId, String optionContent, Integer optionOrder) {
+        return CheckListOption.builder()
+                .optionContent(optionContent)
+                .optionOrder(optionOrder)
+                .checkListItemId(checkListItemId)
+                .build();
+    }
+
+    public void updateOption(String optionContent, Integer optionOrder) {
+        if (optionContent != null) {
+            this.optionContent = optionContent;
+        }
+        if (optionOrder != null) {
+            this.optionOrder = optionOrder;
+        }
+    }
 }

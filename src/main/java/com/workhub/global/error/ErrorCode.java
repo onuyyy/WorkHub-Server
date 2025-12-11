@@ -120,7 +120,19 @@ public enum ErrorCode {
     NOT_EXISTS_CHECK_LIST(HttpStatus.BAD_REQUEST, "CH-001", "존재하지 않는 체크리스트입니다."),
     ALREADY_EXISTS_CHECK_LIST(HttpStatus.BAD_REQUEST, "CH-002", "이미 체크리스트가 존재합니다."),
     INVALID_CHECK_LIST_ITEM_ORDER(HttpStatus.BAD_REQUEST, "CH-003", "항목 순서가 중복될 수 없습니다."),
-    INVALID_CHECK_LIST_OPTION_ORDER(HttpStatus.BAD_REQUEST, "CH-004", "선택지 순서가 중복될 수 없습니다.");
+    INVALID_CHECK_LIST_OPTION_ORDER(HttpStatus.BAD_REQUEST, "CH-004", "선택지 순서가 중복될 수 없습니다."),
+    CHECK_LIST_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "CH-005", "체크리스트 항목을 찾을 수 없습니다."),
+    CHECK_LIST_OPTION_NOT_FOUND(HttpStatus.NOT_FOUND, "CH-006", "체크리스트 선택지를 찾을 수 없습니다."),
+    CHECK_LIST_OPTION_FILE_NOT_FOUND(HttpStatus.NOT_FOUND, "CH-007", "체크리스트 파일을 찾을 수 없습니다."),
+    INVALID_CHECK_LIST_UPDATE_COMMAND(HttpStatus.BAD_REQUEST, "CH-008", "지원하지 않는 체크리스트 작업 유형입니다."),
+
+    // 체크리스트 업데이트 검증
+    CHECK_LIST_CREATE_CANNOT_HAVE_ID(HttpStatus.BAD_REQUEST, "CH-009", "새로 생성하는 항목은 ID를 포함할 수 없습니다."),
+    CHECK_LIST_UPDATE_REQUIRES_ID(HttpStatus.BAD_REQUEST, "CH-010", "수정할 항목의 ID가 필요합니다."),
+    CHECK_LIST_DELETE_REQUIRES_ID(HttpStatus.BAD_REQUEST, "CH-011", "삭제할 항목의 ID가 필요합니다."),
+    CHECK_LIST_CREATE_REQUIRES_TITLE_AND_ORDER(HttpStatus.BAD_REQUEST, "CH-012", "새 항목 생성시 제목과 순서는 필수입니다."),
+    CHECK_LIST_CREATE_REQUIRES_CONTENT_AND_ORDER(HttpStatus.BAD_REQUEST, "CH-013", "새 선택지 생성시 내용과 순서는 필수입니다."),
+    CHECK_LIST_CREATE_REQUIRES_FILE_URL(HttpStatus.BAD_REQUEST, "CH-014", "새 파일 생성시 파일 URL은 필수입니다.");
 
     private final HttpStatus httpStatus;
     private final String errorCode;

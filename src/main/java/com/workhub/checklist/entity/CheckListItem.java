@@ -54,4 +54,37 @@ public class CheckListItem extends BaseTimeEntity {
                 .confirm(false)
                 .build();
     }
+
+    /**
+     * 체크리스트 항목 생성 (업데이트용)
+     *
+     * @param checkListId 체크리스트 ID
+     * @param itemTitle 항목 제목
+     * @param itemOrder 항목 순서
+     * @param templateId 템플릿 ID (선택)
+     * @param userId 생성자 ID
+     * @return 생성된 체크리스트 항목
+     */
+    public static CheckListItem of(Long checkListId, String itemTitle, Integer itemOrder, Long templateId, Long userId) {
+        return CheckListItem.builder()
+                .itemTitle(itemTitle)
+                .itemOrder(itemOrder)
+                .checkListId(checkListId)
+                .templateId(templateId)
+                .userId(userId)
+                .confirm(false)
+                .build();
+    }
+
+    public void updateItem(String itemTitle, Integer itemOrder, Long templateId) {
+        if (itemTitle != null) {
+            this.itemTitle = itemTitle;
+        }
+        if (itemOrder != null) {
+            this.itemOrder = itemOrder;
+        }
+        if (templateId != null) {
+            this.templateId = templateId;
+        }
+    }
 }

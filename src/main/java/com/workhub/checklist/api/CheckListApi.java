@@ -2,6 +2,7 @@ package com.workhub.checklist.api;
 
 import com.workhub.checklist.dto.CheckListCreateRequest;
 import com.workhub.checklist.dto.CheckListResponse;
+import com.workhub.checklist.dto.CheckListUpdateRequest;
 import com.workhub.global.response.ApiResponse;
 import com.workhub.global.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
@@ -72,5 +73,32 @@ public interface CheckListApi {
     ResponseEntity<ApiResponse<CheckListResponse>> findCheckList(
             @PathVariable Long projectId,
             @PathVariable Long nodeId
+    );
+
+    @Operation(
+            summary = "체크리스트 수정",
+            description = "프로젝트 노드의 체크리스트를 부분 수정합니다.",
+            parameters = {
+                    @Parameter(name = "projectId", description = "프로젝트 식별자", in = ParameterIn.PATH, required = true),
+                    @Parameter(name = "nodeId", description = "노드 식별자", in = ParameterIn.PATH, required = true)
+            }
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "체크리스트 수정 성공",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = CheckListResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한이 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "체크리스트를 찾을 수 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류")
+    })
+    @PatchMapping(value = "/nodes/{nodeId}/checkLists", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    ResponseEntity<ApiResponse<CheckListResponse>> update(
+            @PathVariable Long projectId,
+            @PathVariable Long nodeId,
+            @Valid @RequestBody CheckListUpdateRequest request
     );
 }

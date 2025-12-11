@@ -15,8 +15,11 @@ public class CheckListAccessValidator {
 
     public void validateProjectAndNode(Long projectId, Long nodeId) {
         projectNodeService.findByIdAndProjectId(nodeId, projectId);
+        checkProjectMember(projectId);
+    }
 
+    public void checkProjectMember(Long projectId) {
         Long userId = SecurityUtil.getCurrentUserIdOrThrow();
-        projectService.validateProjectMember(projectId, userId);
+        projectService.validateDevMemberForProject(projectId, userId);
     }
 }

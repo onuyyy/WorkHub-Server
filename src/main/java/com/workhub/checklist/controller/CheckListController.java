@@ -3,8 +3,10 @@ package com.workhub.checklist.controller;
 import com.workhub.checklist.api.CheckListApi;
 import com.workhub.checklist.dto.CheckListCreateRequest;
 import com.workhub.checklist.dto.CheckListResponse;
+import com.workhub.checklist.dto.CheckListUpdateRequest;
 import com.workhub.checklist.service.CreateCheckListService;
 import com.workhub.checklist.service.ReadCheckListService;
+import com.workhub.checklist.service.UpdateCheckListService;
 import com.workhub.global.response.ApiResponse;
 import com.workhub.global.security.CustomUserDetails;
 import jakarta.validation.Valid;
@@ -21,6 +23,7 @@ public class CheckListController implements CheckListApi {
 
     private final CreateCheckListService createCheckListService;
     private final ReadCheckListService readCheckListService;
+    private final UpdateCheckListService updateCheckListService;
 
     @Override
     @PostMapping("/checkLists")
@@ -48,6 +51,20 @@ public class CheckListController implements CheckListApi {
         CheckListResponse response = readCheckListService.findCheckList(projectId, nodeId);
 
         return ApiResponse.success(response, "체크리스트가 조회되었습니다.");
+    }
+
+    @Override
+    @PatchMapping("/checkLists")
+    @PreAuthorize("hasAnyRole('DEVELOPER', 'ADMIN')")
+    public ResponseEntity<ApiResponse<CheckListResponse>> update(
+            @PathVariable Long projectId,
+            @PathVariable Long nodeId,
+            @Valid @RequestBody CheckListUpdateRequest request
+    ) {
+
+        CheckListResponse response = updateCheckListService.update(projectId, nodeId, request);
+
+        return ApiResponse.success(response, "체크리스트가 수정되었습니다.");
     }
 
 }

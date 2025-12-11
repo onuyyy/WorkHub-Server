@@ -60,6 +60,11 @@ public class CheckListService {
         return checkListItemRepository.save(item);
     }
 
+    public CheckListItem findCheckListItem(Long itemId) {
+        return checkListItemRepository.findById(itemId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CHECK_LIST_ITEM_NOT_FOUND));
+    }
+
     /**
      * CheckListOption 엔티티를 저장한다.
      */
@@ -67,11 +72,21 @@ public class CheckListService {
         return checkListOptionRepository.save(option);
     }
 
+    public CheckListOption findCheckListOption(Long optionId) {
+        return checkListOptionRepository.findById(optionId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CHECK_LIST_OPTION_NOT_FOUND));
+    }
+
     /**
      * CheckListOptionFile 엔티티를 저장한다.
      */
     public CheckListOptionFile saveCheckListOptionFile(CheckListOptionFile file) {
         return checkListOptionFileRepository.save(file);
+    }
+
+    public CheckListOptionFile findCheckListOptionFile(Long fileId) {
+        return checkListOptionFileRepository.findById(fileId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CHECK_LIST_OPTION_FILE_NOT_FOUND));
     }
 
     /**
@@ -96,6 +111,55 @@ public class CheckListService {
     }
 
     /**
+     * 전달된 파일 엔티티들을 삭제한다.
+     */
+    public void deleteCheckListOptionFiles(List<CheckListOptionFile> files) {
+        checkListOptionFileRepository.deleteAll(files);
+    }
+
+    public void deleteCheckListOptionFile(CheckListOptionFile file) {
+        checkListOptionFileRepository.delete(file);
+    }
+
+    /**
+     * 전달된 옵션 엔티티들을 삭제한다.
+     */
+    public void deleteCheckListOptions(List<CheckListOption> options) {
+        checkListOptionRepository.deleteAll(options);
+    }
+
+    public void deleteCheckListOption(CheckListOption option) {
+        checkListOptionRepository.delete(option);
+    }
+
+    /**
+     * 전달된 아이템 엔티티들을 삭제한다.
+     */
+    public void deleteCheckListItems(List<CheckListItem> items) {
+        checkListItemRepository.deleteAll(items);
+    }
+
+    public void deleteCheckListItem(CheckListItem item) {
+        checkListItemRepository.delete(item);
+    }
+
+    public void existNodeCheck(Long nodeId) {
+        if (checkListRepository.findByProjectNodeId(nodeId).isPresent()) {
+            throw new BusinessException(ErrorCode.ALREADY_EXISTS_CHECK_LIST);
+        }
+    }
+
+    /**
+     * CheckList의 전체 계층 구조를 효율적으로 조회한다.
+     *
+     * @param checkListId 체크리스트 ID
+     * @return 체크리스트 상세 정보
+     */
+    public CheckListDetails findCheckListDetailsById(Long checkListId) {
+        return checkListRepository.findCheckListDetailsById(checkListId);
+    }
+
+    /**
      * CheckListItem 스냅샷으로 변환 후 히스토리 엔티티에 저장
      * @param checkListItem CheckListItem 엔티티
      * @param checkListItemId CheckListItem 식별자
@@ -115,21 +179,5 @@ public class CheckListService {
     public void snapShotAndRecordHistory(CheckListItemComment comment, Long commentId, ActionType actionType) {
         CheckListItemCommentHistorySnapShot snapshot = CheckListItemCommentHistorySnapShot.from(comment);
         historyRecorder.recordHistory(HistoryType.CHECK_LIST_ITEM_COMMENT, commentId, actionType, snapshot);
-    }
-
-    public void existNodeCheck(Long nodeId) {
-        if (checkListRepository.findByProjectNodeId(nodeId).isPresent()) {
-            throw new BusinessException(ErrorCode.ALREADY_EXISTS_CHECK_LIST);
-        }
-    }
-
-    /**
-     * CheckList의 전체 계층 구조를 효율적으로 조회한다.
-     *
-     * @param checkListId 체크리스트 ID
-     * @return 체크리스트 상세 정보
-     */
-    public CheckListDetails findCheckListDetailsById(Long checkListId) {
-        return checkListRepository.findCheckListDetailsById(checkListId);
     }
 }

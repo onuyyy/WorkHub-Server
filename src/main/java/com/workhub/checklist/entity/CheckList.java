@@ -37,4 +37,8 @@ public class CheckList {
                 .build();
     }
 
+    public void updateDescription(String description) {
+        this.checkListDescription = description;
+    }
+
 }

@@ -48,4 +48,14 @@ public class CheckListOptionFile extends BaseTimeEntity {
         int lastSlashIndex = fileUrl.lastIndexOf('/');
         return lastSlashIndex != -1 ? fileUrl.substring(lastSlashIndex + 1) : fileUrl;
     }
+
+    public void updateFile(String fileUrl, Integer fileOrder) {
+        if (fileUrl != null) {
+            this.fileUrl = fileUrl;
+            this.fileName = extractFileName(fileUrl);
+        }
+        if (fileOrder != null) {
+            this.fileOrder = fileOrder;
+        }
+    }
 }
