@@ -106,7 +106,7 @@ public class ProjectNode extends BaseTimeEntity {
                 .title(request.title())
                 .description(request.description())
                 .nodeStatus(NodeStatus.NOT_STARTED)
-                .contractStartDate(request.starDate())
+                .contractStartDate(request.startDate())
                 .contractEndDate(request.endDate())
                 .developerUserId(request.developerUserId())
                 .nodeOrder(nodeOrder)

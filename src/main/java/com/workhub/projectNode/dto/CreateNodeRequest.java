@@ -12,7 +12,7 @@ public record CreateNodeRequest(
         @NotEmpty
         Long developerUserId,
         @NotEmpty
-        LocalDate starDate,
+        LocalDate startDate,
         @NotEmpty
         LocalDate endDate
 ) {
