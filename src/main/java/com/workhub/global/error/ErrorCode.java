@@ -48,6 +48,7 @@ public enum ErrorCode {
 
     // 고객사
     COMPANY_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "CO-001", "이미 등록된 고객사입니다."),
+    Company_NOT_EXISTS(HttpStatus.BAD_REQUEST, "CO-002", "존재하지 않는 고객사입니다."),
 
     // 게시물
     POST_NOT_FOUND(HttpStatus.NOT_FOUND, "PO-001", "게시물을 찾을 수 없습니다."),

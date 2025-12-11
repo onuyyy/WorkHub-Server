@@ -2,9 +2,12 @@ package com.workhub.userTable.service;
 
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
+import com.workhub.userTable.dto.CompanyDetailResponse;
+import com.workhub.userTable.dto.CompanyListResponse;
 import com.workhub.userTable.dto.CompanyRegisterRequest;
 import com.workhub.userTable.dto.CompanyResponse;
 import com.workhub.userTable.entity.Company;
+import com.workhub.userTable.entity.CompanyStatus;
 import com.workhub.userTable.repository.CompanyRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -14,6 +17,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -96,6 +101,87 @@ class CompanyServiceTest {
                 .companyNumber(COMPANY_NUMBER)
                 .tel(COMPANY_TEL)
                 .address(COMPANY_ADDRESS)
+                .companystatus(CompanyStatus.ACTIVE)
                 .build();
+    }
+
+    @Nested
+    @DisplayName("getCompanys")
+    class GetCompanys {
+
+        @Test
+        @DisplayName("전체 고객사 목록을 조회한다")
+        void success() {
+            Company company = persistedCompany();
+            given(companyRepository.findAllByCompanystatus(CompanyStatus.ACTIVE)).willReturn(List.of(company));
+
+            List<CompanyListResponse> responses = companyService.getCompanys();
+
+            assertThat(responses)
+                    .hasSize(1)
+                    .first()
+                    .isEqualTo(CompanyListResponse.from(company));
+
+            verify(companyRepository).findAllByCompanystatus(CompanyStatus.ACTIVE);
+        }
+    }
+
+    @Nested
+    @DisplayName("getCompany")
+    class GetCompany {
+
+        @Test
+        @DisplayName("ID로 고객사를 조회한다")
+        void success() {
+            Company company = persistedCompany();
+            given(companyRepository.findByCompanyIdAndCompanystatus(COMPANY_ID, CompanyStatus.ACTIVE)).willReturn(Optional.of(company));
+
+            CompanyDetailResponse response = companyService.getCompany(COMPANY_ID);
+
+            assertThat(response).isEqualTo(CompanyDetailResponse.from(company));
+            verify(companyRepository).findByCompanyIdAndCompanystatus(COMPANY_ID, CompanyStatus.ACTIVE);
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 고객사면 예외를 던진다")
+        void fail_notFound() {
+            given(companyRepository.findByCompanyIdAndCompanystatus(COMPANY_ID, CompanyStatus.ACTIVE)).willReturn(Optional.empty());
+
+            assertThatThrownBy(() -> companyService.getCompany(COMPANY_ID))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessage(ErrorCode.Company_NOT_EXISTS.getMessage());
+
+            verify(companyRepository).findByCompanyIdAndCompanystatus(COMPANY_ID, CompanyStatus.ACTIVE);
+        }
+    }
+
+    @Nested
+    @DisplayName("deleteCompany")
+    class DeleteCompany {
+
+        @Test
+        @DisplayName("고객사를 비활성화한다")
+        void success() {
+            Company company = persistedCompany();
+            given(companyRepository.findById(COMPANY_ID)).willReturn(Optional.of(company));
+
+            companyService.deleteCompany(COMPANY_ID);
+
+            assertThat(company.getCompanystatus()).isEqualTo(CompanyStatus.INACTIVE);
+            assertThat(company.isDeleted()).isTrue();
+            verify(companyRepository).findById(COMPANY_ID);
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 고객사 삭제 시 예외")
+        void fail_notFound() {
+            given(companyRepository.findById(COMPANY_ID)).willReturn(Optional.empty());
+
+            assertThatThrownBy(() -> companyService.deleteCompany(COMPANY_ID))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessage(ErrorCode.Company_NOT_EXISTS.getMessage());
+
+            verify(companyRepository).findById(COMPANY_ID);
+        }
     }
 }
