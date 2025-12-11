@@ -57,8 +57,8 @@ class UserServiceTest {
         @Test
         @DisplayName("전체 사용자를 리스트 DTO로 반환한다")
         void success() {
-            UserTable admin = user(1L, "admin", "admin@workhub.com", "01000000000", UserRole.ADMIN, Status.ACTIVE, 1L);
-            UserTable client = user(2L, "client", "client@workhub.com", "01011112222", UserRole.CLIENT, Status.SUSPENDED, 2L);
+            UserTable admin = user(1L, "admin", "admin@workhub.com", "01000000000", "Admin User", UserRole.ADMIN, Status.ACTIVE, 1L);
+            UserTable client = user(2L, "client", "client@workhub.com", "01011112222", "Client User", UserRole.CLIENT, Status.SUSPENDED, 2L);
             given(userRepository.findAll()).willReturn(List.of(admin, client));
 
             List<UserListResponse> result = userService.getUsers();
@@ -75,7 +75,7 @@ class UserServiceTest {
         @Test
         @DisplayName("단일 사용자를 상세 DTO로 반환한다")
         void success() {
-            UserTable user = user(10L, "alpha", "alpha@workhub.com", "01099998888", UserRole.DEVELOPER, Status.ACTIVE, 3L);
+            UserTable user = user(10L, "alpha", "alpha@workhub.com", "01099998888", "Alpha Tester", UserRole.DEVELOPER, Status.ACTIVE, 3L);
             given(userRepository.findById(10L)).willReturn(Optional.of(user));
 
             UserDetailResponse result = userService.getUser(10L);
@@ -291,13 +291,14 @@ class UserServiceTest {
         }
     }
 
-    private UserTable user(Long userId, String loginId, String email, String phone, UserRole role, Status status, Long companyId) {
+    private UserTable user(Long userId, String loginId, String email, String phone, String userName, UserRole role, Status status, Long companyId) {
         return UserTable.builder()
                 .userId(userId)
                 .loginId(loginId)
                 .password("encoded")
                 .email(email)
                 .phone(phone)
+                .userName(userName)
                 .role(role)
                 .status(status)
                 .companyId(companyId)
@@ -308,6 +309,7 @@ class UserServiceTest {
         return new UserRegisterRecord(
                 "freshUser",
                 "Plain!234",
+                "Fresh User",
                 "fresh@workhub.com",
                 "01012345678",
                 1L,
@@ -319,6 +321,7 @@ class UserServiceTest {
         UserRegisterRecord register = new UserRegisterRecord(
                 "admin",
                 "encoded",
+                "Admin User",
                 "admin@workhub.com",
                 "01000000000",
                 1L,

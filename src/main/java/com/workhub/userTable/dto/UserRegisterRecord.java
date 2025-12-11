@@ -15,6 +15,10 @@ public record UserRegisterRecord(
         String password,
 
         @NotBlank
+        @Size(max = 20)
+        String userName,
+
+        @NotBlank
         @Email
         @Size(max = 50)
         String email,

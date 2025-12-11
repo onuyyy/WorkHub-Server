@@ -6,6 +6,7 @@ import com.workhub.userTable.entity.UserTable;
 
 public record UserListResponse(
         Long userId,
+        String userName,
         String loginId,
         String email,
         String phone,
@@ -16,6 +17,7 @@ public record UserListResponse(
     public static UserListResponse from(UserTable userTable){
         return new UserListResponse(
                 userTable.getUserId(),
+                userTable.getUserName(),
                 userTable.getLoginId(),
                 userTable.getEmail(),
                 userTable.getPhone(),

@@ -37,6 +37,9 @@ public class AdminUserInitializer {
     @Value("${workhub.admin.company-id:1}")
     private Long companyId;
 
+    @Value("${workhub.admin.user-name:WorkHub Admin}")
+    private String userName;
+
     @PostConstruct
     public void createDefaultAdminIfNecessary() {
         if (!bootstrapEnabled) {
@@ -54,6 +57,7 @@ public class AdminUserInitializer {
                 .password(passwordEncoder.encode(password))
                 .email(email)
                 .phone(phone)
+                .userName(userName)
                 .companyId(companyId)
                 .role(UserRole.ADMIN)
                 .status(Status.ACTIVE)

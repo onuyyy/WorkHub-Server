@@ -48,6 +48,9 @@ public class UserTable extends BaseTimeEntity {
     @Column(name = "company_id", nullable = false)
     private Long companyId;
 
+    @Column(name = "user_name", nullable = false, length = 20)
+    private String userName;
+
     public void updatePassword(String encodedPassword) {
         this.password = encodedPassword;
         this.lastedAt = LocalDateTime.now();
@@ -68,6 +71,7 @@ public class UserTable extends BaseTimeEntity {
                 .password(encodedPassword)
                 .email(register.email())
                 .phone(register.phone())
+                .userName(register.userName())
                 .role(register.role())
                 .companyId(register.companyId())
                 .status(Status.ACTIVE)
