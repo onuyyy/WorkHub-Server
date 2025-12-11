@@ -5,7 +5,6 @@ import com.workhub.global.error.exception.BusinessException;
 import com.workhub.global.util.SecurityUtil;
 import com.workhub.project.dto.request.ProjectListRequest;
 import com.workhub.project.dto.response.PagedProjectListResponse;
-import com.workhub.project.dto.request.ProjectListRequest;
 import com.workhub.project.dto.response.ProjectListResponse;
 import com.workhub.project.entity.Project;
 import com.workhub.project.entity.ProjectClientMember;
