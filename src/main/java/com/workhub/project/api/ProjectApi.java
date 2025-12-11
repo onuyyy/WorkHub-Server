@@ -4,7 +4,7 @@ import com.workhub.global.response.ApiResponse;
 import com.workhub.project.dto.request.CreateProjectRequest;
 import com.workhub.project.dto.request.UpdateStatusRequest;
 import com.workhub.project.dto.response.PagedProjectListResponse;
-import com.workhub.project.dto.response.ProjectListRequest;
+import com.workhub.project.dto.request.ProjectListRequest;
 import com.workhub.project.dto.response.ProjectResponse;
 import com.workhub.project.entity.Status;
 import io.swagger.v3.oas.annotations.Operation;

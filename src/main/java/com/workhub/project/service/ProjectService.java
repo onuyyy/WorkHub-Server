@@ -2,7 +2,7 @@ package com.workhub.project.service;
 
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
-import com.workhub.project.dto.response.ProjectListRequest;
+import com.workhub.project.dto.request.ProjectListRequest;
 import com.workhub.project.entity.Project;
 import com.workhub.project.entity.ProjectClientMember;
 import com.workhub.project.entity.ProjectDevMember;

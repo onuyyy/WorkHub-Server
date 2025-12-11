@@ -44,7 +44,7 @@ public record ProjectListResponse(
         public static DevMembers from(UserTable user) {
             return DevMembers.builder()
                     .devMemberId(user.getUserId())
-                    .devMemberName("김개발자")  // todo : 추후 UserTable에서 사용자 이름 컬럼 추가 후 변경.
+                    .devMemberName(user.getUserName())
                     .build();
         }
     }
@@ -57,7 +57,7 @@ public record ProjectListResponse(
         public static ClientMembers from(UserTable user) {
             return ClientMembers.builder()
                     .clientMemberId(user.getUserId())
-                    .clientMemberName("김매니저")  // todo : 추후 UserTable에서 사용자 이름 컬럼 추가 후 변경.
+                    .clientMemberName(user.getUserName())
                     .build();
         }
     }

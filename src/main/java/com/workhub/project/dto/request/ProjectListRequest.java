@@ -1,4 +1,4 @@
-package com.workhub.project.dto.response;
+package com.workhub.project.dto.request;
 
 import com.workhub.project.entity.Status;
 import lombok.Builder;

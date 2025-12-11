@@ -3,7 +3,7 @@ package com.workhub.project.repository;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.workhub.project.dto.response.ProjectListRequest;
+import com.workhub.project.dto.request.ProjectListRequest;
 import com.workhub.project.entity.Project;
 import com.workhub.project.entity.Status;
 import lombok.RequiredArgsConstructor;

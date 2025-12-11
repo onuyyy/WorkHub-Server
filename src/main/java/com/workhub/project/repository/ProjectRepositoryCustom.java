@@ -1,6 +1,6 @@
 package com.workhub.project.repository;
 
-import com.workhub.project.dto.response.ProjectListRequest;
+import com.workhub.project.dto.request.ProjectListRequest;
 import com.workhub.project.entity.Project;
 import com.workhub.project.entity.Status;
 
