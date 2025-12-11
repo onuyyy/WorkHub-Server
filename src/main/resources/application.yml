@@ -12,6 +12,7 @@ spring:
       max-request-size: 50MB
 
 server:
+  forward-headers-strategy: framework  # Nginx X-Forwarded 헤더 인식
   servlet:
     session:
       cookie:
