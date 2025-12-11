@@ -3,10 +3,10 @@ package com.workhub.post.service.post;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import com.workhub.global.history.HistoryRecorder;
-import com.workhub.post.entity.Post;
-import com.workhub.post.entity.PostType;
 import com.workhub.post.dto.post.request.PostRequest;
 import com.workhub.post.dto.post.response.PostResponse;
+import com.workhub.post.entity.Post;
+import com.workhub.post.entity.PostType;
 import com.workhub.post.repository.post.PostFileRepository;
 import com.workhub.post.repository.post.PostLinkRepository;
 import com.workhub.post.repository.post.PostRepository;
@@ -26,9 +26,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.willDoNothing;
-import static org.mockito.BDDMockito.willThrow;
+import static org.mockito.BDDMockito.*;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.verify;
 
@@ -47,12 +45,14 @@ class CreatePostServiceTest {
     PostValidator postValidator;
     @Mock
     HistoryRecorder historyRecorder;
+    @Mock
+    PostNotificationService postNotificationService;
 
     CreatePostService createPostService;
 
     @BeforeEach
     void setUp() {
-        createPostService = new CreatePostService(postService, postValidator, historyRecorder);
+        createPostService = new CreatePostService(postService, postValidator, historyRecorder, postNotificationService);
         willDoNothing().given(postValidator).validateNodeAndProject(anyLong(), anyLong());
         given(postRepository.findByParentPostIdAndDeletedAtIsNull(anyLong())).willReturn(Collections.emptyList());
         given(postFileRepository.findByPostId(anyLong())).willReturn(Collections.emptyList());

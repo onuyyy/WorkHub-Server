@@ -28,6 +28,7 @@ public class CreatePostService {
     private final PostService postService;
     private final PostValidator postValidator;
     private final HistoryRecorder historyRecorder;
+    private final PostNotificationService postNotificationService;
 
     /**
      * 게시글 생성 시 프로젝트 상태와 부모 게시글 유효성을 검증한 뒤 저장한다.
@@ -55,6 +56,7 @@ public class CreatePostService {
         List<PostLink> savedLinks = savePostLinks(savedPost.getPostId(), request.links());
 
         historyRecorder.recordHistory(HistoryType.POST, savedPost.getPostId(), ActionType.CREATE, PostHistorySnapshot.from(savedPost));
+        postNotificationService.notifyProjectMembers(projectId, savedPost);
 
         return PostResponse.from(savedPost, savedFiles, savedLinks);
     }

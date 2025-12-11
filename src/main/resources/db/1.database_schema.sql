@@ -413,5 +413,7 @@ ALTER TABLE project_notification
         (CASE WHEN project_node_id IS NOT NULL THEN 1 ELSE 0 END +
          CASE WHEN cs_qna_id IS NOT NULL THEN 1 ELSE 0 END +
          CASE WHEN post_id IS NOT NULL THEN 1 ELSE 0 END +
+         CASE WHEN project_id IS NOT NULL THEN 1 ELSE 0 END +
+         CASE WHEN cs_post_id IS NOT NULL THEN 1 ELSE 0 END +
          CASE WHEN comment_id IS NOT NULL THEN 1 ELSE 0 END) = 1
         );

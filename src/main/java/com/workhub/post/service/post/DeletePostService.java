@@ -1,13 +1,13 @@
 package com.workhub.post.service.post;
 
-import com.workhub.global.error.ErrorCode;
-import com.workhub.global.error.exception.BusinessException;
 import com.workhub.global.entity.ActionType;
 import com.workhub.global.entity.HistoryType;
+import com.workhub.global.error.ErrorCode;
+import com.workhub.global.error.exception.BusinessException;
 import com.workhub.global.history.HistoryRecorder;
+import com.workhub.post.dto.post.PostHistorySnapshot;
 import com.workhub.post.entity.Post;
 import com.workhub.post.entity.PostFile;
-import com.workhub.post.dto.post.PostHistorySnapshot;
 import com.workhub.post.entity.PostLink;
 import com.workhub.post.service.PostValidator;
 import jakarta.transaction.Transactional;
@@ -22,6 +22,7 @@ public class DeletePostService {
     private final PostService postService;
     private final PostValidator postValidator;
     private final HistoryRecorder historyRecorder;
+    private final PostNotificationService postNotificationService;
 
 
     /**
@@ -43,6 +44,7 @@ public class DeletePostService {
         }
         historyRecorder.recordHistory(HistoryType.POST, target.getPostId(), ActionType.DELETE, PostHistorySnapshot.from(target));
         deleteRecursively(target);
+        postNotificationService.notifyPostDeleted(projectId, target);
     }
 
     /**

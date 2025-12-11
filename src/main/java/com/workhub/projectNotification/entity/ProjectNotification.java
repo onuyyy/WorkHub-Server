@@ -41,15 +41,57 @@ public class ProjectNotification extends BaseTimeEntity {
     @Column(name = "user_id")
     private Long userId;
 
+    @Column(name = "project_id")
+    private Long projectId;
+
     @Column(name = "project_node_id")
     private Long projectNodeId;
 
     @Column(name = "cs_qna_id")
     private Long csQnaId;
 
+    @Column(name = "cs_post_id")
+    private Long csPostId;
+
     @Column(name = "post_id")
     private Long postId;
 
     @Column(name = "comment_id")
     private Long commentId;
+
+    public void markRead() {
+        this.readAt = LocalDateTime.now();
+    }
+
+    /**
+     * 알림 엔티티 생성 팩토리.
+     * 서비스 레이어에서는 빌더를 직접 사용하지 않고 이 메서드로 생성한다.
+     */
+    public static ProjectNotification of(
+            Long userId,
+            NotificationType type,
+            String title,
+            String content,
+            String relatedUrl,
+            Long projectId,
+            Long projectNodeId,
+            Long postId,
+            Long commentId,
+            Long csQnaId,
+            Long csPostId
+    ) {
+        return ProjectNotification.builder()
+                .userId(userId)
+                .notificationType(type)
+                .title(title)
+                .notificationContent(content)
+                .relatedUrl(relatedUrl)
+                .projectId(projectId)
+                .projectNodeId(projectNodeId)
+                .postId(postId)
+                .commentId(commentId)
+                .csQnaId(csQnaId)
+                .csPostId(csPostId)
+                .build();
+    }
 }

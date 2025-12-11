@@ -5,14 +5,14 @@ import com.workhub.global.entity.HistoryType;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import com.workhub.global.history.HistoryRecorder;
-import com.workhub.post.entity.Post;
-import com.workhub.post.entity.PostFile;
-import com.workhub.post.entity.PostLink;
 import com.workhub.post.dto.post.PostHistorySnapshot;
 import com.workhub.post.dto.post.request.PostFileUpdateRequest;
 import com.workhub.post.dto.post.request.PostLinkUpdateRequest;
 import com.workhub.post.dto.post.request.PostUpdateRequest;
 import com.workhub.post.dto.post.response.PostResponse;
+import com.workhub.post.entity.Post;
+import com.workhub.post.entity.PostFile;
+import com.workhub.post.entity.PostLink;
 import com.workhub.post.service.PostValidator;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +29,7 @@ public class UpdatePostService {
     private final PostService postService;
     private final PostValidator postValidator;
     private final HistoryRecorder historyRecorder;
+    private final PostNotificationService postNotificationService;
 
 
     /**
@@ -56,6 +57,8 @@ public class UpdatePostService {
         List<PostLink> visibleLinks = updatedLinks.stream()
                 .filter(link -> link.getDeletedAt() == null)
                 .toList();
+
+        postNotificationService.notifyPostUpdated(projectId, target);
 
         return PostResponse.from(target, visibleFiles, visibleLinks);
     }

@@ -44,12 +44,14 @@ class DeletePostServiceTest {
     PostValidator postValidator;
     @Mock
     HistoryRecorder historyRecorder;
+    @Mock
+    PostNotificationService postNotificationService;
 
     DeletePostService deletePostService;
 
     @BeforeEach
     void setUp() {
-        deletePostService = new DeletePostService(postService, postValidator, historyRecorder);
+        deletePostService = new DeletePostService(postService, postValidator, historyRecorder, postNotificationService);
         given(postRepository.findByParentPostIdAndDeletedAtIsNull(anyLong())).willReturn(Collections.emptyList());
         given(postFileRepository.findByPostId(anyLong())).willReturn(Collections.emptyList());
         given(postLinkRepository.findByPostId(anyLong())).willReturn(Collections.emptyList());

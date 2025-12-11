@@ -47,12 +47,14 @@ class UpdatePostServiceTest {
     PostValidator postValidator;
     @Mock
     HistoryRecorder historyRecorder;
+    @Mock
+    PostNotificationService postNotificationService;
 
     UpdatePostService updatePostService;
 
     @BeforeEach
     void setUp() {
-        updatePostService = new UpdatePostService(postService, postValidator, historyRecorder);
+        updatePostService = new UpdatePostService(postService, postValidator, historyRecorder, postNotificationService);
         given(postRepository.findByParentPostIdAndDeletedAtIsNull(anyLong())).willReturn(Collections.emptyList());
         given(postFileRepository.findByPostId(anyLong())).willReturn(Collections.emptyList());
         given(postLinkRepository.findByPostId(anyLong())).willReturn(Collections.emptyList());
