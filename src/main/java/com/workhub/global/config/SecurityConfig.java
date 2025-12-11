@@ -52,6 +52,11 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/admin/users/login").permitAll()
 
+                        .requestMatchers("/api/v1/projects/*/nodes/*/checkLists/**").authenticated()
+                        .requestMatchers("/api/v1/projects/*/nodes/*/checkLists").hasAnyRole("DEVELOPER", "ADMIN")
+                        .requestMatchers( "/api/v1/projects/*/nodes/*/checkLists").hasAnyRole("DEVELOPER", "ADMIN")
+                        .requestMatchers( "/api/v1/projects/*/nodes/*/checkLists/*/items/*/status").hasRole("CLIENT")
+
                         .requestMatchers("/api/v1/projects/list").authenticated()
                         .requestMatchers("/api/v1/projects/{projectId}/nodes/**").authenticated()
                         .requestMatchers("/api/v1/projects/{projectId}/nodes/{nodeId}/**").authenticated()
@@ -59,7 +64,6 @@ public class SecurityConfig {
 
                         .requestMatchers("/api/v1/projects/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/admin/users/**").hasRole("ADMIN")
-                        .requestMatchers("/api/v1/projects/**").hasRole("ADMIN")
                         .anyRequest().permitAll()
                 );
 

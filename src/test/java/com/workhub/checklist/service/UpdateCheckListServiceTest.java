@@ -1,6 +1,7 @@
 package com.workhub.checklist.service;
 
 import com.workhub.checklist.dto.CheckListDetails;
+import com.workhub.checklist.dto.CheckListItemStatus;
 import com.workhub.checklist.dto.CheckListItemUpdateRequest;
 import com.workhub.checklist.dto.CheckListOptionFileUpdateRequest;
 import com.workhub.checklist.dto.CheckListOptionUpdateRequest;
@@ -11,6 +12,9 @@ import com.workhub.checklist.entity.CheckList;
 import com.workhub.checklist.entity.CheckListItem;
 import com.workhub.checklist.entity.CheckListOption;
 import com.workhub.checklist.entity.CheckListOptionFile;
+import com.workhub.global.entity.ActionType;
+import com.workhub.global.error.ErrorCode;
+import com.workhub.global.error.exception.BusinessException;
 import com.workhub.global.util.SecurityUtil;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,10 +29,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -69,7 +75,7 @@ class UpdateCheckListServiceTest {
                 .itemOrder(1)
                 .templateId(7L)
                 .userId(5L)
-                .confirm(false)
+                .status(CheckListItemStatus.PENDING)
                 .build();
 
         existingOption = CheckListOption.builder()
@@ -135,7 +141,7 @@ class UpdateCheckListServiceTest {
                 .checkListId(checkList.getCheckListId())
                 .itemTitle("삭제 대상")
                 .itemOrder(3)
-                .confirm(false)
+                .status(CheckListItemStatus.PENDING)
                 .userId(5L)
                 .build();
 
@@ -247,5 +253,107 @@ class UpdateCheckListServiceTest {
         verify(checkListService).deleteCheckListOptionFiles(filesForItemDelete);
         verify(checkListService).deleteCheckListOptions(optionsForDeleteItem);
         verify(checkListService).deleteCheckListItem(itemToDelete);
+    }
+
+    @Test
+    @DisplayName("클라이언트가 항목 상태를 수정하면 히스토리가 남고 상태가 변경된다")
+    void givenValidClientRequest_whenUpdateStatus_thenUpdatesItemAndRecordsHistory() {
+        // given
+        Long projectId = 1L;
+        Long nodeId = 10L;
+        Long checkListId = checkList.getCheckListId();
+        Long itemId = 777L;
+
+        CheckListItem item = CheckListItem.builder()
+                .checkListItemId(itemId)
+                .checkListId(checkListId)
+                .status(CheckListItemStatus.PENDING)
+                .build();
+
+        given(checkListService.findById(checkListId)).willReturn(checkList);
+        given(checkListService.findCheckListItem(itemId)).willReturn(item);
+
+        // when
+        CheckListItemStatus result = updateCheckListService.updateStatus(
+                projectId,
+                nodeId,
+                checkListId,
+                itemId,
+                CheckListItemStatus.AGREED
+        );
+
+        // then
+        assertThat(result).isEqualTo(CheckListItemStatus.AGREED);
+        assertThat(item.getStatus()).isEqualTo(CheckListItemStatus.AGREED);
+
+        verify(checkListAccessValidator).validateProjectAndNode(projectId, nodeId);
+        verify(checkListAccessValidator).chekProjectClientMember(projectId);
+        verify(checkListService).snapShotAndRecordHistory(item, itemId, ActionType.UPDATE);
+    }
+
+    @Test
+    @DisplayName("요청한 체크리스트에 속하지 않은 항목이면 예외가 발생한다")
+    void givenMismatchedItem_whenUpdateStatus_thenThrowsBusinessException() {
+        // given
+        Long projectId = 1L;
+        Long nodeId = 10L;
+        Long checkListId = checkList.getCheckListId();
+        Long itemId = 888L;
+
+        CheckListItem item = CheckListItem.builder()
+                .checkListItemId(itemId)
+                .checkListId(999L)
+                .status(CheckListItemStatus.PENDING)
+                .build();
+
+        given(checkListService.findById(checkListId)).willReturn(checkList);
+        given(checkListService.findCheckListItem(itemId)).willReturn(item);
+
+        // when & then
+        assertThatThrownBy(() -> updateCheckListService.updateStatus(
+                projectId,
+                nodeId,
+                checkListId,
+                itemId,
+                CheckListItemStatus.ON_HOLD
+        ))
+                .isInstanceOf(BusinessException.class)
+                .hasMessage(ErrorCode.CHECK_LIST_ITEM_NOT_BELONG_TO_CHECK_LIST.getMessage());
+
+        verify(checkListService, never()).snapShotAndRecordHistory(item, itemId, ActionType.UPDATE);
+    }
+
+    @Test
+    @DisplayName("status 값이 없으면 기존 상태를 유지하지만 히스토리는 남는다")
+    void givenNullStatus_whenUpdateStatus_thenKeepsCurrentStatusAndRecordsHistory() {
+        // given
+        Long projectId = 1L;
+        Long nodeId = 10L;
+        Long checkListId = checkList.getCheckListId();
+        Long itemId = 889L;
+
+        CheckListItem item = CheckListItem.builder()
+                .checkListItemId(itemId)
+                .checkListId(checkListId)
+                .status(CheckListItemStatus.PENDING)
+                .build();
+
+        given(checkListService.findById(checkListId)).willReturn(checkList);
+        given(checkListService.findCheckListItem(itemId)).willReturn(item);
+
+        // when
+        CheckListItemStatus result = updateCheckListService.updateStatus(
+                projectId,
+                nodeId,
+                checkListId,
+                itemId,
+                null
+        );
+
+        // then
+        assertThat(result).isEqualTo(CheckListItemStatus.PENDING);
+        assertThat(item.getStatus()).isEqualTo(CheckListItemStatus.PENDING);
+
+        verify(checkListService).snapShotAndRecordHistory(item, itemId, ActionType.UPDATE);
     }
 }

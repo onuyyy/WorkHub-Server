@@ -1,15 +1,6 @@
 package com.workhub.checklist.service;
 
-import com.workhub.checklist.dto.CheckListDetails;
-import com.workhub.checklist.dto.CheckListItemResponse;
-import com.workhub.checklist.dto.CheckListItemUpdateRequest;
-import com.workhub.checklist.dto.CheckListOptionFileResponse;
-import com.workhub.checklist.dto.CheckListOptionFileUpdateRequest;
-import com.workhub.checklist.dto.CheckListOptionResponse;
-import com.workhub.checklist.dto.CheckListOptionUpdateRequest;
-import com.workhub.checklist.dto.CheckListResponse;
-import com.workhub.checklist.dto.CheckListUpdateCommandType;
-import com.workhub.checklist.dto.CheckListUpdateRequest;
+import com.workhub.checklist.dto.*;
 import com.workhub.checklist.entity.CheckList;
 import com.workhub.checklist.entity.CheckListItem;
 import com.workhub.checklist.entity.CheckListOption;
@@ -61,6 +52,7 @@ public class UpdateCheckListService {
     public CheckListResponse update(Long projectId, Long nodeId, CheckListUpdateRequest request) {
 
         checkListAccessValidator.validateProjectAndNode(projectId, nodeId);
+        checkListAccessValidator.checkProjectDevMember(projectId);
 
         CheckList checkList = checkListService.findByNodeId(nodeId);
 
@@ -148,7 +140,7 @@ public class UpdateCheckListService {
     private void updateItem(CheckList checkList, CheckListItemUpdateRequest request) {
         Long itemId = requireItemId(request);
         CheckListItem item = checkListService.findCheckListItem(itemId);
-        validateItemBelongs(item, checkList.getCheckListId());
+        validateItemBelongsToCheckList(item, checkList.getCheckListId());
 
         checkListService.snapShotAndRecordHistory(item, itemId, ActionType.UPDATE);
         item.updateItem(request.itemTitle(), request.itemOrder(), request.templateId());
@@ -165,7 +157,7 @@ public class UpdateCheckListService {
     private void deleteItem(CheckList checkList, CheckListItemUpdateRequest request) {
         Long itemId = requireItemId(request);
         CheckListItem item = checkListService.findCheckListItem(itemId);
-        validateItemBelongs(item, checkList.getCheckListId());
+        validateItemBelongsToCheckList(item, checkList.getCheckListId());
 
         deleteOptionsWithFiles(itemId);
 
@@ -365,6 +357,35 @@ public class UpdateCheckListService {
         }
     }
 
+    /**
+     * 체크리스트 아이템의 상태(동의/보류) 를 수정
+     * @param projectId 프로젝트 식별자
+     * @param nodeId 노드 식별자
+     * @param checkListId 체크리스트 식별자
+     * @param checkListItemId 체크리스트 아이템 식별자
+     * @param status 상태 값
+     * @return CheckListItemStatus 변경된 상태 값
+     */
+    public CheckListItemStatus updateStatus(
+            Long projectId,
+            Long nodeId,
+            Long checkListId,
+            Long checkListItemId,
+            CheckListItemStatus status
+    ) {
+        checkListAccessValidator.validateProjectAndNode(projectId, nodeId);
+        checkListAccessValidator.chekProjectClientMember(projectId);
+
+        CheckList checkList = checkListService.findById(checkListId);
+        CheckListItem item = checkListService.findCheckListItem(checkListItemId);
+        validateItemBelongsToCheckList(item, checkList.getCheckListId());
+
+        item.updateStatus(status);
+        checkListService.snapShotAndRecordHistory(item, item.getCheckListItemId(), ActionType.UPDATE);
+
+        return item.getStatus();
+    }
+
     private Long requireItemId(CheckListItemUpdateRequest request) {
         if (request.checkListItemId() == null) {
             throw new BusinessException(ErrorCode.INVALID_CHECK_LIST_UPDATE_COMMAND);
@@ -386,9 +407,9 @@ public class UpdateCheckListService {
         return request.checkListOptionFileId();
     }
 
-    private void validateItemBelongs(CheckListItem item, Long checkListId) {
+    private void validateItemBelongsToCheckList(CheckListItem item, Long checkListId) {
         if (!Objects.equals(item.getCheckListId(), checkListId)) {
-            throw new BusinessException(ErrorCode.INVALID_CHECK_LIST_UPDATE_COMMAND);
+            throw new BusinessException(ErrorCode.CHECK_LIST_ITEM_NOT_BELONG_TO_CHECK_LIST);
         }
     }
 

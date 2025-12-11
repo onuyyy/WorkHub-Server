@@ -10,7 +10,7 @@ public record CheckListItemHistorySnapShot(
         Long checkListItemId,
         String itemTitle,
         Integer itemOrder,
-        Boolean confirm,
+        CheckListItemStatus status,
         LocalDateTime confirmedAt,
         Long checkListId,
         Long templateId,
@@ -21,7 +21,7 @@ public record CheckListItemHistorySnapShot(
                 .checkListItemId(item.getCheckListItemId())
                 .itemTitle(item.getItemTitle())
                 .itemOrder(item.getItemOrder())
-                .confirm(item.getConfirm())
+                .status(item.getStatus())
                 .confirmedAt(item.getConfirmedAt())
                 .checkListId(item.getCheckListId())
                 .templateId(item.getTemplateId())

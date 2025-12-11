@@ -93,6 +93,12 @@ public class ProjectService {
         }
     }
 
+    public void validateClientMemberForProject(Long projectId, Long clientMemberId) {
+        if(!clientMemberRepository.existsByProjectIdAndUserId(projectId, clientMemberId)) {
+            throw new BusinessException(ErrorCode.NOT_PROJECT_MEMBER);
+        }
+    }
+
     public void validateProjectMember(Long projectId, Long userId) {
         boolean isDevMember = devMemberRepository.existsByProjectIdAndUserId(projectId, userId);
         boolean isClientMember = clientMemberRepository.existsByProjectIdAndUserId(projectId, userId);

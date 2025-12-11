@@ -9,7 +9,7 @@ public record CheckListItemResponse(
         Long checkListItemId,
         String itemTitle,
         Integer itemOrder,
-        Boolean confirm,
+        CheckListItemStatus status,
         LocalDateTime confirmedAt,
         Long templateId,
         List<CheckListOptionResponse> options
@@ -19,7 +19,7 @@ public record CheckListItemResponse(
                 item.getCheckListItemId(),
                 item.getItemTitle(),
                 item.getItemOrder(),
-                item.getConfirm(),
+                item.getStatus(),
                 item.getConfirmedAt(),
                 item.getTemplateId(),
                 options

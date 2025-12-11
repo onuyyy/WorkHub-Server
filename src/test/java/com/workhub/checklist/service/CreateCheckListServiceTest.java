@@ -57,7 +57,7 @@ class CreateCheckListServiceTest {
                 .itemOrder(1)
                 .checkListId(1L)
                 .userId(2L)
-                .confirm(false)
+                .status(CheckListItemStatus.PENDING)
                 .build();
 
         mockItem2 = CheckListItem.builder()
@@ -66,7 +66,7 @@ class CreateCheckListServiceTest {
                 .itemOrder(2)
                 .checkListId(1L)
                 .userId(2L)
-                .confirm(false)
+                .status(CheckListItemStatus.PENDING)
                 .build();
 
         mockOption1 = CheckListOption.builder()
@@ -222,7 +222,7 @@ class CreateCheckListServiceTest {
                 item.getItemTitle().equals("항목1") &&
                         item.getItemOrder().equals(1) &&
                         item.getUserId().equals(userId) &&
-                        item.getConfirm().equals(false)
+                        item.getStatus() == CheckListItemStatus.PENDING
         ));
         verify(checkListService).saveCheckListOption(argThat(option ->
                 option.getOptionContent().equals("선택지1") &&

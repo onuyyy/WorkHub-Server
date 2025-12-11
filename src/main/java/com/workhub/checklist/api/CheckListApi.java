@@ -1,6 +1,7 @@
 package com.workhub.checklist.api;
 
 import com.workhub.checklist.dto.CheckListCreateRequest;
+import com.workhub.checklist.dto.CheckListItemStatus;
 import com.workhub.checklist.dto.CheckListResponse;
 import com.workhub.checklist.dto.CheckListUpdateRequest;
 import com.workhub.global.response.ApiResponse;
@@ -100,5 +101,37 @@ public interface CheckListApi {
             @PathVariable Long projectId,
             @PathVariable Long nodeId,
             @Valid @RequestBody CheckListUpdateRequest request
+    );
+
+    @Operation(
+            summary = "체크리스트 아이템 상태 변경",
+            description = "클라이언트가 체크리스트 항목의 상태를 입력 혹은 수정합니다.",
+            parameters = {
+                    @Parameter(name = "projectId", description = "프로젝트 식별자", in = ParameterIn.PATH, required = true),
+                    @Parameter(name = "nodeId", description = "노드 식별자", in = ParameterIn.PATH, required = true),
+                    @Parameter(name = "checkListId", description = "체크리스트 식별자", in = ParameterIn.PATH, required = true),
+                    @Parameter(name = "checkListItemId", description = "체크리스트 항목 식별자", in = ParameterIn.PATH, required = true),
+                    @Parameter(name = "status", description = "입력할 상태값", in = ParameterIn.QUERY, required = false)
+            }
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "체크리스트 항목 상태 변경 성공",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = CheckListItemStatus.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한이 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "체크리스트 또는 항목을 찾을 수 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류")
+    })
+    @PatchMapping(value = "/nodes/{nodeId}/checkLists/{checkListId}/items/{checkListItemId}/status", produces = MediaType.APPLICATION_JSON_VALUE)
+    ResponseEntity<ApiResponse<CheckListItemStatus>> updateStatus(
+            @PathVariable Long projectId,
+            @PathVariable Long nodeId,
+            @PathVariable Long checkListId,
+            @PathVariable Long checkListItemId,
+            @RequestParam(required = false) CheckListItemStatus status
     );
 }

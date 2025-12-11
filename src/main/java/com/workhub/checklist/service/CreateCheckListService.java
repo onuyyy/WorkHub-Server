@@ -37,6 +37,8 @@ public class CreateCheckListService {
     public CheckListResponse create(Long projectId, Long nodeId, Long userId, CheckListCreateRequest request) {
 
         checkListAccessValidator.validateProjectAndNode(projectId, nodeId);
+        checkListAccessValidator.checkProjectDevMember(projectId);
+
         validateItemOrders(request.items());
         checkListService.existNodeCheck(nodeId);
 

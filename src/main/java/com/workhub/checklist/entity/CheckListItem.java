@@ -1,6 +1,7 @@
 package com.workhub.checklist.entity;
 
 import com.workhub.checklist.dto.CheckListItemRequest;
+import com.workhub.checklist.dto.CheckListItemStatus;
 import com.workhub.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -29,8 +30,9 @@ public class CheckListItem extends BaseTimeEntity {
     @Column(name = "item_order", nullable = false)
     private Integer itemOrder;
 
-    @Column(name = "confirm")
-    private Boolean confirm;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status")
+    private CheckListItemStatus status;
 
     @Column(name = "confirmed_at")
     private LocalDateTime confirmedAt;
@@ -51,7 +53,7 @@ public class CheckListItem extends BaseTimeEntity {
                 .checkListId(checkListId)
                 .templateId(request.templateId())
                 .userId(userId)
-                .confirm(false)
+                .status(CheckListItemStatus.PENDING)
                 .build();
     }
 
@@ -72,7 +74,6 @@ public class CheckListItem extends BaseTimeEntity {
                 .checkListId(checkListId)
                 .templateId(templateId)
                 .userId(userId)
-                .confirm(false)
                 .build();
     }
 
@@ -85,6 +86,12 @@ public class CheckListItem extends BaseTimeEntity {
         }
         if (templateId != null) {
             this.templateId = templateId;
+        }
+    }
+
+    public void updateStatus(CheckListItemStatus status) {
+        if (status != null) {
+            this.status = status;
         }
     }
 }

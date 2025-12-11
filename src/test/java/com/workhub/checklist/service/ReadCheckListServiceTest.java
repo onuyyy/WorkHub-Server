@@ -1,6 +1,7 @@
 package com.workhub.checklist.service;
 
 import com.workhub.checklist.dto.CheckListDetails;
+import com.workhub.checklist.dto.CheckListItemStatus;
 import com.workhub.checklist.dto.CheckListResponse;
 import com.workhub.checklist.entity.CheckList;
 import com.workhub.checklist.entity.CheckListItem;
@@ -17,7 +18,6 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -50,7 +50,7 @@ class ReadCheckListServiceTest {
                 .checkListItemId(11L)
                 .itemTitle("아이템")
                 .itemOrder(1)
-                .confirm(false)
+                .status(CheckListItemStatus.PENDING)
                 .confirmedAt(LocalDateTime.now())
                 .checkListId(checkListId)
                 .templateId(100L)
@@ -89,8 +89,9 @@ class ReadCheckListServiceTest {
         assertThat(response.items().get(0).options().get(0).files().get(0).fileUrl()).isEqualTo("https://example.com/file.png");
 
         verify(checkListAccessValidator).validateProjectAndNode(projectId, nodeId);
+        verify(checkListAccessValidator).checkProjectDevMember(projectId);
+        verify(checkListAccessValidator).chekProjectClientMember(projectId);
         verify(checkListService).findByNodeId(nodeId);
         verify(checkListService).findCheckListDetailsById(checkListId);
-        verifyNoMoreInteractions(checkListAccessValidator, checkListService);
     }
 }

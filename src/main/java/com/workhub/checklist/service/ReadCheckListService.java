@@ -29,6 +29,8 @@ public class ReadCheckListService {
      */
     public CheckListResponse findCheckList(Long projectId, Long nodeId) {
         checkListAccessValidator.validateProjectAndNode(projectId, nodeId);
+        checkListAccessValidator.checkProjectDevMember(projectId);
+        checkListAccessValidator.chekProjectClientMember(projectId);
 
         CheckList checkList = checkListService.findByNodeId(nodeId);
 
