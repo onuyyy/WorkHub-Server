@@ -74,8 +74,17 @@ class ReadCheckListServiceTest {
 
         CheckListDetails details = new CheckListDetails(checkList, List.of(item), List.of(option), List.of(file));
 
+        CheckListResponse expectedResponse = new CheckListResponse(
+                checkListId,
+                "테스트 체크리스트",
+                nodeId,
+                10L,
+                List.of()
+        );
+
         when(checkListService.findByNodeId(nodeId)).thenReturn(checkList);
         when(checkListService.findCheckListDetailsById(checkListId)).thenReturn(details);
+        when(checkListService.buildResponse(details)).thenReturn(expectedResponse);
 
         // when
         CheckListResponse response = readCheckListService.findCheckList(projectId, nodeId);
@@ -83,15 +92,11 @@ class ReadCheckListServiceTest {
         // then
         assertThat(response.checkListId()).isEqualTo(checkListId);
         assertThat(response.description()).isEqualTo("테스트 체크리스트");
-        assertThat(response.items()).hasSize(1);
-        assertThat(response.items().get(0).options()).hasSize(1);
-        assertThat(response.items().get(0).options().get(0).files()).hasSize(1);
-        assertThat(response.items().get(0).options().get(0).files().get(0).fileUrl()).isEqualTo("https://example.com/file.png");
 
         verify(checkListAccessValidator).validateProjectAndNode(projectId, nodeId);
-        verify(checkListAccessValidator).checkProjectDevMember(projectId);
-        verify(checkListAccessValidator).chekProjectClientMember(projectId);
+        verify(checkListAccessValidator).checkProjectMemberOrAdmin(projectId);
         verify(checkListService).findByNodeId(nodeId);
         verify(checkListService).findCheckListDetailsById(checkListId);
+        verify(checkListService).buildResponse(details);
     }
 }

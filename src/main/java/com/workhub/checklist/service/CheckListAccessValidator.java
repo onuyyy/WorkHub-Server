@@ -22,6 +22,20 @@ public class CheckListAccessValidator {
         projectService.validateDevMemberForProject(projectId, userId);
     }
 
+    public void checkProjectDevMemberOrAdmin(Long projectId) {
+        if(!SecurityUtil.hasRole("ADMIN")){
+            Long userId = SecurityUtil.getCurrentUserIdOrThrow();
+            projectService.validateDevMemberForProject(projectId, userId);
+        }
+    }
+
+    public void checkProjectMemberOrAdmin(Long projectId) {
+        if(!SecurityUtil.hasRole("ADMIN")){
+            Long userId = SecurityUtil.getCurrentUserIdOrThrow();
+            projectService.validateProjectMember(projectId, userId);
+        }
+    }
+
     public void chekProjectClientMember(Long projectId) {
         Long userId = SecurityUtil.getCurrentUserIdOrThrow();
         projectService.validateClientMemberForProject(projectId, userId);

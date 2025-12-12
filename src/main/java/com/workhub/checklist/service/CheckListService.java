@@ -1,8 +1,6 @@
 package com.workhub.checklist.service;
 
-import com.workhub.checklist.dto.CheckListDetails;
-import com.workhub.checklist.dto.CheckListItemCommentHistorySnapShot;
-import com.workhub.checklist.dto.CheckListItemHistorySnapShot;
+import com.workhub.checklist.dto.*;
 import com.workhub.checklist.entity.*;
 import com.workhub.checklist.repository.CheckListItemRepository;
 import com.workhub.checklist.repository.CheckListOptionFileRepository;
@@ -18,6 +16,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -179,5 +179,62 @@ public class CheckListService {
     public void snapShotAndRecordHistory(CheckListItemComment comment, Long commentId, ActionType actionType) {
         CheckListItemCommentHistorySnapShot snapshot = CheckListItemCommentHistorySnapShot.from(comment);
         historyRecorder.recordHistory(HistoryType.CHECK_LIST_ITEM_COMMENT, commentId, actionType, snapshot);
+    }
+
+    /**
+     * CheckListDetails를 CheckListResponse로 변환한다.
+     * @param details CheckList 상세 정보
+     * @return CheckListResponse
+     */
+    public CheckListResponse buildResponse(CheckListDetails details) {
+        Map<Long, List<CheckListOptionFile>> filesByOptionId = details.getFiles().stream()
+                .collect(Collectors.groupingBy(CheckListOptionFile::getCheckListOptionId));
+
+        Map<Long, List<CheckListOption>> optionsByItemId = details.getOptions().stream()
+                .collect(Collectors.groupingBy(CheckListOption::getCheckListItemId));
+
+        List<CheckListItemResponse> itemResponses = details.getItems().stream()
+                .map(item -> toItemResponse(item, optionsByItemId, filesByOptionId))
+                .collect(Collectors.toList());
+
+        return CheckListResponse.from(details.getCheckList(), itemResponses);
+    }
+
+    /**
+     * CheckListItem을 CheckListItemResponse로 변환한다.
+     * @param item CheckListItem 엔티티
+     * @param optionsByItemId 아이템별 옵션 맵
+     * @param filesByOptionId 옵션별 파일 맵
+     * @return CheckListItemResponse
+     */
+    private CheckListItemResponse toItemResponse(
+            CheckListItem item,
+            Map<Long, List<CheckListOption>> optionsByItemId,
+            Map<Long, List<CheckListOptionFile>> filesByOptionId
+    ) {
+        List<CheckListOptionResponse> optionResponses =
+                optionsByItemId.getOrDefault(item.getCheckListItemId(), List.of()).stream()
+                        .map(option -> toOptionResponse(option, filesByOptionId))
+                        .collect(Collectors.toList());
+
+        return CheckListItemResponse.from(item, optionResponses);
+    }
+
+    /**
+     * CheckListOption을 CheckListOptionResponse로 변환한다.
+     * @param option CheckListOption 엔티티
+     * @param filesByOptionId 옵션별 파일 맵
+     * @return CheckListOptionResponse
+     */
+    private CheckListOptionResponse toOptionResponse(
+            CheckListOption option,
+            Map<Long, List<CheckListOptionFile>> filesByOptionId
+    ) {
+        List<CheckListOptionFileResponse> fileResponses =
+                filesByOptionId.getOrDefault(option.getCheckListOptionId(), List.of()).stream()
+                        .map(CheckListOptionFileResponse::from)
+                        .collect(Collectors.toList());
+
+        return CheckListOptionResponse.from(option, fileResponses);
     }
 }

@@ -13,7 +13,6 @@ import com.workhub.global.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,7 +27,6 @@ public class CheckListController implements CheckListApi {
 
     @Override
     @PostMapping
-    @PreAuthorize("hasAnyRole('DEVELOPER', 'ADMIN')")
     public ResponseEntity<ApiResponse<CheckListResponse>> create(
             @PathVariable Long projectId,
             @PathVariable Long nodeId,
@@ -56,7 +54,6 @@ public class CheckListController implements CheckListApi {
 
     @Override
     @PatchMapping
-    @PreAuthorize("hasAnyRole('DEVELOPER', 'ADMIN')")
     public ResponseEntity<ApiResponse<CheckListResponse>> update(
             @PathVariable Long projectId,
             @PathVariable Long nodeId,
@@ -70,7 +67,6 @@ public class CheckListController implements CheckListApi {
 
     @Override
     @PatchMapping("/{checkListId}/items/{checkListItemId}/status")
-    @PreAuthorize("hasRole('CLIENT')")
     public ResponseEntity<ApiResponse<CheckListItemStatus>> updateStatus(
             @PathVariable Long projectId,
             @PathVariable Long nodeId,

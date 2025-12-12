@@ -14,9 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * 체크리스트 업데이트 서비스
@@ -52,7 +50,7 @@ public class UpdateCheckListService {
     public CheckListResponse update(Long projectId, Long nodeId, CheckListUpdateRequest request) {
 
         checkListAccessValidator.validateProjectAndNode(projectId, nodeId);
-        checkListAccessValidator.checkProjectDevMember(projectId);
+        checkListAccessValidator.checkProjectDevMemberOrAdmin(projectId);
 
         CheckList checkList = checkListService.findByNodeId(nodeId);
 
@@ -66,7 +64,7 @@ public class UpdateCheckListService {
         }
 
         CheckListDetails details = checkListService.findCheckListDetailsById(checkList.getCheckListId());
-        return buildResponse(details);
+        return checkListService.buildResponse(details);
     }
 
     /**
@@ -423,44 +421,5 @@ public class UpdateCheckListService {
         if (!Objects.equals(file.getCheckListOptionId(), optionId)) {
             throw new BusinessException(ErrorCode.INVALID_CHECK_LIST_UPDATE_COMMAND);
         }
-    }
-
-    private CheckListResponse buildResponse(CheckListDetails details) {
-        Map<Long, List<CheckListOptionFile>> filesByOptionId = details.getFiles().stream()
-                .collect(Collectors.groupingBy(CheckListOptionFile::getCheckListOptionId));
-
-        Map<Long, List<CheckListOption>> optionsByItemId = details.getOptions().stream()
-                .collect(Collectors.groupingBy(CheckListOption::getCheckListItemId));
-
-        List<CheckListItemResponse> itemResponses = details.getItems().stream()
-                .map(item -> toItemResponse(item, optionsByItemId, filesByOptionId))
-                .collect(Collectors.toList());
-
-        return CheckListResponse.from(details.getCheckList(), itemResponses);
-    }
-
-    private CheckListItemResponse toItemResponse(
-            CheckListItem item,
-            Map<Long, List<CheckListOption>> optionsByItemId,
-            Map<Long, List<CheckListOptionFile>> filesByOptionId
-    ) {
-        List<CheckListOptionResponse> optionResponses =
-                optionsByItemId.getOrDefault(item.getCheckListItemId(), List.of()).stream()
-                        .map(option -> toOptionResponse(option, filesByOptionId))
-                        .collect(Collectors.toList());
-
-        return CheckListItemResponse.from(item, optionResponses);
-    }
-
-    private CheckListOptionResponse toOptionResponse(
-            CheckListOption option,
-            Map<Long, List<CheckListOptionFile>> filesByOptionId
-    ) {
-        List<CheckListOptionFileResponse> fileResponses =
-                filesByOptionId.getOrDefault(option.getCheckListOptionId(), List.of()).stream()
-                        .map(CheckListOptionFileResponse::from)
-                        .collect(Collectors.toList());
-
-        return CheckListOptionResponse.from(option, fileResponses);
     }
 }

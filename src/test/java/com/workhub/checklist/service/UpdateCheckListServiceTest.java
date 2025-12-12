@@ -111,12 +111,21 @@ class UpdateCheckListServiceTest {
                 new CheckListItemUpdateRequest(CheckListUpdateCommandType.CREATE, null, "새 항목", 1, null, List.of(optionCreate));
         CheckListUpdateRequest request = new CheckListUpdateRequest("최신 전달사항", List.of(itemCreate));
 
+        CheckListDetails details = new CheckListDetails(checkList, List.of(existingItem), List.of(existingOption), List.of(existingFile));
+        CheckListResponse expectedResponse = new CheckListResponse(
+                checkList.getCheckListId(),
+                "최신 전달사항",
+                checkList.getProjectNodeId(),
+                checkList.getUserId(),
+                List.of()
+        );
+
         given(checkListService.findByNodeId(10L)).willReturn(checkList);
         given(checkListService.saveCheckListItem(any(CheckListItem.class))).willReturn(existingItem);
         given(checkListService.saveCheckListOption(any(CheckListOption.class))).willReturn(existingOption);
         given(checkListService.saveCheckListOptionFile(any(CheckListOptionFile.class))).willReturn(existingFile);
-        given(checkListService.findCheckListDetailsById(checkList.getCheckListId()))
-                .willReturn(new CheckListDetails(checkList, List.of(existingItem), List.of(existingOption), List.of(existingFile)));
+        given(checkListService.findCheckListDetailsById(checkList.getCheckListId())).willReturn(details);
+        given(checkListService.buildResponse(details)).willReturn(expectedResponse);
 
         // when
         CheckListResponse response = updateCheckListService.update(1L, 10L, request);
@@ -230,8 +239,18 @@ class UpdateCheckListServiceTest {
                 .willReturn(filesForOptionDelete);
         given(checkListService.findOptionFilesByCheckListOptionId(optionUnderDeletedItem.getCheckListOptionId()))
                 .willReturn(filesForItemDelete);
-        given(checkListService.findCheckListDetailsById(checkList.getCheckListId()))
-                .willReturn(new CheckListDetails(checkList, List.of(existingItem), List.of(existingOption), List.of(existingFile)));
+
+        CheckListDetails details = new CheckListDetails(checkList, List.of(existingItem), List.of(existingOption), List.of(existingFile));
+        CheckListResponse expectedResponse = new CheckListResponse(
+                checkList.getCheckListId(),
+                checkList.getCheckListDescription(),
+                checkList.getProjectNodeId(),
+                checkList.getUserId(),
+                List.of()
+        );
+
+        given(checkListService.findCheckListDetailsById(checkList.getCheckListId())).willReturn(details);
+        given(checkListService.buildResponse(details)).willReturn(expectedResponse);
 
         // when
         CheckListResponse response = updateCheckListService.update(1L, 10L, request);
