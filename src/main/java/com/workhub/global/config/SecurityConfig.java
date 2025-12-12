@@ -105,6 +105,7 @@ public class SecurityConfig {
 
         configuration.setAllowedOriginPatterns(List.of(
                 "https://work-hub-fe.vercel.app",
+                "https://workhub.o-r.kr",
                 "http://localhost:3000"
         ));
         configuration.setAllowedMethods(Arrays.asList(
