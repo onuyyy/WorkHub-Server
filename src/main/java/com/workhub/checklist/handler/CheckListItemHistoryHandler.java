@@ -1,6 +1,6 @@
 package com.workhub.checklist.handler;
 
-import com.workhub.checklist.entity.CheckListItemHistory;
+import com.workhub.checklist.entity.checkList.CheckListItemHistory;
 import com.workhub.checklist.repository.CheckListItemHistoryRepository;
 import com.workhub.global.entity.HistoryType;
 import com.workhub.global.history.HistoryHandler;

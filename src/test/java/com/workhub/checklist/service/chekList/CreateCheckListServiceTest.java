@@ -1,10 +1,10 @@
 package com.workhub.checklist.service.chekList;
 
 import com.workhub.checklist.dto.checkList.*;
-import com.workhub.checklist.entity.CheckList;
-import com.workhub.checklist.entity.CheckListItem;
-import com.workhub.checklist.entity.CheckListOption;
-import com.workhub.checklist.entity.CheckListOptionFile;
+import com.workhub.checklist.entity.checkList.CheckList;
+import com.workhub.checklist.entity.checkList.CheckListItem;
+import com.workhub.checklist.entity.checkList.CheckListOption;
+import com.workhub.checklist.entity.checkList.CheckListOptionFile;
 import com.workhub.checklist.service.CheckListAccessValidator;
 import com.workhub.checklist.service.checkList.CheckListService;
 import com.workhub.checklist.service.checkList.CreateCheckListService;

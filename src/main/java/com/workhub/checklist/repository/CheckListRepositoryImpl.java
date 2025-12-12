@@ -2,7 +2,10 @@ package com.workhub.checklist.repository;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.workhub.checklist.dto.checkList.CheckListDetails;
-import com.workhub.checklist.entity.*;
+import com.workhub.checklist.entity.checkList.CheckList;
+import com.workhub.checklist.entity.checkList.CheckListItem;
+import com.workhub.checklist.entity.checkList.CheckListOption;
+import com.workhub.checklist.entity.checkList.CheckListOptionFile;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
@@ -10,10 +13,10 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
-import static com.workhub.checklist.entity.QCheckList.checkList;
-import static com.workhub.checklist.entity.QCheckListItem.checkListItem;
-import static com.workhub.checklist.entity.QCheckListOption.checkListOption;
-import static com.workhub.checklist.entity.QCheckListOptionFile.checkListOptionFile;
+import static com.workhub.checklist.entity.checkList.QCheckList.checkList;
+import static com.workhub.checklist.entity.checkList.QCheckListItem.checkListItem;
+import static com.workhub.checklist.entity.checkList.QCheckListOption.checkListOption;
+import static com.workhub.checklist.entity.checkList.QCheckListOptionFile.checkListOptionFile;
 
 @Repository
 @RequiredArgsConstructor

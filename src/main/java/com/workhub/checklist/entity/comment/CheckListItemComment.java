@@ -1,4 +1,4 @@
-package com.workhub.checklist.entity;
+package com.workhub.checklist.entity.comment;
 
 import com.workhub.global.entity.BaseTimeEntity;
 import com.workhub.global.error.ErrorCode;

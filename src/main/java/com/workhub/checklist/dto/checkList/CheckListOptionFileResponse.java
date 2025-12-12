@@ -1,6 +1,6 @@
 package com.workhub.checklist.dto.checkList;
 
-import com.workhub.checklist.entity.CheckListOptionFile;
+import com.workhub.checklist.entity.checkList.CheckListOptionFile;
 
 public record CheckListOptionFileResponse(
         Long checkListOptionFileId,

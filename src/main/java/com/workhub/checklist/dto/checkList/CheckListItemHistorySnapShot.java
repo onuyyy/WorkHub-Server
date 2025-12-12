@@ -1,6 +1,6 @@
 package com.workhub.checklist.dto.checkList;
 
-import com.workhub.checklist.entity.CheckListItem;
+import com.workhub.checklist.entity.checkList.CheckListItem;
 import lombok.Builder;
 
 import java.time.LocalDateTime;

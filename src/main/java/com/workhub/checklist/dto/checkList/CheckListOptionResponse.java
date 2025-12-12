@@ -1,6 +1,6 @@
 package com.workhub.checklist.dto.checkList;
 
-import com.workhub.checklist.entity.CheckListOption;
+import com.workhub.checklist.entity.checkList.CheckListOption;
 
 import java.util.List;
 

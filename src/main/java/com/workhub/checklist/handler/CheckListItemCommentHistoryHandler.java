@@ -1,6 +1,6 @@
 package com.workhub.checklist.handler;
 
-import com.workhub.checklist.entity.CheckListItemCommentHistory;
+import com.workhub.checklist.entity.comment.CheckListItemCommentHistory;
 import com.workhub.checklist.repository.CheckListItemCommentHistoryRepository;
 import com.workhub.global.entity.HistoryType;
 import com.workhub.global.history.HistoryHandler;

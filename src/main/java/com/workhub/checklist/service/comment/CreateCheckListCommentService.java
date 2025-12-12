@@ -1,10 +1,13 @@
 package com.workhub.checklist.service.comment;
 
+import com.workhub.checklist.dto.comment.CheckListCommentFileRequest;
+import com.workhub.checklist.dto.comment.CheckListCommentFileResponse;
 import com.workhub.checklist.dto.comment.CheckListCommentRequest;
 import com.workhub.checklist.dto.comment.CheckListCommentResponse;
-import com.workhub.checklist.entity.CheckList;
-import com.workhub.checklist.entity.CheckListItem;
-import com.workhub.checklist.entity.CheckListItemComment;
+import com.workhub.checklist.entity.checkList.CheckList;
+import com.workhub.checklist.entity.checkList.CheckListItem;
+import com.workhub.checklist.entity.comment.CheckListItemComment;
+import com.workhub.checklist.entity.comment.CheckListItemCommentFile;
 import com.workhub.checklist.service.CheckListAccessValidator;
 import com.workhub.checklist.service.checkList.CheckListService;
 import com.workhub.global.entity.ActionType;
@@ -14,6 +17,8 @@ import com.workhub.global.util.SecurityUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -53,7 +58,9 @@ public class CreateCheckListCommentService {
         comment = checkListCommentService.save(comment);
         checkListService.snapShotAndRecordHistory(comment, comment.getClCommentId(), ActionType.CREATE);
 
-        return CheckListCommentResponse.from(comment);
+        List<CheckListCommentFileResponse> fileResponses = createCommentFiles(comment.getClCommentId(), request.files());
+
+        return CheckListCommentResponse.from(comment, fileResponses);
     }
 
     private void validateContent(String content) {
@@ -84,5 +91,23 @@ public class CreateCheckListCommentService {
             throw new BusinessException(ErrorCode.NOT_MATCHED_CHECK_LIST_ITEM_COMMENT);
         }
         return parentComment.getClCommentId();
+    }
+
+    /**
+     * 댓글 첨부파일 목록을 생성한다.
+     * @param commentId 댓글 식별자
+     * @param fileRequests 파일 요청 목록
+     * @return CheckListCommentFileResponse 목록
+     */
+    private List<CheckListCommentFileResponse> createCommentFiles(Long commentId, List<CheckListCommentFileRequest> fileRequests) {
+        if (fileRequests == null || fileRequests.isEmpty()) {
+            return List.of();
+        }
+
+        return fileRequests.stream()
+                .map(f -> CheckListItemCommentFile.of(commentId, f))
+                .peek(checkListCommentService::saveCommentFile)
+                .map(CheckListCommentFileResponse::from)
+                .toList();
     }
 }

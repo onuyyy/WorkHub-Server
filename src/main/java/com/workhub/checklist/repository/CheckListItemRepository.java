@@ -1,6 +1,6 @@
 package com.workhub.checklist.repository;
 
-import com.workhub.checklist.entity.CheckListItem;
+import com.workhub.checklist.entity.checkList.CheckListItem;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

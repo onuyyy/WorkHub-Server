@@ -1,4 +1,4 @@
-package com.workhub.checklist.entity;
+package com.workhub.checklist.entity.checkList;
 
 import com.workhub.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;

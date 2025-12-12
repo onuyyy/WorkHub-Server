@@ -1,5 +1,6 @@
-package com.workhub.checklist.entity;
+package com.workhub.checklist.entity.comment;
 
+import com.workhub.checklist.dto.comment.CheckListCommentFileRequest;
 import com.workhub.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -20,7 +21,7 @@ public class CheckListItemCommentFile extends BaseTimeEntity {
     @Column(name = "comment_file_id")
     private Long commentFileId;
 
-    @Column(name = "file_url", length = 255, nullable = false)
+    @Column(name = "file_url", length = 255)
     private String fileUrl;
 
     @Column(name = "file_name", length = 255, nullable = false)
@@ -31,4 +32,12 @@ public class CheckListItemCommentFile extends BaseTimeEntity {
 
     @Column(name = "cl_comment_id")
     private Long clCommentId;
+
+    public static CheckListItemCommentFile of(Long clCommentId, CheckListCommentFileRequest request) {
+        return CheckListItemCommentFile.builder()
+                .clCommentId(clCommentId)
+                .fileName(request.fileName())
+                .fileOrder(request.fileOrder())
+                .build();
+    }
 }

@@ -1,10 +1,12 @@
 package com.workhub.checklist.service.comment;
 
+import com.workhub.checklist.dto.comment.CheckListCommentFileRequest;
 import com.workhub.checklist.dto.comment.CheckListCommentRequest;
 import com.workhub.checklist.dto.comment.CheckListCommentResponse;
-import com.workhub.checklist.entity.CheckList;
-import com.workhub.checklist.entity.CheckListItem;
-import com.workhub.checklist.entity.CheckListItemComment;
+import com.workhub.checklist.entity.checkList.CheckList;
+import com.workhub.checklist.entity.checkList.CheckListItem;
+import com.workhub.checklist.entity.comment.CheckListItemComment;
+import com.workhub.checklist.entity.comment.CheckListItemCommentFile;
 import com.workhub.checklist.service.CheckListAccessValidator;
 import com.workhub.checklist.service.checkList.CheckListService;
 import com.workhub.global.entity.ActionType;
@@ -20,6 +22,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -171,6 +175,7 @@ class CreateCheckListCommentServiceTest {
         CheckListCommentRequest request = CheckListCommentRequest.builder()
                 .content("   ")
                 .patentClCommentId(null)
+                .files(null)
                 .build();
 
         // when & then
@@ -182,5 +187,125 @@ class CreateCheckListCommentServiceTest {
 
         verifyNoInteractions(checkListService);
         verify(checkListCommentService, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("댓글 생성 시 파일 첨부가 포함되면 파일도 함께 저장된다")
+    void givenRequestWithFiles_whenCreate_thenReturnResponseWithFiles() {
+        // given
+        Long projectId = 1L;
+        Long nodeId = 2L;
+        Long checkListId = 3L;
+        Long checkListItemId = 4L;
+        String content = "댓글 내용";
+        List<CheckListCommentFileRequest> files = List.of(
+                new CheckListCommentFileRequest("file1.jpg", 0),
+                new CheckListCommentFileRequest("file2.png", 1)
+        );
+
+        CheckList checkList = CheckList.builder()
+                .checkListId(checkListId)
+                .projectNodeId(nodeId)
+                .userId(10L)
+                .checkListDescription("desc")
+                .build();
+
+        CheckListItem checkListItem = CheckListItem.builder()
+                .checkListItemId(checkListItemId)
+                .checkListId(checkListId)
+                .itemTitle("item")
+                .itemOrder(1)
+                .build();
+
+        CheckListItemComment savedComment = CheckListItemComment.builder()
+                .clCommentId(100L)
+                .checkListItemId(checkListItemId)
+                .userId(88L)
+                .clContent(content)
+                .build();
+
+        CheckListCommentRequest request = CheckListCommentRequest.builder()
+                .content(content)
+                .patentClCommentId(null)
+                .files(files)
+                .build();
+
+        when(checkListService.findById(checkListId)).thenReturn(checkList);
+        when(checkListService.findCheckListItem(checkListItemId)).thenReturn(checkListItem);
+        when(checkListCommentService.save(any(CheckListItemComment.class))).thenReturn(savedComment);
+        when(checkListCommentService.saveCommentFile(any(CheckListItemCommentFile.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        doNothing().when(checkListService)
+                .snapShotAndRecordHistory(savedComment, savedComment.getClCommentId(), ActionType.CREATE);
+
+        // when
+        CheckListCommentResponse response =
+                createCheckListCommentService.create(projectId, nodeId, checkListId, checkListItemId, request);
+
+        // then
+        assertThat(response.clCommentId()).isEqualTo(100L);
+        assertThat(response.content()).isEqualTo(content);
+        assertThat(response.userId()).isEqualTo(88L);
+        assertThat(response.files()).hasSize(2);
+        assertThat(response.files().get(0).fileName()).isEqualTo("file1.jpg");
+        assertThat(response.files().get(1).fileName()).isEqualTo("file2.png");
+        assertThat(response.files().get(0).fileOrder()).isEqualTo(0);
+        assertThat(response.files().get(1).fileOrder()).isEqualTo(1);
+
+        verify(checkListCommentService, times(2)).saveCommentFile(any(CheckListItemCommentFile.class));
+    }
+
+    @Test
+    @DisplayName("파일 첨부 없이 댓글을 생성하면 빈 파일 리스트가 반환된다")
+    void givenRequestWithoutFiles_whenCreate_thenReturnResponseWithEmptyFiles() {
+        // given
+        Long projectId = 1L;
+        Long nodeId = 2L;
+        Long checkListId = 3L;
+        Long checkListItemId = 4L;
+        String content = "댓글 내용";
+
+        CheckList checkList = CheckList.builder()
+                .checkListId(checkListId)
+                .projectNodeId(nodeId)
+                .userId(10L)
+                .checkListDescription("desc")
+                .build();
+
+        CheckListItem checkListItem = CheckListItem.builder()
+                .checkListItemId(checkListItemId)
+                .checkListId(checkListId)
+                .itemTitle("item")
+                .itemOrder(1)
+                .build();
+
+        CheckListItemComment savedComment = CheckListItemComment.builder()
+                .clCommentId(100L)
+                .checkListItemId(checkListItemId)
+                .userId(88L)
+                .clContent(content)
+                .build();
+
+        CheckListCommentRequest request = CheckListCommentRequest.builder()
+                .content(content)
+                .patentClCommentId(null)
+                .files(null)
+                .build();
+
+        when(checkListService.findById(checkListId)).thenReturn(checkList);
+        when(checkListService.findCheckListItem(checkListItemId)).thenReturn(checkListItem);
+        when(checkListCommentService.save(any(CheckListItemComment.class))).thenReturn(savedComment);
+        doNothing().when(checkListService)
+                .snapShotAndRecordHistory(savedComment, savedComment.getClCommentId(), ActionType.CREATE);
+
+        // when
+        CheckListCommentResponse response =
+                createCheckListCommentService.create(projectId, nodeId, checkListId, checkListItemId, request);
+
+        // then
+        assertThat(response.clCommentId()).isEqualTo(100L);
+        assertThat(response.content()).isEqualTo(content);
+        assertThat(response.files()).isEmpty();
+
+        verify(checkListCommentService, never()).saveCommentFile(any(CheckListItemCommentFile.class));
     }
 }

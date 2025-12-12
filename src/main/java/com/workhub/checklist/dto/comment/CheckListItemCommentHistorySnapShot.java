@@ -1,6 +1,6 @@
 package com.workhub.checklist.dto.comment;
 
-import com.workhub.checklist.entity.CheckListItemComment;
+import com.workhub.checklist.entity.comment.CheckListItemComment;
 import lombok.Builder;
 
 @Builder
