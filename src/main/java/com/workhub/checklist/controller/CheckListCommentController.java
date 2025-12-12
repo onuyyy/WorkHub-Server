@@ -3,13 +3,16 @@ package com.workhub.checklist.controller;
 import com.workhub.checklist.api.CheckListCommentApi;
 import com.workhub.checklist.dto.comment.CheckListCommentRequest;
 import com.workhub.checklist.dto.comment.CheckListCommentResponse;
+import com.workhub.checklist.dto.comment.CheckListCommentUpdateRequest;
 import com.workhub.checklist.service.comment.CreateCheckListCommentService;
+import com.workhub.checklist.service.comment.UpdateCheckListCommentService;
 import com.workhub.global.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class CheckListCommentController implements CheckListCommentApi {
 
     private final CreateCheckListCommentService createCheckListCommentService;
+    private final UpdateCheckListCommentService updateCheckListCommentService;
 
     @Override
     @PostMapping("/{checkListId}/items/{checkListItemId}/comments")
@@ -38,6 +42,21 @@ public class CheckListCommentController implements CheckListCommentApi {
         return ApiResponse.created(response, "체크리스트 댓글이 작성되었습니다.");
     }
 
+    @Override
+    @PatchMapping("/{checkListId}/items/{checkListItemId}/comments/{commentId}")
+    public ResponseEntity<ApiResponse<CheckListCommentResponse>> update(
+            @PathVariable Long projectId,
+            @PathVariable Long nodeId,
+            @PathVariable Long checkListId,
+            @PathVariable Long checkListItemId,
+            @PathVariable Long commentId,
+            @Valid @RequestBody CheckListCommentUpdateRequest request
+    ) {
+        CheckListCommentResponse response = updateCheckListCommentService.update(
+                projectId, nodeId, checkListId, checkListItemId, commentId, request);
+
+        return ApiResponse.success(response, "체크리스트 댓글이 수정되었습니다.");
+    }
 
 
 }

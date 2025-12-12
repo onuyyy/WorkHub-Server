@@ -1,7 +1,7 @@
 package com.workhub.checklist.service.comment;
 
-import com.workhub.checklist.dto.comment.CheckListCommentRequest;
 import com.workhub.checklist.dto.comment.CheckListCommentResponse;
+import com.workhub.checklist.dto.comment.CheckListCommentUpdateRequest;
 import com.workhub.checklist.entity.CheckList;
 import com.workhub.checklist.entity.CheckListItem;
 import com.workhub.checklist.entity.CheckListItemComment;
@@ -10,7 +10,6 @@ import com.workhub.checklist.service.checkList.CheckListService;
 import com.workhub.global.entity.ActionType;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
-import com.workhub.global.util.SecurityUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -18,23 +17,29 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class CreateCheckListCommentService {
+public class UpdateCheckListCommentService {
 
     private final CheckListCommentService checkListCommentService;
     private final CheckListAccessValidator checkListAccessValidator;
     private final CheckListService checkListService;
 
     /**
-     * 프로젝트 해당하는 개발사/고객사와 관리자만이 댓글을 작성할 수 있다.
+     * 작성자 또는 관리자만이 댓글을 수정할 수 있다.
      * @param projectId 프로젝트 식별자
      * @param nodeId 노드 식별자
      * @param checkListId 체크리스트 식별자
      * @param checkListItemId 아이템 식별자
+     * @param commentId 댓글 식별자
      * @param request 요청 폼
      * @return CheckListCommentResponse
      */
-    public CheckListCommentResponse create(
-            Long projectId, Long nodeId, Long checkListId, Long checkListItemId, CheckListCommentRequest request) {
+    public CheckListCommentResponse update(Long projectId,
+                                           Long nodeId,
+                                           Long checkListId,
+                                           Long checkListItemId,
+                                           Long commentId,
+                                           CheckListCommentUpdateRequest request) {
+
         checkListAccessValidator.validateProjectAndNode(projectId, nodeId);
         checkListAccessValidator.checkProjectMemberOrAdmin(projectId);
 
@@ -46,12 +51,12 @@ public class CreateCheckListCommentService {
         CheckListItem checkListItem = checkListService.findCheckListItem(checkListItemId);
         validateItemBelongsToCheckList(checkListId, checkListItem);
 
-        Long parentCommentId = resolveParent(checkListItemId, request.patentClCommentId());
-        Long userId = SecurityUtil.getCurrentUserIdOrThrow();
+        CheckListItemComment comment = checkListCommentService.findById(commentId);
+        validateCommentBelongsToItem(checkListItemId, comment);
+        checkListAccessValidator.validateAdminOrCommentOwner(comment.getUserId());
 
-        CheckListItemComment comment = CheckListItemComment.of(checkListItemId, userId, parentCommentId, request.content());
-        comment = checkListCommentService.save(comment);
-        checkListService.snapShotAndRecordHistory(comment, comment.getClCommentId(), ActionType.CREATE);
+        comment.updateContent(request.content());
+        checkListService.snapShotAndRecordHistory(comment, comment.getClCommentId(), ActionType.UPDATE);
 
         return CheckListCommentResponse.from(comment);
     }
@@ -74,15 +79,10 @@ public class CreateCheckListCommentService {
         }
     }
 
-    private Long resolveParent(Long checkListItemId, Long parentCommentId) {
-        if (parentCommentId == null) {
-            return null;
-        }
-
-        CheckListItemComment parentComment = checkListCommentService.findById(parentCommentId);
-        if (!checkListItemId.equals(parentComment.getCheckListItemId())) {
+    private void validateCommentBelongsToItem(Long checkListItemId, CheckListItemComment comment) {
+        if (!checkListItemId.equals(comment.getCheckListItemId())) {
             throw new BusinessException(ErrorCode.NOT_MATCHED_CHECK_LIST_ITEM_COMMENT);
         }
-        return parentComment.getClCommentId();
     }
+
 }

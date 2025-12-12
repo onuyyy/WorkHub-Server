@@ -1,6 +1,8 @@
 package com.workhub.checklist.entity;
 
 import com.workhub.global.entity.BaseTimeEntity;
+import com.workhub.global.error.ErrorCode;
+import com.workhub.global.error.exception.BusinessException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -43,5 +45,12 @@ public class CheckListItemComment extends BaseTimeEntity {
                 .parentClCommentId(parentClCommentId)
                 .clContent(content)
                 .build();
+    }
+
+    public void updateContent(String content) {
+        if (content == null || content.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_CHECK_LIST_ITEM_COMMENT_CONTENT);
+        }
+        this.clContent = content;
     }
 }

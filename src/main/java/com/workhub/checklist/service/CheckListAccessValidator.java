@@ -1,5 +1,7 @@
 package com.workhub.checklist.service;
 
+import com.workhub.global.error.ErrorCode;
+import com.workhub.global.error.exception.BusinessException;
 import com.workhub.global.util.SecurityUtil;
 import com.workhub.project.service.ProjectService;
 import com.workhub.projectNode.service.ProjectNodeService;
@@ -39,5 +41,16 @@ public class CheckListAccessValidator {
     public void chekProjectClientMember(Long projectId) {
         Long userId = SecurityUtil.getCurrentUserIdOrThrow();
         projectService.validateClientMemberForProject(projectId, userId);
+    }
+
+    public void validateAdminOrCommentOwner(Long commentOwnerId) {
+        if (SecurityUtil.hasRole("ADMIN")) {
+            return;
+        }
+
+        Long userId = SecurityUtil.getCurrentUserIdOrThrow();
+        if (!userId.equals(commentOwnerId)) {
+            throw new BusinessException(ErrorCode.NOT_AUTHORIZED_CHECK_LIST_ITEM_COMMENT_USER);
+        }
     }
 }
