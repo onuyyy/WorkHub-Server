@@ -1,4 +1,4 @@
-package com.workhub.userTable.dto;
+package com.workhub.userTable.dto.email;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

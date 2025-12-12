@@ -1,10 +1,10 @@
 package com.workhub.userTable.controller;
 
 import com.workhub.global.response.ApiResponse;
-import com.workhub.userTable.dto.AdminPasswordResetRequest;
-import com.workhub.userTable.dto.UserPasswordChangeRequest;
-import com.workhub.userTable.dto.UserRoleUpdateRequest;
-import com.workhub.userTable.dto.UserTableResponse;
+import com.workhub.userTable.dto.user.request.AdminPasswordResetRequest;
+import com.workhub.userTable.dto.user.request.UserPasswordChangeRequest;
+import com.workhub.userTable.dto.user.request.UserRoleUpdateRequest;
+import com.workhub.userTable.dto.user.response.UserTableResponse;
 import com.workhub.userTable.entity.Status;
 import com.workhub.userTable.entity.UserRole;
 import com.workhub.userTable.entity.UserTable;

@@ -64,7 +64,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/admin/users/{userId}").authenticated()
                         .requestMatchers("/api/v1/auth/passwordReset/**").authenticated()
 
-                        .requestMatchers("/api/v1/company").authenticated()
+                        .requestMatchers("/api/v1/company/list").authenticated()
+                        .requestMatchers("/api/v1/company/{companyId}/list").authenticated()
                         .requestMatchers("/api/v1/company/detail/{companyId}").authenticated()
                         .requestMatchers("/api/v1/company/**").hasRole("ADMIN")
 

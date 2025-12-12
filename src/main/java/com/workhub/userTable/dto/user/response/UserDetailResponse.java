@@ -1,4 +1,4 @@
-package com.workhub.userTable.dto;
+package com.workhub.userTable.dto.user.response;
 
 import com.workhub.userTable.entity.Status;
 import com.workhub.userTable.entity.UserRole;

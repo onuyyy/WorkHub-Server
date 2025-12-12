@@ -1,15 +1,15 @@
 package com.workhub.userTable.api;
 
 import com.workhub.global.response.ApiResponse;
-import com.workhub.userTable.dto.AdminPasswordResetRequest;
-import com.workhub.userTable.dto.UserDetailResponse;
-import com.workhub.userTable.dto.UserListResponse;
-import com.workhub.userTable.dto.UserLoginRecord;
-import com.workhub.userTable.dto.UserPasswordChangeRequest;
-import com.workhub.userTable.dto.UserRegisterRecord;
-import com.workhub.userTable.dto.UserTableResponse;
+import com.workhub.userTable.dto.user.request.AdminPasswordResetRequest;
+import com.workhub.userTable.dto.user.response.UserDetailResponse;
+import com.workhub.userTable.dto.user.response.UserListResponse;
+import com.workhub.userTable.dto.user.response.UserLoginRecord;
+import com.workhub.userTable.dto.user.request.UserPasswordChangeRequest;
+import com.workhub.userTable.dto.user.response.UserRegisterRecord;
+import com.workhub.userTable.dto.user.response.UserTableResponse;
 import com.workhub.global.security.CustomUserDetails;
-import com.workhub.userTable.dto.UserRoleUpdateRequest;
+import com.workhub.userTable.dto.user.request.UserRoleUpdateRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -60,7 +60,7 @@ public interface UserTableApi {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "사용자를 찾을 수 없음"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류 (회원 상세 조회 실패)")
     })
-    UserDetailResponse getUser(Long userId);
+    ResponseEntity<ApiResponse<UserDetailResponse>> getUser(Long userId);
 
     @Operation(
             summary = "사용자 로그인",

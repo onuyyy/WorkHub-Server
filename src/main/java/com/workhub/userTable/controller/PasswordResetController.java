@@ -2,8 +2,8 @@ package com.workhub.userTable.controller;
 
 import com.workhub.global.response.ApiResponse;
 import com.workhub.userTable.api.PasswordResetApi;
-import com.workhub.userTable.dto.PasswordResetConfirmRequest;
-import com.workhub.userTable.dto.PasswordResetSendRequest;
+import com.workhub.userTable.dto.user.request.PasswordResetConfirmRequest;
+import com.workhub.userTable.dto.user.request.PasswordResetSendRequest;
 import com.workhub.userTable.service.PasswordResetService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

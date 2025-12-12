@@ -1,7 +1,7 @@
 package com.workhub.userTable.entity;
 
 import com.workhub.global.entity.BaseTimeEntity;
-import com.workhub.userTable.dto.CompanyRegisterRequest;
+import com.workhub.userTable.dto.company.request.CompanyRegisterRequest;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

@@ -31,4 +31,17 @@ public class UserRepositoryImpl implements UserRepositoryCustom {
         return users.stream()
                 .collect(Collectors.toMap(UserTable::getUserId, user -> user));
     }
+
+    @Override
+    public List<UserTable> findMapByCompanyIdIn(Long companyId) {
+
+        if (companyId == null || companyId <= 0) {
+            return null;
+        }
+
+        return queryFactory
+                .selectFrom(userTable)
+                .where(userTable.companyId.in(companyId))
+                .fetch();
+    }
 }

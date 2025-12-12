@@ -1,9 +1,9 @@
 package com.workhub.userTable.api;
 
 import com.workhub.global.response.ApiResponse;
-import com.workhub.userTable.dto.EmailVerificationConfirmRequest;
-import com.workhub.userTable.dto.EmailVerificationSendRequest;
-import com.workhub.userTable.dto.EmailVerificationStatusResponse;
+import com.workhub.userTable.dto.email.EmailVerificationConfirmRequest;
+import com.workhub.userTable.dto.email.EmailVerificationSendRequest;
+import com.workhub.userTable.dto.email.EmailVerificationStatusResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;

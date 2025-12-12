@@ -2,8 +2,8 @@ package com.workhub.userTable.service;
 
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
-import com.workhub.userTable.dto.PasswordResetConfirmRequest;
-import com.workhub.userTable.dto.PasswordResetSendRequest;
+import com.workhub.userTable.dto.user.request.PasswordResetConfirmRequest;
+import com.workhub.userTable.dto.user.request.PasswordResetSendRequest;
 import com.workhub.userTable.entity.UserTable;
 import com.workhub.userTable.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

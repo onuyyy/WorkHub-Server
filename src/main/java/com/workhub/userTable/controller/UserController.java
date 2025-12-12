@@ -2,7 +2,10 @@ package com.workhub.userTable.controller;
 
 import com.workhub.global.response.ApiResponse;
 import com.workhub.userTable.api.UserTableApi;
-import com.workhub.userTable.dto.*;
+import com.workhub.userTable.dto.user.request.AdminPasswordResetRequest;
+import com.workhub.userTable.dto.user.request.UserPasswordChangeRequest;
+import com.workhub.userTable.dto.user.request.UserRoleUpdateRequest;
+import com.workhub.userTable.dto.user.response.*;
 import com.workhub.userTable.entity.UserTable;
 import com.workhub.global.security.CustomUserDetails;
 import com.workhub.userTable.service.UserService;
@@ -55,8 +58,9 @@ public class UserController implements UserTableApi {
     }
 
     @GetMapping("/{userId}")
-    public UserDetailResponse getUser(@PathVariable Long userId){
-        return userService.getUser(userId);
+    public ResponseEntity<ApiResponse<UserDetailResponse>> getUser(@PathVariable Long userId){
+        UserDetailResponse response = userService.getUser(userId);
+        return ApiResponse.success(response);
     }
 
     @PostMapping("/add/user")

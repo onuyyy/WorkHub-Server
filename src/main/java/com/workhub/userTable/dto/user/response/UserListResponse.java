@@ -1,10 +1,10 @@
-package com.workhub.userTable.dto;
+package com.workhub.userTable.dto.user.response;
 
 import com.workhub.userTable.entity.Status;
 import com.workhub.userTable.entity.UserRole;
 import com.workhub.userTable.entity.UserTable;
 
-public record UserTableResponse(
+public record UserListResponse(
         Long userId,
         String userName,
         String loginId,
@@ -13,9 +13,9 @@ public record UserTableResponse(
         UserRole role,
         Status status,
         Long companyId
-) {
-    public static UserTableResponse from(UserTable userTable) {
-        return new UserTableResponse(
+){
+    public static UserListResponse from(UserTable userTable){
+        return new UserListResponse(
                 userTable.getUserId(),
                 userTable.getUserName(),
                 userTable.getLoginId(),

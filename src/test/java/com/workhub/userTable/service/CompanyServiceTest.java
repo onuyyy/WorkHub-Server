@@ -2,10 +2,10 @@ package com.workhub.userTable.service;
 
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
-import com.workhub.userTable.dto.CompanyDetailResponse;
-import com.workhub.userTable.dto.CompanyListResponse;
-import com.workhub.userTable.dto.CompanyRegisterRequest;
-import com.workhub.userTable.dto.CompanyResponse;
+import com.workhub.userTable.dto.company.response.CompanyDetailResponse;
+import com.workhub.userTable.dto.company.response.CompanyListResponse;
+import com.workhub.userTable.dto.company.request.CompanyRegisterRequest;
+import com.workhub.userTable.dto.company.response.CompanyResponse;
 import com.workhub.userTable.entity.Company;
 import com.workhub.userTable.entity.CompanyStatus;
 import com.workhub.userTable.repository.CompanyRepository;

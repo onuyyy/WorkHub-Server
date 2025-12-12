@@ -1,8 +1,8 @@
 package com.workhub.userTable.api;
 
 import com.workhub.global.response.ApiResponse;
-import com.workhub.userTable.dto.PasswordResetConfirmRequest;
-import com.workhub.userTable.dto.PasswordResetSendRequest;
+import com.workhub.userTable.dto.user.request.PasswordResetConfirmRequest;
+import com.workhub.userTable.dto.user.request.PasswordResetSendRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;

@@ -1,4 +1,4 @@
-package com.workhub.userTable.dto;
+package com.workhub.userTable.dto.email;
 
 public record EmailVerificationStatusResponse(
         boolean verified

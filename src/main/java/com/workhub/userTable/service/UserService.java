@@ -2,7 +2,9 @@ package com.workhub.userTable.service;
 
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
-import com.workhub.userTable.dto.*;
+import com.workhub.userTable.dto.user.request.AdminPasswordResetRequest;
+import com.workhub.userTable.dto.user.request.UserPasswordChangeRequest;
+import com.workhub.userTable.dto.user.response.*;
 import com.workhub.userTable.entity.Status;
 import com.workhub.userTable.entity.UserRole;
 import com.workhub.userTable.entity.UserTable;
@@ -114,5 +116,14 @@ public class UserService {
 
     public Map<Long, UserTable> getUserMapByUserIdIn(List<Long> userIds) {
         return userRepository.findMapByUserIdIn(userIds);
+    }
+
+    public List<UserNameResponse> getUserMapByCompanyIdIn(Long companyId) {
+
+        List<UserTable> userNames = userRepository.findMapByCompanyIdIn(companyId);
+
+        return userNames.stream()
+                .map(UserNameResponse::from)
+                .toList();
     }
 }

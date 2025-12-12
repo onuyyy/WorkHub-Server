@@ -1,11 +1,13 @@
 package com.workhub.userTable.api;
 
 import com.workhub.global.response.ApiResponse;
-import com.workhub.userTable.dto.CompanyDetailResponse;
-import com.workhub.userTable.dto.CompanyListResponse;
-import com.workhub.userTable.dto.CompanyRegisterRequest;
-import com.workhub.userTable.dto.CompanyResponse;
-import com.workhub.userTable.dto.CompanyStatusUpdateRequest;
+import com.workhub.userTable.dto.company.request.CompanyRegisterRequest;
+import com.workhub.userTable.dto.company.request.CompanyStatusUpdateRequest;
+import com.workhub.userTable.dto.company.response.CompanyDetailResponse;
+import com.workhub.userTable.dto.company.response.CompanyListResponse;
+import com.workhub.userTable.dto.company.response.CompanyResponse;
+import com.workhub.userTable.dto.company.response.CompanyTitleResponse;
+import com.workhub.userTable.dto.user.response.UserNameResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -51,7 +53,21 @@ public interface CompanyApi {
                             schema = @Schema(implementation = CompanyListResponse.class))
             )
     })
-    List<CompanyListResponse> getCompanys();
+    ResponseEntity<ApiResponse<List<CompanyListResponse>>> getCompanys();
+
+    @Operation(
+            summary = "고객사 상호 목록 조회",
+            description = "등록된 고객사 전체 상호 목록을 조회합니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "고객사 상호 목록 조회 성공",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = CompanyTitleResponse.class))
+            )
+    })
+    public ResponseEntity<ApiResponse<List<CompanyTitleResponse>>> getCompanyNames();
 
     @Operation(
             summary = "고객사 상세 조회",
@@ -67,7 +83,7 @@ public interface CompanyApi {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "존재하지 않는 고객사"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청")
     })
-    CompanyDetailResponse getCompany(@PathVariable("companyId") Long companyId);
+    ResponseEntity<ApiResponse<CompanyDetailResponse>> getCompany(@PathVariable("companyId") Long companyId);
 
     @Operation(
             summary = "고객사 삭제",
@@ -102,4 +118,20 @@ public interface CompanyApi {
             @PathVariable("companyId") Long companyId,
             @RequestBody @Valid CompanyStatusUpdateRequest request
     );
+
+    @Operation(
+            summary = "고객사 소속 직원 목록 조회",
+            description = "고객사 ID를 기준으로 해당 고객사에 소속된 직원 목록을 조회합니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "직원 목록 조회 성공",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = UserNameResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "존재하지 않는 고객사"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청")
+    })
+    ResponseEntity<ApiResponse<List<UserNameResponse>>> getMemberList(@PathVariable("companyId") Long companyId);
 }

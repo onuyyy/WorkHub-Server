@@ -7,4 +7,5 @@ import java.util.Map;
 
 public interface UserRepositoryCustom {
     Map<Long, UserTable> findMapByUserIdIn(List<Long> userIds);
+    List<UserTable> findMapByCompanyIdIn(Long companyId);
 }
