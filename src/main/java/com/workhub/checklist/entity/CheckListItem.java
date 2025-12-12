@@ -1,7 +1,7 @@
 package com.workhub.checklist.entity;
 
-import com.workhub.checklist.dto.CheckListItemRequest;
-import com.workhub.checklist.dto.CheckListItemStatus;
+import com.workhub.checklist.dto.checkList.CheckListItemRequest;
+import com.workhub.checklist.dto.checkList.CheckListItemStatus;
 import com.workhub.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

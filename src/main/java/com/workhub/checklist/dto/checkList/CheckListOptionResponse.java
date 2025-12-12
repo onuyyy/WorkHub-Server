@@ -1,4 +1,4 @@
-package com.workhub.checklist.dto;
+package com.workhub.checklist.dto.checkList;
 
 import com.workhub.checklist.entity.CheckListOption;
 

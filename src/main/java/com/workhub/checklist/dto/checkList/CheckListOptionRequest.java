@@ -1,4 +1,4 @@
-package com.workhub.checklist.dto;
+package com.workhub.checklist.dto.checkList;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

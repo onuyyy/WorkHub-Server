@@ -1,7 +1,7 @@
 package com.workhub.checklist.repository;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.workhub.checklist.dto.CheckListDetails;
+import com.workhub.checklist.dto.checkList.CheckListDetails;
 import com.workhub.checklist.entity.*;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;

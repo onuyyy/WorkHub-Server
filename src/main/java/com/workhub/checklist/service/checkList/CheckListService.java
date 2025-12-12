@@ -1,6 +1,7 @@
-package com.workhub.checklist.service;
+package com.workhub.checklist.service.checkList;
 
-import com.workhub.checklist.dto.*;
+import com.workhub.checklist.dto.checkList.*;
+import com.workhub.checklist.dto.comment.CheckListItemCommentHistorySnapShot;
 import com.workhub.checklist.entity.*;
 import com.workhub.checklist.repository.CheckListItemRepository;
 import com.workhub.checklist.repository.CheckListOptionFileRepository;

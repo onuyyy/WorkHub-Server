@@ -1,8 +1,9 @@
-package com.workhub.checklist.service;
+package com.workhub.checklist.service.checkList;
 
-import com.workhub.checklist.dto.CheckListDetails;
-import com.workhub.checklist.dto.CheckListResponse;
+import com.workhub.checklist.dto.checkList.CheckListDetails;
+import com.workhub.checklist.dto.checkList.CheckListResponse;
 import com.workhub.checklist.entity.CheckList;
+import com.workhub.checklist.service.CheckListAccessValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

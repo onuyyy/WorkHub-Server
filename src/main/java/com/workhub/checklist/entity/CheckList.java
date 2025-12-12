@@ -1,6 +1,6 @@
 package com.workhub.checklist.entity;
 
-import com.workhub.checklist.dto.CheckListCreateRequest;
+import com.workhub.checklist.dto.checkList.CheckListCreateRequest;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

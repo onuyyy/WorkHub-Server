@@ -1,13 +1,13 @@
 package com.workhub.checklist.controller;
 
 import com.workhub.checklist.api.CheckListApi;
-import com.workhub.checklist.dto.CheckListCreateRequest;
-import com.workhub.checklist.dto.CheckListItemStatus;
-import com.workhub.checklist.dto.CheckListResponse;
-import com.workhub.checklist.dto.CheckListUpdateRequest;
-import com.workhub.checklist.service.CreateCheckListService;
-import com.workhub.checklist.service.ReadCheckListService;
-import com.workhub.checklist.service.UpdateCheckListService;
+import com.workhub.checklist.dto.checkList.CheckListCreateRequest;
+import com.workhub.checklist.dto.checkList.CheckListItemStatus;
+import com.workhub.checklist.dto.checkList.CheckListResponse;
+import com.workhub.checklist.dto.checkList.CheckListUpdateRequest;
+import com.workhub.checklist.service.checkList.CreateCheckListService;
+import com.workhub.checklist.service.checkList.ReadCheckListService;
+import com.workhub.checklist.service.checkList.UpdateCheckListService;
 import com.workhub.global.response.ApiResponse;
 import com.workhub.global.security.CustomUserDetails;
 import jakarta.validation.Valid;

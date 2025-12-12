@@ -136,7 +136,10 @@ public enum ErrorCode {
     CHECK_LIST_CREATE_REQUIRES_TITLE_AND_ORDER(HttpStatus.BAD_REQUEST, "CH-012", "새 항목 생성시 제목과 순서는 필수입니다."),
     CHECK_LIST_CREATE_REQUIRES_CONTENT_AND_ORDER(HttpStatus.BAD_REQUEST, "CH-013", "새 선택지 생성시 내용과 순서는 필수입니다."),
     CHECK_LIST_CREATE_REQUIRES_FILE_URL(HttpStatus.BAD_REQUEST, "CH-014", "새 파일 생성시 파일 URL은 필수입니다."),
-    CHECK_LIST_ITEM_NOT_BELONG_TO_CHECK_LIST(HttpStatus.BAD_REQUEST, "CH-015", "요청한 체크리스트에 속한 항목이 아닙니다.");
+    CHECK_LIST_ITEM_NOT_BELONG_TO_CHECK_LIST(HttpStatus.BAD_REQUEST, "CH-015", "요청한 체크리스트에 속한 항목이 아닙니다."),
+    INVALID_CHECK_LIST_ITEM_COMMENT_CONTENT(HttpStatus.BAD_REQUEST, "CH-016", "댓글 내용이 없습니다."),
+    NOT_EXISTS_CHECK_LIST_ITEM_COMMENT(HttpStatus.BAD_REQUEST, "CH-017", "댓글이 존재하지 않습니다."),
+    NOT_MATCHED_CHECK_LIST_ITEM_COMMENT(HttpStatus.BAD_REQUEST, "CH-018", "요청한 체크리스트 항목의 댓글이 아닙니다.");
 
     private final HttpStatus httpStatus;
     private final String errorCode;

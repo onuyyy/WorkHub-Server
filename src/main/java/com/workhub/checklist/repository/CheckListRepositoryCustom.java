@@ -1,6 +1,6 @@
 package com.workhub.checklist.repository;
 
-import com.workhub.checklist.dto.CheckListDetails;
+import com.workhub.checklist.dto.checkList.CheckListDetails;
 
 public interface CheckListRepositoryCustom {
 

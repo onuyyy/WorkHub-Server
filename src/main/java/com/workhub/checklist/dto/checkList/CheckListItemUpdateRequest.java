@@ -1,20 +1,27 @@
-package com.workhub.checklist.dto;
+package com.workhub.checklist.dto.checkList;
 
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 
-public record CheckListOptionFileUpdateRequest(
-        @NotNull(message = "파일 작업 유형은 필수입니다")
+import java.util.List;
+
+public record CheckListItemUpdateRequest(
+        @NotNull(message = "항목 작업 유형은 필수입니다")
         CheckListUpdateCommandType changeType,
 
-        Long checkListOptionFileId,
-        String fileUrl,
-        Integer fileOrder
+        Long checkListItemId,
+        String itemTitle,
+        Integer itemOrder,
+        Long templateId,
+
+        @Valid
+        List<CheckListOptionUpdateRequest> options
 ) {
     /**
      * changeType에 따른 필드 검증
-     * - CREATE: ID 없어야 함, fileUrl 필수
+     * - CREATE: ID 없어야 함, title/order 필수
      * - UPDATE: ID 필수
      * - DELETE: ID 필수
      */
@@ -25,24 +32,29 @@ public record CheckListOptionFileUpdateRequest(
 
         switch (changeType) {
             case CREATE -> {
-                if (checkListOptionFileId != null) {
+                if (checkListItemId != null) {
                     throw new BusinessException(ErrorCode.CHECK_LIST_CREATE_CANNOT_HAVE_ID);
                 }
-                if (fileUrl == null || fileUrl.isBlank()) {
-                    throw new BusinessException(ErrorCode.CHECK_LIST_CREATE_REQUIRES_FILE_URL);
+                if (itemTitle == null || itemOrder == null) {
+                    throw new BusinessException(ErrorCode.CHECK_LIST_CREATE_REQUIRES_TITLE_AND_ORDER);
                 }
             }
             case UPDATE -> {
-                if (checkListOptionFileId == null) {
+                if (checkListItemId == null) {
                     throw new BusinessException(ErrorCode.CHECK_LIST_UPDATE_REQUIRES_ID);
                 }
-                // UPDATE는 부분 업데이트 허용: fileUrl, fileOrder 중 하나만 있어도 OK
+                // UPDATE는 부분 업데이트 허용: title, order 중 하나만 있어도 OK
             }
             case DELETE -> {
-                if (checkListOptionFileId == null) {
+                if (checkListItemId == null) {
                     throw new BusinessException(ErrorCode.CHECK_LIST_DELETE_REQUIRES_ID);
                 }
             }
+        }
+
+        // 하위 options도 검증
+        if (options != null) {
+            options.forEach(CheckListOptionUpdateRequest::validate);
         }
     }
 }

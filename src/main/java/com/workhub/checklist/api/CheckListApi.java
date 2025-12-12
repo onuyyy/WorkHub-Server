@@ -1,9 +1,9 @@
 package com.workhub.checklist.api;
 
-import com.workhub.checklist.dto.CheckListCreateRequest;
-import com.workhub.checklist.dto.CheckListItemStatus;
-import com.workhub.checklist.dto.CheckListResponse;
-import com.workhub.checklist.dto.CheckListUpdateRequest;
+import com.workhub.checklist.dto.checkList.CheckListCreateRequest;
+import com.workhub.checklist.dto.checkList.CheckListItemStatus;
+import com.workhub.checklist.dto.checkList.CheckListResponse;
+import com.workhub.checklist.dto.checkList.CheckListUpdateRequest;
 import com.workhub.global.response.ApiResponse;
 import com.workhub.global.security.CustomUserDetails;
 import io.swagger.v3.oas.annotations.Operation;

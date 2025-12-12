@@ -32,4 +32,16 @@ public class CheckListItemComment extends BaseTimeEntity {
 
     @Column(name = "parent_cl_comment_id")
     private Long parentClCommentId;
+
+    public static CheckListItemComment of(Long checkListItemId,
+                                          Long userId,
+                                          Long parentClCommentId,
+                                          String content) {
+        return CheckListItemComment.builder()
+                .checkListItemId(checkListItemId)
+                .userId(userId)
+                .parentClCommentId(parentClCommentId)
+                .clContent(content)
+                .build();
+    }
 }
