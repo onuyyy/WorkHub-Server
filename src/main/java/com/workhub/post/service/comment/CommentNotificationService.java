@@ -16,7 +16,7 @@ public class CommentNotificationService {
     private final NotificationTargetFinder notificationTargetFinder;
     private final NotificationPublisher notificationPublisher;
 
-    protected void notifyCommentCreated(Long projectId, Post post, PostComment comment) {
+    protected void notifyCreated(Long projectId, Post post, PostComment comment) {
         publishComment(projectId, post, comment, "댓글이 생성되었습니다.");
     }
 

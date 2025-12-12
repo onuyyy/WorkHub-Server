@@ -6,7 +6,6 @@ import com.workhub.cs.entity.CsPost;
 import com.workhub.cs.entity.CsPostFile;
 import com.workhub.global.entity.ActionType;
 import com.workhub.project.service.ProjectService;
-import com.workhub.cs.service.CsPostNotificationService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -47,7 +46,7 @@ public class CreateCsPostService {
         }
 
         csPostService.snapShotAndRecordHistory(csPost, csPost.getCsPostId(), ActionType.CREATE);
-        csPostNotificationService.notifyCsPostCreated(projectId, csPost.getCsPostId(), csPost.getTitle());
+        csPostNotificationService.notifyCreated(projectId, csPost.getCsPostId(), csPost.getTitle());
 
         return CsPostResponse.from(csPost, files);
     }

@@ -21,7 +21,7 @@ public class PostNotificationService {
      * @param projectId 프로젝트 ID
      * @param post 생성된 게시글
      */
-    protected void notifyPostCreated(Long projectId, Post post) {
+    protected void notifyCreated(Long projectId, Post post) {
         Set<Long> receivers = notificationTargetFinder.findAllMembersOfProject(projectId);
         if (receivers.isEmpty()) {
             return;
@@ -38,28 +38,9 @@ public class PostNotificationService {
     }
 
     /**
-     * 게시글 삭제 시 프로젝트 멤버에게 알림을 전송한다.
-     */
-    protected void notifyPostDeleted(Long projectId, Post post) {
-        Set<Long> receivers = notificationTargetFinder.findAllMembersOfProject(projectId);
-        if (receivers.isEmpty()) {
-            return;
-        }
-        String relatedUrl = "/projects/" + projectId + "/nodes/" + post.getProjectNodeId() + "/posts/" + post.getPostId();
-        notificationPublisher.publishPost(
-                receivers,
-                NotificationType.POST_DELETED,
-                post.getTitle(),
-                "게시글이 삭제되었습니다.",
-                relatedUrl,
-                post.getPostId()
-        );
-    }
-
-    /**
      * 게시글 수정 시 프로젝트 멤버에게 알림을 보낸다.
      */
-    protected void notifyPostUpdated(Long projectId, Post post) {
+    protected void notifyUpdated(Long projectId, Post post) {
         Set<Long> receivers = notificationTargetFinder.findAllMembersOfProject(projectId);
         if (receivers.isEmpty()) {
             return;

@@ -63,7 +63,7 @@ public class CreatePostService {
         List<PostLink> savedLinks = savePostLinks(savedPost.getPostId(), request.links());
 
         historyRecorder.recordHistory(HistoryType.POST, savedPost.getPostId(), ActionType.CREATE, PostHistorySnapshot.from(savedPost));
-        postNotificationService.notifyPostCreated(projectId, savedPost);
+        postNotificationService.notifyCreated(projectId, savedPost);
 
         return PostResponse.from(savedPost, savedFiles, savedLinks);
     }

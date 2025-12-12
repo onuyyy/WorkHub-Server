@@ -22,7 +22,6 @@ public class DeletePostService {
     private final PostService postService;
     private final PostValidator postValidator;
     private final HistoryRecorder historyRecorder;
-    private final PostNotificationService postNotificationService;
 
 
     /**
@@ -44,7 +43,6 @@ public class DeletePostService {
         }
         historyRecorder.recordHistory(HistoryType.POST, target.getPostId(), ActionType.DELETE, PostHistorySnapshot.from(target));
         deleteRecursively(target);
-        postNotificationService.notifyPostDeleted(projectId, target);
     }
 
     /**

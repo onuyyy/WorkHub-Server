@@ -24,6 +24,7 @@ public class CreateProjectService {
 
     private final ProjectService projectService;
     private final HistoryRecorder historyRecorder;
+    private final ProjectEventNotificationService projectEventNotificationService;
 
     /**
      * 프로젝트를 생성하고 관련 히스토리 및 멤버 정보를 저장
@@ -35,6 +36,7 @@ public class CreateProjectService {
         Project savedProject = saveProjectAndHistory(request);
         saveClientMembersAndHistory(request.managerIds(), savedProject.getProjectId());
         saveDevMembersAndHistory(request.developerIds(), savedProject.getProjectId());
+        projectEventNotificationService.notifyProjectCreated(savedProject);
 
         return ProjectResponse.from(savedProject);
     }

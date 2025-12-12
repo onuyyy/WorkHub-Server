@@ -6,12 +6,7 @@ import com.workhub.global.history.HistoryRecorder;
 import com.workhub.project.dto.ProjectHistorySnapshot;
 import com.workhub.project.dto.request.CreateProjectRequest;
 import com.workhub.project.dto.response.ProjectResponse;
-import com.workhub.project.entity.DevPart;
-import com.workhub.project.entity.Project;
-import com.workhub.project.entity.ProjectClientMember;
-import com.workhub.project.entity.ProjectDevMember;
-import com.workhub.project.entity.Role;
-import com.workhub.project.entity.Status;
+import com.workhub.project.entity.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,6 +31,9 @@ class CreateProjectServiceTest {
 
     @Mock
     private HistoryRecorder historyRecorder;
+
+    @Mock
+    private ProjectEventNotificationService projectEventNotificationService;
 
     @InjectMocks
     private CreateProjectService createProjectService;
@@ -151,6 +149,7 @@ class CreateProjectServiceTest {
         assertThat(response).isNotNull();
         assertThat(response.projectId()).isEqualTo(1L);
         assertThat(response.projectTitle()).isEqualTo("신규 프로젝트");
+        verify(projectEventNotificationService).notifyProjectCreated(any(Project.class));
     }
 
     @Test

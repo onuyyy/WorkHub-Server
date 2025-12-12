@@ -42,7 +42,7 @@ public class CreateCommentService {
         postComment =  commentService.save(postComment);
 
         snapshotAndRecordHistory(postComment, ActionType.CREATE);
-        commentNotificationService.notifyCommentCreated(projectId, post, postComment);
+        commentNotificationService.notifyCreated(projectId, post, postComment);
         return CommentResponse.from(postComment);
     }
 

@@ -1,4 +1,4 @@
-package com.workhub.cs.service;
+package com.workhub.cs.service.csPost;
 
 import com.workhub.global.notification.NotificationPublisher;
 import com.workhub.project.entity.ProjectDevMember;
@@ -24,7 +24,7 @@ public class CsPostNotificationService {
     /**
      * CS 게시글 생성 시 개발사 멤버에게 알림.
      */
-    public void notifyCsPostCreated(Long projectId, Long csPostId, String title) {
+    public void notifyCreated(Long projectId, Long csPostId, String title) {
         Set<Long> receivers = findDevMembers(projectId);
         if (receivers.isEmpty()) return;
         String url = "/api/v1/projects/" + projectId + "/csPosts";
@@ -35,7 +35,7 @@ public class CsPostNotificationService {
     /**
      * CS 게시글 수정 시 개발사 멤버 + 해당 게시물의 댓글 작성자에게 알림.
      */
-    public void notifyCsPostUpdated(Long projectId, Long csPostId, String title, Set<Long> commenters) {
+    public void notifyUpdated(Long projectId, Long csPostId, String title, Set<Long> commenters) {
         Set<Long> receivers = findDevMembers(projectId);
         receivers.addAll(commenters);
         if (receivers.isEmpty()) return;

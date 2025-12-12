@@ -5,6 +5,7 @@ import com.workhub.global.entity.HistoryType;
 import com.workhub.global.history.HistoryRecorder;
 import com.workhub.project.dto.ProjectHistorySnapshot;
 import com.workhub.project.dto.request.CreateProjectRequest;
+import com.workhub.project.dto.request.UpdateStatusRequest;
 import com.workhub.project.dto.response.ProjectResponse;
 import com.workhub.project.entity.DevPart;
 import com.workhub.project.entity.Project;
@@ -36,6 +37,9 @@ class UpdateProjectServiceTest {
 
     @Mock
     private HistoryRecorder historyRecorder;
+
+    @Mock
+    private ProjectEventNotificationService projectEventNotificationService;
 
     @InjectMocks
     private UpdateProjectService updateProjectService;
@@ -354,5 +358,19 @@ class UpdateProjectServiceTest {
         // 새로운 멤버 추가
         verify(projectService).saveClientMembers(eq(Arrays.asList(100L, 200L)), eq(1L));
         verify(projectService).saveDevMembers(eq(Arrays.asList(1000L, 2000L)), eq(1L));
+    }
+
+    @Test
+    @DisplayName("프로젝트 상태 변경 시 히스토리와 알림이 기록된다")
+    void givenStatusChange_whenUpdateStatus_thenHistoryAndNotification() {
+        mockProject.updateProjectStatus(Status.IN_PROGRESS);
+        when(projectService.findProjectById(1L)).thenReturn(mockProject);
+        UpdateStatusRequest request = new UpdateStatusRequest(Status.COMPLETED);
+
+        updateProjectService.updateProjectStatus(1L, request);
+
+        verify(historyRecorder).recordHistory(eq(HistoryType.PROJECT), eq(1L), eq(ActionType.UPDATE), any(ProjectHistorySnapshot.class));
+        verify(projectEventNotificationService).notifyStatusChanged(mockProject, Status.IN_PROGRESS);
+        assertThat(mockProject.getStatus()).isEqualTo(Status.COMPLETED);
     }
 }

@@ -5,7 +5,6 @@ import com.workhub.cs.dto.csQna.CsQnaResponse;
 import com.workhub.cs.entity.CsPost;
 import com.workhub.cs.entity.CsQna;
 import com.workhub.cs.service.CsPostAccessValidator;
-import com.workhub.cs.service.CsQnaNotificationService;
 import com.workhub.global.entity.ActionType;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
@@ -36,7 +35,7 @@ public class CreateCsQnaService {
 
         // 알림: 게시글 작성자 + (대댓글이면 부모 댓글 작성자)
         Long parentAuthor = parentQnaId != null ? csQnaService.findById(parentQnaId).getUserId() : null;
-        csQnaNotificationService.notifyCsQnaCreated(projectId, csPostId, csQna.getCsQnaId(), csPost.getUserId(), parentAuthor);
+        csQnaNotificationService.notifyCreated(projectId, csPostId, csQna.getCsQnaId(), csPost.getUserId(), parentAuthor);
 
         return CsQnaResponse.from(csQna);
     }

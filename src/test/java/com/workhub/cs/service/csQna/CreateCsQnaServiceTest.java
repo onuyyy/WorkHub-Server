@@ -5,7 +5,6 @@ import com.workhub.cs.dto.csQna.CsQnaResponse;
 import com.workhub.cs.entity.CsPost;
 import com.workhub.cs.entity.CsQna;
 import com.workhub.cs.service.CsPostAccessValidator;
-import com.workhub.cs.service.CsQnaNotificationService;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import org.junit.jupiter.api.DisplayName;

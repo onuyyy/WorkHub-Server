@@ -5,7 +5,6 @@ import com.workhub.cs.dto.csPost.CsPostUpdateRequest;
 import com.workhub.cs.entity.CsPost;
 import com.workhub.cs.entity.CsPostStatus;
 import com.workhub.cs.service.CsPostAccessValidator;
-import com.workhub.cs.service.CsPostNotificationService;
 import com.workhub.cs.service.csQna.CsQnaService;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;

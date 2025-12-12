@@ -25,6 +25,7 @@ public class UpdateProjectService {
 
     private final ProjectService projectService;
     private final HistoryRecorder historyRecorder;
+    private final ProjectEventNotificationService projectEventNotificationService;
 
     /**
      * 프로젝트 상태를 업데이트하고 변경 이력을 저장.
@@ -35,11 +36,12 @@ public class UpdateProjectService {
                                     UpdateStatusRequest statusRequest) {
 
         Project original = projectService.findProjectById(projectId);
+        var beforeStatus = original.getStatus();
         ProjectHistorySnapshot snapshot = ProjectHistorySnapshot.from(original);
-        //String beforeStatus = original.getStatus().toString();
 
         original.updateProjectStatus(statusRequest.status());
         historyRecorder.recordHistory(HistoryType.PROJECT, projectId, ActionType.UPDATE, snapshot);
+        projectEventNotificationService.notifyStatusChanged(original, beforeStatus);
 
     }
 
@@ -53,8 +55,13 @@ public class UpdateProjectService {
      */
     public ProjectResponse updateProject(Long projectId, CreateProjectRequest request) {
 
-        // 1. 프로젝트 업데이트
-        Project updatedProject = updateProjectAndHistory(projectId, request);
+        // 1. 프로젝트 업데이트 및 변경 필드 확인
+        Project original = projectService.findProjectById(projectId);
+        var beforeTitle = original.getProjectTitle();
+        var beforeDescription = original.getProjectDescription();
+        var beforeEndDate = original.getContractEndDate();
+
+        Project updatedProject = updateProjectAndHistory(original, request);
 
         // 2. 기존 멤버 조회
         List<ProjectClientMember> existingClientMembers = projectService.getClientMemberByProjectId(projectId);
@@ -71,6 +78,16 @@ public class UpdateProjectService {
         removeDevMembersAndHistory(existingDevMembers, toRemoveDevIds, projectId);
         saveClientMembersAndHistory(toAddClientIds, projectId);
         saveDevMembersAndHistory(toAddDevIds, projectId);
+
+        // 5. 알림 발행
+        boolean titleChanged = !beforeTitle.equals(updatedProject.getProjectTitle());
+        boolean descChanged = !beforeDescription.equals(updatedProject.getProjectDescription());
+        boolean endDateChanged = (beforeEndDate == null && updatedProject.getContractEndDate() != null)
+                || (beforeEndDate != null && !beforeEndDate.equals(updatedProject.getContractEndDate()));
+
+        projectEventNotificationService.notifyInfoUpdated(updatedProject, titleChanged, descChanged, endDateChanged);
+        projectEventNotificationService.notifyMembersAdded(updatedProject, toAddClientIds.size() + toAddDevIds.size());
+        projectEventNotificationService.notifyMembersRemoved(updatedProject, toRemoveClientIds.size() + toRemoveDevIds.size());
 
         return ProjectResponse.from(updatedProject);
     }
@@ -119,12 +136,11 @@ public class UpdateProjectService {
      * @param request 업데이트 요청
      * @return 업데이트된 프로젝트
      */
-    private Project updateProjectAndHistory(Long projectId, CreateProjectRequest request) {
-        Project original = projectService.findProjectById(projectId);
+    private Project updateProjectAndHistory(Project original, CreateProjectRequest request) {
         ProjectHistorySnapshot snapshot = ProjectHistorySnapshot.from(original);
 
         original.update(request);
-        historyRecorder.recordHistory(HistoryType.PROJECT, projectId, ActionType.UPDATE, snapshot);
+        historyRecorder.recordHistory(HistoryType.PROJECT, original.getProjectId(), ActionType.UPDATE, snapshot);
 
         return original;
     }

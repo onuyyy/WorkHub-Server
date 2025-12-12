@@ -58,7 +58,7 @@ public class UpdatePostService {
                 .filter(link -> link.getDeletedAt() == null)
                 .toList();
 
-        postNotificationService.notifyPostUpdated(projectId, target);
+        postNotificationService.notifyUpdated(projectId, target);
 
         return PostResponse.from(target, visibleFiles, visibleLinks);
     }
