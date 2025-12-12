@@ -25,6 +25,7 @@ CREATE TABLE user_table (
     phone VARCHAR(12) NOT NULL,
     user_role VARCHAR(20) NOT NULL,
     user_name VARCHAR(20) NOT NULL,
+    profile_img VARCHAR NULL,
     status VARCHAR(20) NOT NULL,
     created_at TIMESTAMP NULL,
     updated_at TIMESTAMP NULL,

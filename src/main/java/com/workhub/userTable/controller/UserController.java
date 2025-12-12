@@ -1,13 +1,13 @@
 package com.workhub.userTable.controller;
 
+import com.workhub.file.service.UpdateProfileService;
 import com.workhub.global.response.ApiResponse;
-import com.workhub.userTable.api.UserTableApi;
-import com.workhub.userTable.dto.user.request.AdminPasswordResetRequest;
-import com.workhub.userTable.dto.user.request.UserPasswordChangeRequest;
-import com.workhub.userTable.dto.user.request.UserRoleUpdateRequest;
-import com.workhub.userTable.dto.user.response.*;
-import com.workhub.userTable.entity.UserTable;
 import com.workhub.global.security.CustomUserDetails;
+import com.workhub.userTable.api.UserApi;
+import com.workhub.userTable.dto.user.request.UserLoginRecord;
+import com.workhub.userTable.dto.user.request.UserPasswordChangeRequest;
+import com.workhub.userTable.dto.user.response.UserDetailResponse;
+import com.workhub.userTable.dto.user.response.UserListResponse;
 import com.workhub.userTable.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -20,19 +20,17 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/admin/users")
+@RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
-public class UserController implements UserTableApi {
+public class UserController implements UserApi {
 
     private final UserService userService;
-
-    @GetMapping
-    public List<UserListResponse> getUserTable(){
-        return userService.getUsers();
-    }
+    private final UpdateProfileService profileService;
 
     @PostMapping("/login")
     @Override
@@ -57,47 +55,34 @@ public class UserController implements UserTableApi {
         return ApiResponse.success("로그인 성공");
     }
 
+    @GetMapping("/list")
+    @Override
+    public List<UserListResponse> getUserTable(){
+        return userService.getUsers();
+    }
+
+
     @GetMapping("/{userId}")
+    @Override
     public ResponseEntity<ApiResponse<UserDetailResponse>> getUser(@PathVariable Long userId){
         UserDetailResponse response = userService.getUser(userId);
         return ApiResponse.success(response);
     }
 
-    @PostMapping("/add/user")
-    @Override
-    public ResponseEntity<ApiResponse<UserTableResponse>> register(@RequestBody @Valid UserRegisterRecord registerRecord) {
-        UserTable createdUser = userService.register(registerRecord);
-        return ApiResponse.created(UserTableResponse.from(createdUser), "관리자가 계정을 생성했습니다.");
-    }
-
     @PatchMapping("/auth/passwordReset/confirm")
     @Override
     public ResponseEntity<ApiResponse<String>> updatePassword(@AuthenticationPrincipal CustomUserDetails userDetails,
-                                              @Valid @RequestBody UserPasswordChangeRequest passwordUpdateDto) {
+                                                              @Valid @RequestBody UserPasswordChangeRequest passwordUpdateDto) {
         userService.changePassword(userDetails.getUserId(), passwordUpdateDto);
         return ApiResponse.success("비밀번호 재설정 완료", "비밀번호 재설정 요청 성공");
     }
 
-    @PatchMapping("/{userId}/password/reset")
+    @PatchMapping("/profile")
     @Override
-    public ResponseEntity<ApiResponse<String>> resetPasswordByAdmin(@PathVariable Long userId,
-                                                    @Valid @RequestBody AdminPasswordResetRequest passwordResetDto) {
-        userService.resetPassword(userId, passwordResetDto);
-        return ApiResponse.success("관리자 비밀번호 초기화 완료", "관리자가 비밀번호를 초기화했습니다.");
-    }
+    public ResponseEntity<ApiResponse<String>> updateProfile(@RequestPart("file") MultipartFile file) {
 
-    @PatchMapping("/{userId}/role")
-    @Override
-    public ResponseEntity<ApiResponse<UserTableResponse>> updateUserRole(@PathVariable Long userId,
-                                                                         @Valid @RequestBody UserRoleUpdateRequest request) {
-        UserTableResponse updatedUser = userService.updateRole(userId, request.role());
-        return ApiResponse.success(updatedUser, "회원 역할이 변경되었습니다.");
-    }
+        String profile = profileService.updateProfile(file);
+        return ApiResponse.success(profile);
 
-    @DeleteMapping("/delete/{userId}")
-    @Override
-    public ResponseEntity<ApiResponse<Object>> deleteUser(@PathVariable Long userId) {
-        userService.deleteUser(userId);
-        return ApiResponse.success(null, "회원이 비활성화되었습니다.");
     }
 }

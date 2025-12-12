@@ -3,7 +3,9 @@ package com.workhub.userTable.service;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import com.workhub.userTable.dto.user.request.AdminPasswordResetRequest;
+import com.workhub.userTable.dto.user.request.UserLoginRecord;
 import com.workhub.userTable.dto.user.request.UserPasswordChangeRequest;
+import com.workhub.userTable.dto.user.request.UserRegisterRecord;
 import com.workhub.userTable.dto.user.response.*;
 import com.workhub.userTable.entity.Status;
 import com.workhub.userTable.entity.UserRole;
@@ -42,6 +44,7 @@ public class UserService {
 
     }
 
+    @Transactional
     public UserTable getUserById(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_EXISTS));

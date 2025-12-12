@@ -60,9 +60,8 @@ public class SecurityConfig {
                         .accessDeniedHandler(accessDeniedHandler)  // 권한이 없는 경우 403
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/admin/users/login").permitAll()
-                        .requestMatchers("/api/v1/admin/users/{userId}").authenticated()
-                        .requestMatchers("/api/v1/auth/passwordReset/**").authenticated()
+                        .requestMatchers("/api/v1/users/login").permitAll()
+                        .requestMatchers("/api/v1/users/**").authenticated()
 
                         .requestMatchers("/api/v1/company/list").authenticated()
                         .requestMatchers("/api/v1/company/{companyId}/list").authenticated()

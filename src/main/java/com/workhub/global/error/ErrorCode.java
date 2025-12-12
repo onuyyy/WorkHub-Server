@@ -98,6 +98,7 @@ public enum ErrorCode {
     INVALID_FILE_NAME(HttpStatus.BAD_REQUEST, "F-005", "파일 이름이 누락되었습니다."),
     FILE_SIZE_EXCEEDED(HttpStatus.BAD_REQUEST, "F-006", "파일 크기가 제한을 초과했습니다."),
     FILE_ACCESS_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "F-007", "파일 접근에 실패했습니다."),
+    INVALID_FILE_URL(HttpStatus.BAD_REQUEST, "F-008", "올바르지 않은 파일 URL입니다."),
 
     // 프로젝트
     PROJECT_SAVE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "PR-001", "프로젝트 저장에 실패했습니다."),

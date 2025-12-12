@@ -1,4 +1,4 @@
-package com.workhub.userTable.dto.user.response;
+package com.workhub.userTable.dto.user.request;
 
 import com.workhub.userTable.entity.UserRole;
 import jakarta.validation.constraints.Email;

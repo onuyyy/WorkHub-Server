@@ -1,7 +1,7 @@
 package com.workhub.userTable.entity;
 
 import com.workhub.global.entity.BaseTimeEntity;
-import com.workhub.userTable.dto.user.response.UserRegisterRecord;
+import com.workhub.userTable.dto.user.request.UserRegisterRecord;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -33,6 +33,9 @@ public class UserTable extends BaseTimeEntity {
 
     @Column(name = "phone", nullable = false, length = 12)
     private String phone;
+
+    @Column(name = "profile_img")
+    private String profileImg;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "user_role", nullable = false)
@@ -76,5 +79,9 @@ public class UserTable extends BaseTimeEntity {
                 .companyId(register.companyId())
                 .status(Status.ACTIVE)
                 .build();
+    }
+
+    public void updateProfile(String newProfile) {
+        this.profileImg = newProfile;
     }
 }

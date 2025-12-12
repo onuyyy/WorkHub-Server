@@ -1,4 +1,4 @@
-package com.workhub.userTable.dto.user.response;
+package com.workhub.userTable.dto.user.request;
 
 public record UserLoginRecord(
         String loginId,

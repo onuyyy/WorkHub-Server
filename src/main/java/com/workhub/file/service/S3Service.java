@@ -1,6 +1,5 @@
 package com.workhub.file.service;
 
-import com.workhub.file.dto.FileUploadResponse;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
@@ -16,9 +15,11 @@ import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignReques
 
 import java.io.IOException;
 import java.time.Duration;
-import java.util.List;
-import java.util.UUID;
 
+/**
+ * AWS S3와의 직접적인 통신을 담당하는 저수준 서비스.
+ * 비즈니스 로직 없이 순수한 S3 작업만 수행합니다.
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -30,206 +31,121 @@ public class S3Service {
     @Value("${spring.cloud.aws.s3.bucket}")
     private String bucket;
 
-    @Value("${file.upload.max-size}")
-    private long maxFileSize;
+    @Value("${spring.cloud.aws.region.static}")
+    private String region;
 
     /**
-     * 클라이언트로부터 전달받은 파일을 AWS S3에 저장.
-     * 파일명은 UUID를 사용하여 고유하게 생성되며, 원본 파일의 확장자는 유지.
-     * @param files 업로드할 MultipartFile List 객체
-     * @return S3에 저장된 고유 파일명 (UUID + 확장자)
-     */
-    public List<FileUploadResponse> uploadFiles(List<MultipartFile> files) {
-
-        if (files == null || files.isEmpty()) {
-            return List.of();
-        }
-
-        return files.stream()
-                .map(file -> {
-                    if (file.isEmpty()) {
-                        log.error("File upload failed: Empty file found in the list.");
-                        throw new BusinessException(ErrorCode.INVALID_FILE_NAME);
-                    }
-                    return uploadFile(file);
-                })
-                .map(fileName -> FileUploadResponse.from(fileName, ""))
-                .toList();
-    }
-
-    /**
-     * S3에 저장된 파일에 대한 서명된 URL을 생성.
-     * 파일이 존재하지 않으면 예외 발생.
-     * 생성된 URL은 10분간 유효하며, 해당 시간 동안 파일 다운로드가 가능.
-     * @param fileNames S3에 저장된 파일명 리스트
-     * @return 10분간 유효한 사전 서명된 다운로드 URL 리스트
-     */
-    public List<FileUploadResponse> getPresignedUrls(List<String> fileNames) {
-
-        return fileNames.stream()
-                .map(this::getPresignedUrl)
-                .toList();
-    }
-
-    /**
-     * 클라이언트로부터 전달받은 파일을 AWS S3에 저장.
-     * 파일명은 UUID를 사용하여 고유하게 생성되며, 원본 파일의 확장자는 유지.
+     * S3에 파일을 업로드.
      * @param file 업로드할 MultipartFile 객체
-     * @return S3에 저장된 고유 파일명 (UUID + 확장자)
-     */
-    private String uploadFile(MultipartFile file) {
-
-        String originalFilename = file.getOriginalFilename();
-
-        if (originalFilename == null || originalFilename.trim().isEmpty()) {
-            log.error("File upload failed: Original filename is missing or empty.");
-            // 파일명이 없거나 비어있는 것은 잘못된 입력으로 간주.
-            throw new BusinessException(ErrorCode.INVALID_FILE_NAME);
-        }
-
-        validateFileSize(file);
-        validateFileExtension(originalFilename);
-        String fileName = generateFileName(originalFilename);
-
-        uploadToS3(file, fileName);
-
-        log.info("AWS S3 File Upload Successfully, fileName : {}", fileName);
-        return fileName;
-    }
-
-    /**
-     * S3에 저장된 파일에 대한 서명된 URL을 생성.
-     * 파일이 존재하지 않으면 예외 발생.
-     * 생성된 URL은 10분간 유효하며, 해당 시간 동안 파일 다운로드가 가능.
-     * @param fileName S3에 저장된 파일명
-     * @return 10분간 유효한 사전 서명된 다운로드 URL
-     */
-    private FileUploadResponse getPresignedUrl(String fileName) {
-
-        validateFileExists(fileName);
-
-        GetObjectPresignRequest presignRequest = createPresignRequest(fileName);
-
-        String presignedUrl = s3Presigner.presignGetObject(presignRequest)
-                .url()
-                .toString();
-
-        return FileUploadResponse.from(fileName, presignedUrl);
-    }
-
-    /**
-     * 파일을 S3에 업로드.
-     * @param file 업로드할 MultipartFile 객체
-     * @param fileName S3에 저장될 파일명
+     * @param key S3에 저장될 키 (파일명, prefix 포함 가능)
      * @throws BusinessException S3 업로드 실패 시
      */
-    private void uploadToS3(MultipartFile file, String fileName) {
-
+    public void uploadToS3(MultipartFile file, String key) {
         try {
             s3Client.putObject(
                     PutObjectRequest.builder()
                             .bucket(bucket)
-                            .key(fileName)
+                            .key(key)
                             .contentType(file.getContentType())
-                            .build()
-                    , RequestBody.fromInputStream(file.getInputStream(), file.getSize())
+                            .build(),
+                    RequestBody.fromInputStream(file.getInputStream(), file.getSize())
             );
+            log.info("S3 upload successful: {}", key);
         } catch (IOException e) {
-            log.error("AWS S3 File Upload Failed, fileName : {}, error : {}", fileName, e.getMessage(), e);
+            log.error("S3 upload failed - IOException: {}", key, e);
             throw new BusinessException(ErrorCode.FILE_UPLOAD_FAIL);
         } catch (S3Exception e) {
-            log.error("AWS S3 File Upload Failed, error : {}", e.getMessage(), e);
+            log.error("S3 upload failed - S3Exception: {}", key, e);
             throw new BusinessException(ErrorCode.FILE_UPLOAD_FAIL);
         }
     }
 
     /**
-     * Presigned URL 생성을 위한 GetObjectPresignRequest 생성.
-     * @param fileName S3에 저장된 파일명
-     * @return 10분간 유효한 GetObjectPresignRequest 객체
+     * S3에서 파일을 삭제.
+     * @param key 삭제할 파일의 키
+     * @throws BusinessException S3 파일 삭제 실패 시
      */
-    private GetObjectPresignRequest createPresignRequest(String fileName) {
-        GetObjectRequest objectRequest = GetObjectRequest.builder()
-                .bucket(bucket)
-                .key(fileName)
-                .build();
-
-        return GetObjectPresignRequest.builder()
-                .getObjectRequest(objectRequest)
-                .signatureDuration(Duration.ofMinutes(10))  // 10분간 유효
-                .build();
-    }
-
-    /**
-     * 원본 파일명으로부터 고유한 파일명을 생성.
-     * UUID를 사용하여 파일명 중복을 방지하며, 원본 파일의 확장자는 유지.
-     * @param originalFilename 원본 파일명
-     * @return UUID + 확장자로 구성된 고유 파일명
-     */
-    private String generateFileName(String originalFilename) {
-
-        String extension = "";
-        if (originalFilename != null && originalFilename.contains(".")) {
-            extension = originalFilename.substring(originalFilename.lastIndexOf(".")).toLowerCase();
+    public void deleteFromS3(String key) {
+        try {
+            s3Client.deleteObject(
+                    DeleteObjectRequest.builder()
+                            .bucket(bucket)
+                            .key(key)
+                            .build()
+            );
+            log.info("S3 delete successful: {}", key);
+        } catch (S3Exception e) {
+            log.error("S3 delete failed: {}", key, e);
+            throw new BusinessException(ErrorCode.FILE_DELETE_FAIL);
         }
-        return UUID.randomUUID().toString() + extension;
     }
 
     /**
      * S3에 파일이 존재하는지 확인.
-     * @param fileName 확인할 파일명
-     * @throws BusinessException 파일이 존재하지 않거나 접근 실패 시
+     * @param key 확인할 파일의 키
+     * @return 파일 존재 여부
      */
-    private void validateFileExists(String fileName) {
-
+    public boolean fileExists(String key) {
         try {
             s3Client.headObject(
                     HeadObjectRequest.builder()
                             .bucket(bucket)
-                            .key(fileName)
+                            .key(key)
                             .build()
             );
+            return true;
         } catch (NoSuchKeyException e) {
-            log.error("AWS S3 File not found in S3 : {}", fileName);
-            throw new BusinessException(ErrorCode.FILE_NOT_FOUND);
+            log.debug("File not found in S3: {}", key);
+            return false;
         } catch (S3Exception e) {
-            log.error("AWS S3 error while checking file : {}", fileName, e);
+            log.error("S3 error while checking file existence: {}", key, e);
             throw new BusinessException(ErrorCode.FILE_ACCESS_FAIL);
         }
     }
 
     /**
-     * 업로드 하려는 파일의 크기가 허용된 크기를 초과하는지 검증.
-     * @param file 업로드할 MultipartFile 객체
-     * @throws BusinessException 파일 크기가 허용된 크기를 초과할 경우
+     * S3 파일의 public URL을 생성.
+     * @param key S3에 저장된 파일의 키
+     * @return public URL
      */
-    private void validateFileSize(MultipartFile file) {
-
-        if (file.getSize() > maxFileSize) {
-            log.error("File size exceeds maximum allowed size. File size: {} bytes, Max size: {} bytes",
-                    file.getSize(), maxFileSize);
-            throw new BusinessException(ErrorCode.FILE_SIZE_EXCEEDED);
-        }
+    public String getPublicUrl(String key) {
+        return String.format("https://%s.s3.%s.amazonaws.com/%s", bucket, region, key);
     }
 
     /**
-     * 업로드 하려는 파일이 혀용된 파일 확장자인지 검증.
-     * @param originalFilename 원본 파일명
-     * @throws BusinessException 파일의 확장자가 지원하지 않는 확장자일 경우
+     * S3 파일의 Presigned URL을 생성.
+     * @param key S3에 저장된 파일의 키
+     * @param duration URL 유효 기간
+     * @return Presigned URL
      */
-    private void validateFileExtension(String originalFilename) {
+    public String createPresignedUrl(String key, Duration duration) {
+        GetObjectRequest objectRequest = GetObjectRequest.builder()
+                .bucket(bucket)
+                .key(key)
+                .build();
 
-        String extension = "";
-        if (originalFilename != null && originalFilename.contains(".")) {
-            extension = originalFilename.substring(originalFilename.lastIndexOf(".")).toLowerCase();
+        GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+                .getObjectRequest(objectRequest)
+                .signatureDuration(duration)
+                .build();
+
+        return s3Presigner.presignGetObject(presignRequest)
+                .url()
+                .toString();
+    }
+
+    /**
+     * public URL에서 S3 키(파일명)를 추출.
+     * @param publicUrl S3 파일의 public URL
+     * @return S3 키 (prefix 포함)
+     * @throws BusinessException URL 형식이 올바르지 않을 경우
+     */
+    public String extractFileNameFromUrl(String publicUrl) {
+        String baseUrl = String.format("https://%s.s3.%s.amazonaws.com/", bucket, region);
+        if (publicUrl != null && publicUrl.startsWith(baseUrl)) {
+            return publicUrl.substring(baseUrl.length());
         }
-
-        List<String> allowedExtensions = List.of(
-                ".jpg", ".jpeg", ".png", ".pdf", ".gif", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".hwp", ".hwpx"
-        );
-
-        if (!allowedExtensions.contains(extension)) {
-            throw new BusinessException(ErrorCode.INVALID_FILE_TYPE);
-        }
+        log.error("Invalid S3 public URL format: {}", publicUrl);
+        throw new BusinessException(ErrorCode.INVALID_FILE_URL);
     }
 }

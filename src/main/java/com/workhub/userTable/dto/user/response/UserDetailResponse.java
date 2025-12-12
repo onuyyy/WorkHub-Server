@@ -3,7 +3,9 @@ package com.workhub.userTable.dto.user.response;
 import com.workhub.userTable.entity.Status;
 import com.workhub.userTable.entity.UserRole;
 import com.workhub.userTable.entity.UserTable;
+import lombok.Builder;
 
+@Builder
 public record UserDetailResponse(
         Long userId,
         String userName,
@@ -12,18 +14,20 @@ public record UserDetailResponse(
         String phone,
         UserRole role,
         Status status,
+        String profileImg,
         Long companyId
 ){
     public static UserDetailResponse from(UserTable userTable){
-        return new UserDetailResponse(
-                userTable.getUserId(),
-                userTable.getUserName(),
-                userTable.getLoginId(),
-                userTable.getEmail(),
-                userTable.getPhone(),
-                userTable.getRole(),
-                userTable.getStatus(),
-                userTable.getCompanyId()
-        );
+        return UserDetailResponse.builder()
+                .userId(userTable.getUserId())
+                .userName(userTable.getUserName())
+                .loginId(userTable.getLoginId())
+                .email(userTable.getEmail())
+                .phone(userTable.getPhone())
+                .role(userTable.getRole())
+                .status(userTable.getStatus())
+                .profileImg(userTable.getProfileImg())
+                .companyId(userTable.getCompanyId())
+                .build();
     }
 }
