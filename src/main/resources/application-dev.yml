@@ -1,4 +1,13 @@
 spring:
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: workhub.devteam@gmail.com
+    password: ${SMTP_PASSWORD}
+    properties:
+      mail.smtp.starttls.enable: true
+      mail.smtp.auth: true
+
   cloud:
     aws:
       region:
@@ -7,6 +16,7 @@ spring:
         instance-profile: true
       s3:
         bucket: bucket-workhub
+
   # Database Configuration
   datasource:
     url: ${DB_URL}
@@ -61,3 +71,7 @@ springdoc:
     servers:
       - url: https://workhub.o-r.kr
         description: 운영 서버 (HTTPS)
+
+workhub:
+  mail:
+    verification-expiry-minutes: 10
