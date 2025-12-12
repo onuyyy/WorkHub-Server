@@ -33,6 +33,19 @@ CREATE TABLE user_table (
     company_id BIGINT NULL
 );
 
+CREATE TABLE email_verification (
+    email_verification_id BIGSERIAL PRIMARY KEY,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    verification_code VARCHAR(6) NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    is_verified BOOLEAN NOT NULL,
+    created_at TIMESTAMP NULL,
+    updated_at TIMESTAMP NULL,
+    deleted_at TIMESTAMP NULL
+);
+
+CREATE UNIQUE INDEX idx_email_verification_email ON email_verification(email);
+
 CREATE TABLE user_history (
     change_log_id BIGSERIAL PRIMARY KEY,
     target_id BIGINT NOT NULL,
