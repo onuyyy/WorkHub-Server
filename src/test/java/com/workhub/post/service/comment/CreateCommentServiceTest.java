@@ -21,7 +21,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-import static org.mockito.BDDMockito.willDoNothing;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -40,6 +39,8 @@ class CreateCommentServiceTest {
     HistoryRecorder historyRecorder;
     @Mock
     PostValidator postValidator;
+    @Mock
+    CommentNotificationService commentNotificationService;
 
     @InjectMocks
     CreateCommentService createCommentService;

@@ -2,8 +2,10 @@ package com.workhub.cs.service.csQna;
 
 import com.workhub.cs.dto.csQna.CsQnaRequest;
 import com.workhub.cs.dto.csQna.CsQnaResponse;
+import com.workhub.cs.entity.CsPost;
 import com.workhub.cs.entity.CsQna;
 import com.workhub.cs.service.CsPostAccessValidator;
+import com.workhub.cs.service.CsQnaNotificationService;
 import com.workhub.global.entity.ActionType;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
@@ -18,11 +20,12 @@ public class CreateCsQnaService {
 
     private final CsQnaService csQnaService;
     private final CsPostAccessValidator csPostAccessValidator;
+    private final CsQnaNotificationService csQnaNotificationService;
 
     public CsQnaResponse create(Long projectId, Long csPostId, Long userId, CsQnaRequest csQnaRequest) {
 
         validateContent(csQnaRequest.qnaContent());
-        csPostAccessValidator.validateProjectAndGetPost(projectId, csPostId);
+        CsPost csPost = csPostAccessValidator.validateProjectAndGetPost(projectId, csPostId);
 
         Long parentQnaId = resolveParent(csPostId, csQnaRequest.parentQnaId());
 
@@ -30,6 +33,10 @@ public class CreateCsQnaService {
         csQna = csQnaService.save(csQna);
 
         csQnaService.snapShotAndRecordHistory(csQna, csQna.getCsQnaId(), ActionType.CREATE);
+
+        // 알림: 게시글 작성자 + (대댓글이면 부모 댓글 작성자)
+        Long parentAuthor = parentQnaId != null ? csQnaService.findById(parentQnaId).getUserId() : null;
+        csQnaNotificationService.notifyCsQnaCreated(projectId, csPostId, csQna.getCsQnaId(), csPost.getUserId(), parentAuthor);
 
         return CsQnaResponse.from(csQna);
     }

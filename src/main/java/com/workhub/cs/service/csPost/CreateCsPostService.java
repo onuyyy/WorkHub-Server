@@ -5,8 +5,8 @@ import com.workhub.cs.dto.csPost.CsPostResponse;
 import com.workhub.cs.entity.CsPost;
 import com.workhub.cs.entity.CsPostFile;
 import com.workhub.global.entity.ActionType;
-import com.workhub.global.history.HistoryRecorder;
 import com.workhub.project.service.ProjectService;
+import com.workhub.cs.service.CsPostNotificationService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,7 +20,7 @@ public class CreateCsPostService {
 
     private final CsPostService csPostService;
     private final ProjectService projectService;
-    private final HistoryRecorder historyRecorder;
+    private final CsPostNotificationService csPostNotificationService;
 
     /**
      * CS POST를 작성한다.
@@ -47,6 +47,7 @@ public class CreateCsPostService {
         }
 
         csPostService.snapShotAndRecordHistory(csPost, csPost.getCsPostId(), ActionType.CREATE);
+        csPostNotificationService.notifyCsPostCreated(projectId, csPost.getCsPostId(), csPost.getTitle());
 
         return CsPostResponse.from(csPost, files);
     }

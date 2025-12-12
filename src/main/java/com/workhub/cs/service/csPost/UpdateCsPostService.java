@@ -6,7 +6,10 @@ import com.workhub.cs.dto.csPost.CsPostUpdateRequest;
 import com.workhub.cs.entity.CsPost;
 import com.workhub.cs.entity.CsPostFile;
 import com.workhub.cs.entity.CsPostStatus;
+import com.workhub.cs.entity.CsQna;
 import com.workhub.cs.service.CsPostAccessValidator;
+import com.workhub.cs.service.CsPostNotificationService;
+import com.workhub.cs.service.csQna.CsQnaService;
 import com.workhub.global.entity.ActionType;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
@@ -24,6 +27,8 @@ public class UpdateCsPostService {
 
     private final CsPostService csPostService;
     private final CsPostAccessValidator csPostAccessValidator;
+    private final CsPostNotificationService csPostNotificationService;
+    private final CsQnaService csQnaService;
 
     /**
      * CS POST를 수정한다.
@@ -47,6 +52,11 @@ public class UpdateCsPostService {
 
         List<CsPostFile> visibleFiles = updatedFiles.stream().filter(
                 file -> file.getDeletedAt() == null).toList();
+
+        Set<Long> commenters = csQnaService.findAllByCsPostId(csPostId).stream()
+                .map(CsQna::getUserId)
+                .collect(Collectors.toSet());
+        csPostNotificationService.notifyCsPostUpdated(projectId, csPostId, csPost.getTitle(), commenters);
 
         return CsPostResponse.from(csPost, visibleFiles);
     }

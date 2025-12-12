@@ -21,7 +21,7 @@ public class PostNotificationService {
      * @param projectId 프로젝트 ID
      * @param post 생성된 게시글
      */
-    protected void notifyProjectMembers(Long projectId, Post post) {
+    protected void notifyPostCreated(Long projectId, Post post) {
         Set<Long> receivers = notificationTargetFinder.findAllMembersOfProject(projectId);
         if (receivers.isEmpty()) {
             return;

@@ -34,6 +34,8 @@ class UpdateCommentServiceTest {
     HistoryRecorder historyRecorder;
     @Mock
     PostValidator postValidator;
+    @Mock
+    CommentNotificationService commentNotificationService;
 
     @InjectMocks
     UpdateCommentService updateCommentService;

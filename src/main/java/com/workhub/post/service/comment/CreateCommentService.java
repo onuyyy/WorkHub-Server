@@ -8,6 +8,7 @@ import com.workhub.global.history.HistoryRecorder;
 import com.workhub.post.dto.comment.CommentHistorySnapshot;
 import com.workhub.post.dto.comment.request.CommentRequest;
 import com.workhub.post.dto.comment.response.CommentResponse;
+import com.workhub.post.entity.Post;
 import com.workhub.post.entity.PostComment;
 import com.workhub.post.service.PostValidator;
 import jakarta.transaction.Transactional;
@@ -21,6 +22,7 @@ public class CreateCommentService {
     private final CommentService commentService;
     private final HistoryRecorder historyRecorder;
     private final PostValidator postValidator;
+    private final CommentNotificationService commentNotificationService;
 
     /**
      * 댓글을 생성하고 히스토리를 기록한다.
@@ -33,13 +35,14 @@ public class CreateCommentService {
      */
     public CommentResponse create(Long projectId, Long postId, Long userId, CommentRequest commentRequest) {
         validateContent(commentRequest.content());
-        postValidator.validatePostToProject(postId, projectId);
+        Post post = postValidator.validatePostToProject(postId, projectId);
 
         Long parentCommentId = resolveParent(postId, commentRequest.parentCommentId());
         PostComment postComment = PostComment.of(postId, userId, parentCommentId, commentRequest.content());
         postComment =  commentService.save(postComment);
 
         snapshotAndRecordHistory(postComment, ActionType.CREATE);
+        commentNotificationService.notifyCommentCreated(projectId, post, postComment);
         return CommentResponse.from(postComment);
     }
 

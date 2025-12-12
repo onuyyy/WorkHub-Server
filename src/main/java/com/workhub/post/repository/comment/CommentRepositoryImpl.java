@@ -25,6 +25,7 @@ public class CommentRepositoryImpl implements CommentRepositoryCustom {
                 .selectFrom(postComment)
                 .where(
                         postIdEq(postId),
+                        postComment.deletedAt.isNull(),
                         postComment.parentCommentId.isNull()
                 )
                 .orderBy(postComment.createdAt.desc())
@@ -38,6 +39,7 @@ public class CommentRepositoryImpl implements CommentRepositoryCustom {
                 .from(postComment)
                 .where(
                         postIdEq(postId),
+                        postComment.deletedAt.isNull(),
                         postComment.parentCommentId.isNull()
                 )
                 .fetchOne();
@@ -51,7 +53,10 @@ public class CommentRepositoryImpl implements CommentRepositoryCustom {
 
         return queryFactory
                 .selectFrom(postComment)
-                .where(postIdEq(postId))
+                .where(
+                        postIdEq(postId),
+                        postComment.deletedAt.isNull()
+                )
                 .orderBy(postComment.createdAt.asc())
                 .fetch();
     }

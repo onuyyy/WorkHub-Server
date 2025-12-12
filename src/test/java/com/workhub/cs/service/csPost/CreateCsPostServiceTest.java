@@ -4,9 +4,9 @@ import com.workhub.cs.dto.csPost.CsPostFileRequest;
 import com.workhub.cs.dto.csPost.CsPostRequest;
 import com.workhub.cs.dto.csPost.CsPostResponse;
 import com.workhub.cs.entity.CsPost;
+import com.workhub.cs.service.CsPostNotificationService;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
-import com.workhub.global.history.HistoryRecorder;
 import com.workhub.project.entity.Project;
 import com.workhub.project.entity.Status;
 import com.workhub.project.service.ProjectService;
@@ -37,7 +37,7 @@ class CreateCsPostServiceTest {
     private ProjectService projectService;
 
     @Mock
-    private HistoryRecorder historyRecorder;
+    private CsPostNotificationService csPostNotificationService;
 
     @InjectMocks
     private CreateCsPostService createCsPostService;
@@ -83,8 +83,8 @@ class CreateCsPostServiceTest {
         Long userId = 2L;
 
         List<CsPostFileRequest> fileRequests = Arrays.asList(
-                new CsPostFileRequest("url1", 1),
-                new CsPostFileRequest("url2", 2)
+                new CsPostFileRequest("file1", 1),
+                new CsPostFileRequest("file2", 2)
         );
 
         CsPostRequest request = new CsPostRequest("문의 제목", "내용", fileRequests);
