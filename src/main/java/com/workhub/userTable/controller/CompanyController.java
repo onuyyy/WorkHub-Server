@@ -28,7 +28,7 @@ public class CompanyController implements CompanyApi {
         return companyService.getCompanys();
     }
 
-    @GetMapping("/{companyId}")
+    @GetMapping("/detail/{companyId}")
     public CompanyDetailResponse getCompany(@PathVariable("companyId") Long companyId) {
         return companyService.getCompany(companyId);
     }

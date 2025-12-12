@@ -90,7 +90,7 @@ public class UserController implements UserTableApi {
         return ApiResponse.success(updatedUser, "회원 역할이 변경되었습니다.");
     }
 
-    @DeleteMapping("/{userId}")
+    @DeleteMapping("/delete/{userId}")
     @Override
     public ResponseEntity<ApiResponse<Object>> deleteUser(@PathVariable Long userId) {
         userService.deleteUser(userId);

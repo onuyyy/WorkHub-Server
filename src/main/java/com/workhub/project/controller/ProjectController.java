@@ -3,9 +3,9 @@ package com.workhub.project.controller;
 import com.workhub.global.response.ApiResponse;
 import com.workhub.project.api.ProjectApi;
 import com.workhub.project.dto.request.CreateProjectRequest;
+import com.workhub.project.dto.request.ProjectListRequest;
 import com.workhub.project.dto.request.UpdateStatusRequest;
 import com.workhub.project.dto.response.PagedProjectListResponse;
-import com.workhub.project.dto.request.ProjectListRequest;
 import com.workhub.project.dto.response.ProjectResponse;
 import com.workhub.project.entity.Status;
 import com.workhub.project.service.CreateProjectService;
@@ -16,7 +16,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -33,7 +32,6 @@ public class ProjectController implements ProjectApi {
     private final ReadProjectService readProjectService;
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<ProjectResponse>> createProject(@RequestBody CreateProjectRequest projectRequest) {
 
         ProjectResponse projectResponse = createProjectService.createProject(projectRequest);
@@ -41,7 +39,6 @@ public class ProjectController implements ProjectApi {
     }
 
     @PatchMapping("/{projectId}/status")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<String>> updateStatus(@PathVariable("projectId") Long projectId,
                                                             @RequestBody UpdateStatusRequest request) {
 
@@ -51,7 +48,6 @@ public class ProjectController implements ProjectApi {
     }
 
     @PutMapping("/{projectId}")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<ProjectResponse>> updateProject(@PathVariable("projectId") Long projectId,
                                                                       @RequestBody CreateProjectRequest request) {
 
@@ -60,7 +56,6 @@ public class ProjectController implements ProjectApi {
     }
 
     @DeleteMapping("/{projectId}")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<String>> deleteProject(@PathVariable("projectId") Long projectId) {
 
         deleteProjectService.deleteProject(projectId);

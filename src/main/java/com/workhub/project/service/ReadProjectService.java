@@ -67,7 +67,7 @@ public class ReadProjectService {
 
         // 배치 데이터 로딩
         List<Long> projectIds = extractProjectIds(projects);
-        BatchData batchData = loadBatchData(projectIds);
+        BatchData batchData = loadBatchData(projectIds, projects);
 
         // 프로젝트 응답 생성
         List<ProjectListResponse> responses = buildProjectResponses(projects, batchData);
@@ -129,12 +129,13 @@ public class ReadProjectService {
 
     /**
      * 배치 조회를 통해 필요한 모든 데이터를 한 번에 로딩.
-     * 멤버, 사용자, 워크플로우 정보를 배치로 조회하고 그룹핑.
+     * 멤버, 사용자, 워크플로우, 회사 정보를 배치로 조회하고 그룹핑.
      *
      * @param projectIds 프로젝트 ID 리스트
+     * @param projects 프로젝트 엔티티 리스트 (이미 조회된 데이터)
      * @return 배치 조회된 데이터 객체
      */
-    private BatchData loadBatchData(List<Long> projectIds) {
+    private BatchData loadBatchData(List<Long> projectIds, List<Project> projects) {
         List<ProjectClientMember> allClientMembers = projectService.getClientMemberByProjectIdIn(projectIds);
         List<ProjectDevMember> allDevMembers = projectService.getDevMemberByProjectIdIn(projectIds);
 
@@ -142,10 +143,17 @@ public class ReadProjectService {
         Map<Long, UserTable> userMap = userService.getUserMapByUserIdIn(List.copyOf(userIds));
         Map<Long, Long> workflowCountMap = projectNodeService.getProjectNodeCountMapByProjectIdIn(projectIds);
 
+        // Company 배치 조회 추가 (이미 조회된 projects에서 companyId 추출)
+        List<Long> companyIds = projects.stream()
+                .map(Project::getClientCompanyId)
+                .distinct()
+                .toList();
+        Map<Long, Company> companyMap = companyService.getCompanyMapByCompanyIdIn(companyIds);
+
         Map<Long, List<ProjectClientMember>> clientMemberMap = groupClientMembersByProjectId(allClientMembers);
         Map<Long, List<ProjectDevMember>> devMemberMap = groupDevMembersByProjectId(allDevMembers);
 
-        return new BatchData(clientMemberMap, devMemberMap, userMap, workflowCountMap);
+        return new BatchData(clientMemberMap, devMemberMap, userMap, workflowCountMap, companyMap);
     }
 
     /**
@@ -198,7 +206,8 @@ public class ReadProjectService {
                         batchData.clientMemberMap().getOrDefault(project.getProjectId(), List.of()),
                         batchData.devMemberMap().getOrDefault(project.getProjectId(), List.of()),
                         batchData.userMap(),
-                        batchData.workflowCountMap().getOrDefault(project.getProjectId(), 0L)
+                        batchData.workflowCountMap().getOrDefault(project.getProjectId(), 0L),
+                        batchData.companyMap()
                 ))
                 .toList();
     }
@@ -212,6 +221,7 @@ public class ReadProjectService {
      * @param devMembers 개발자 멤버 목록
      * @param userMap 사용자 정보 맵 (배치 조회 결과)
      * @param workflowCount 워크플로우 단계 개수
+     * @param companyMap 회사 정보 맵 (배치 조회 결과)
      * @return 프로젝트 응답 객체
      */
     private ProjectListResponse buildProjectResponse(
@@ -219,7 +229,8 @@ public class ReadProjectService {
             List<ProjectClientMember> clientMembers,
             List<ProjectDevMember> devMembers,
             Map<Long, UserTable> userMap,
-            Long workflowCount
+            Long workflowCount,
+            Map<Long, Company> companyMap
     ) {
         List<UserTable> clientList = clientMembers.stream()
                 .map(ProjectClientMember::getUserId)
@@ -247,25 +258,34 @@ public class ReadProjectService {
                 .filter(Objects::nonNull)
                 .toList();
 
+        // Company를 배치 조회 결과에서 가져오기
         Long companyId = project.getClientCompanyId();
-        Company company = companyService.findById(companyId);
+        Company company = companyMap.get(companyId);
+        if (company == null) {
+            log.warn("Company not found in batch result. ProjectId={}, CompanyId={}",
+                    project.getProjectId(), companyId);
+            // fallback: DB에서 직접 조회 (예외 상황)
+            company = companyService.findById(companyId);
+        }
 
         return ProjectListResponse.from(project, clientList, devList, workflowCount, company);
     }
 
     /**
      * 배치 조회된 데이터를 담는 내부 레코드.
-     * 멤버 맵, 사용자 맵, 워크플로우 개수 맵을 포함.
+     * 멤버 맵, 사용자 맵, 워크플로우 개수 맵, 회사 맵을 포함.
      *
      * @param clientMemberMap 프로젝트별 클라이언트 멤버 맵
      * @param devMemberMap 프로젝트별 개발자 멤버 맵
      * @param userMap 사용자 ID별 사용자 정보 맵
      * @param workflowCountMap 프로젝트별 워크플로우 개수 맵
+     * @param companyMap 회사 ID별 회사 정보 맵
      */
     private record BatchData(
             Map<Long, List<ProjectClientMember>> clientMemberMap,
             Map<Long, List<ProjectDevMember>> devMemberMap,
             Map<Long, UserTable> userMap,
-            Map<Long, Long> workflowCountMap
+            Map<Long, Long> workflowCountMap,
+            Map<Long, Company> companyMap
     ) {}
 }

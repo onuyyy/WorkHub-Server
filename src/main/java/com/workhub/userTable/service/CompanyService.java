@@ -13,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -68,5 +70,22 @@ public class CompanyService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.Company_NOT_EXISTS));
         company.updateStatus(status);
         return CompanyResponse.from(company);
+    }
+
+    /**
+     * 여러 companyId로 Company 맵을 배치 조회
+     *
+     * @param companyIds 조회할 Company ID 리스트
+     * @return companyId를 키로 하는 Company 맵
+     */
+    @Transactional(readOnly = true)
+    public Map<Long, Company> getCompanyMapByCompanyIdIn(List<Long> companyIds) {
+        if (companyIds == null || companyIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return companyRepository.findAllByCompanyIdInAndCompanystatus(companyIds, CompanyStatus.ACTIVE)
+                .stream()
+                .collect(Collectors.toMap(Company::getCompanyId, company -> company));
     }
 }

@@ -26,7 +26,7 @@ public class ProjectNodeController implements ProjectNodeApi {
     private final DeleteProjectNodeService deleteProjectNodeService;
 
     @Override
-    @GetMapping
+    @GetMapping("/list")
     public ResponseEntity<ApiResponse<List<NodeListResponse>>> getNodeList(@PathVariable("projectId") Long projectId){
 
         List<NodeListResponse> nodeListByProject = readProjectNodeService.getNodeListByProject(projectId);
@@ -36,7 +36,7 @@ public class ProjectNodeController implements ProjectNodeApi {
     }
 
     @Override
-    @PostMapping
+    @PostMapping("/create")
     public ResponseEntity<ApiResponse<CreateNodeResponse>> createNode(@PathVariable Long projectId,
                                                                       @RequestBody CreateNodeRequest request) {
 

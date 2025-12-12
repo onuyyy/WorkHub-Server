@@ -61,6 +61,12 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/admin/users/login").permitAll()
+                        .requestMatchers("/api/v1/admin/users/{userId}").authenticated()
+                        .requestMatchers("/api/v1/auth/passwordReset/**").authenticated()
+
+                        .requestMatchers("/api/v1/company").authenticated()
+                        .requestMatchers("/api/v1/company/detail/{companyId}").authenticated()
+                        .requestMatchers("/api/v1/company/**").hasRole("ADMIN")
 
                         .requestMatchers("/api/v1/projects/*/nodes/*/checkLists/**").authenticated()
                         .requestMatchers("/api/v1/projects/*/nodes/*/checkLists").hasAnyRole("DEVELOPER", "ADMIN")
@@ -68,9 +74,11 @@ public class SecurityConfig {
                         .requestMatchers( "/api/v1/projects/*/nodes/*/checkLists/*/items/*/status").hasRole("CLIENT")
 
                         .requestMatchers("/api/v1/projects/list").authenticated()
-                        .requestMatchers("/api/v1/projects/{projectId}/nodes/**").authenticated()
-                        .requestMatchers("/api/v1/projects/{projectId}/nodes/{nodeId}/**").authenticated()
-                        .requestMatchers("/api/v1/auth/passwordReset/**").authenticated()
+                        .requestMatchers("/api/v1/projects/*/status").hasAnyRole("DEVELOPER", "ADMIN")
+
+                        .requestMatchers("/api/v1/projects/{projectId}/nodes/list").authenticated()
+                        .requestMatchers("/api/v1/projects/{projectId}/nodes/**").hasAnyRole("DEVELOPER", "ADMIN")
+
 
                         .requestMatchers("/api/v1/projects/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/admin/users/**").hasRole("ADMIN")

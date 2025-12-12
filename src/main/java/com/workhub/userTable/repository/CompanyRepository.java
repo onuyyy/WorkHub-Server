@@ -13,4 +13,6 @@ public interface CompanyRepository extends JpaRepository<Company, Long> {
     List<Company> findAllByCompanystatus(CompanyStatus status);
 
     Optional<Company> findByCompanyIdAndCompanystatus(Long companyId, CompanyStatus status);
+
+    List<Company> findAllByCompanyIdInAndCompanystatus(List<Long> companyIds, CompanyStatus status);
 }
