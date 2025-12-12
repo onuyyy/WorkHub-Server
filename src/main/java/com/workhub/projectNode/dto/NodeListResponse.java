@@ -1,6 +1,7 @@
 package com.workhub.projectNode.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.workhub.project.dto.response.DevMembers;
 import com.workhub.projectNode.entity.NodeStatus;
 import com.workhub.projectNode.entity.ProjectNode;
 import com.workhub.userTable.entity.UserTable;
@@ -26,18 +27,6 @@ public record NodeListResponse(
         // todo : 추후 체크리스트, 게시판의 첨부파일과 링크 총 게수를 담아서 응답해야합니다.
 
 ) {
-    @Builder
-    public static record DevMembers (
-            Long devMemberId,
-            String devMemberName
-    ){
-        public static DevMembers from(UserTable user) {
-            return DevMembers.builder()
-                    .devMemberId(user.getUserId())
-                    .devMemberName(user.getUserName())
-                    .build();
-        }
-    }
 
     public static NodeListResponse from(ProjectNode projectNode, UserTable user) {
         return NodeListResponse.builder()

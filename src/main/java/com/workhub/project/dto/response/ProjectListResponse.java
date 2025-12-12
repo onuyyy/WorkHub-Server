@@ -36,31 +36,7 @@ public record ProjectListResponse(
         }
     }
 
-    @Builder
-    public static record DevMembers (
-            Long devMemberId,
-            String devMemberName
-    ){
-        public static DevMembers from(UserTable user) {
-            return DevMembers.builder()
-                    .devMemberId(user.getUserId())
-                    .devMemberName(user.getUserName())
-                    .build();
-        }
-    }
 
-    @Builder
-    public static record ClientMembers (
-            Long clientMemberId,
-            String clientMemberName
-    ){
-        public static ClientMembers from(UserTable user) {
-            return ClientMembers.builder()
-                    .clientMemberId(user.getUserId())
-                    .clientMemberName(user.getUserName())
-                    .build();
-        }
-    }
 
     public static ProjectListResponse from(Project project, List<UserTable> clientList, List<UserTable> devList,
                                            Long workflow, Company company) {
