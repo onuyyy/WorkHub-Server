@@ -19,9 +19,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 
 @RequiredArgsConstructor
@@ -42,13 +46,14 @@ public class PostController implements PostApi {
      * @return ApiResponse 래퍼로 감싼 생성 결과
      */
     @Override
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<PostResponse>> createPost(
             @PathVariable Long projectId,
             @PathVariable Long nodeId,
-            @Valid @RequestBody PostRequest request,
+            @Valid @RequestPart("data") PostRequest request,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-        PostResponse created = createPostService.create(projectId, nodeId, getUserId(userDetails), request);
+        PostResponse created = createPostService.create(projectId, nodeId, getUserId(userDetails), request, files);
         return ApiResponse.created(created, "게시글이 생성되었습니다.");
     }
 

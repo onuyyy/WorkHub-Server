@@ -1,5 +1,6 @@
 package com.workhub.post.entity;
 
+import com.workhub.file.dto.FileUploadResponse;
 import com.workhub.global.entity.BaseTimeEntity;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
@@ -51,6 +52,17 @@ public class PostFile extends BaseTimeEntity {
                 .fileUrl(validateUrl(request.fileUrl()))
                 .fileName(request.fileName())
                 .fileOrder(validateOrder(request.fileOrder()))
+                .build();
+    }
+
+    public static PostFile of(Long postId, FileUploadResponse uploadFile, int order) {
+        PostFileRequest file = PostFileRequest.from(uploadFile, order);
+
+        return PostFile.builder()
+                .postId(postId)
+                .fileUrl(validateUrl(file.fileUrl()))
+                .fileName(file.fileName())
+                .fileOrder(validateOrder(file.fileOrder()))
                 .build();
     }
 

@@ -14,6 +14,6 @@ public record PostRequest(
         @NotBlank String postIp,
         Long parentPostId,
 
-        @Valid List<PostFileRequest> files,
+        //@Valid List<PostFileRequest> files,
         @Valid List<PostLinkRequest> links
 ) { }

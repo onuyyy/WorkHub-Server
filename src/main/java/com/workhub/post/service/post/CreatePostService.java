@@ -1,5 +1,7 @@
 package com.workhub.post.service.post;
 
+import com.workhub.file.dto.FileUploadResponse;
+import com.workhub.file.service.S3Service;
 import com.workhub.global.entity.ActionType;
 import com.workhub.global.entity.HistoryType;
 import com.workhub.global.error.ErrorCode;
@@ -17,8 +19,10 @@ import com.workhub.post.service.PostValidator;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.stream.IntStream;
 
 @Service
 @RequiredArgsConstructor
@@ -29,17 +33,19 @@ public class CreatePostService {
     private final PostValidator postValidator;
     private final HistoryRecorder historyRecorder;
     private final PostNotificationService postNotificationService;
+    private final S3Service s3Service;
 
     /**
      * 게시글 생성 시 프로젝트 상태와 부모 게시글 유효성을 검증한 뒤 저장한다.
      *
-     * @param projectId 프로젝트 ID
+     * @param projectId     프로젝트 ID
      * @param projectNodeId 프로젝트 노드 ID
-     * @param userId 작성자 ID
-     * @param request 게시글 생성 요청
+     * @param userId        작성자 ID
+     * @param request       게시글 생성 요청
+     * @param files         첨부파일 data
      * @return 저장된 게시글
      */
-    public PostResponse create(Long projectId, Long projectNodeId, Long userId, PostRequest request) {
+    public PostResponse create(Long projectId, Long projectNodeId, Long userId, PostRequest request, List<MultipartFile> files) {
         postValidator.validateNodeAndProject(projectNodeId, projectId);
 
         Long parentPostId = request.parentPostId();
@@ -52,13 +58,34 @@ public class CreatePostService {
         }
 
         Post savedPost = postService.save(Post.of(projectNodeId, userId, parentPostId, request));
-        List<PostFile> savedFiles = savePostFiles(savedPost.getPostId(), request.files());
+        // 파일 업로드 + PostFile 저장.
+        List<PostFile> savedFiles = uploadAndSaveFiles(savedPost.getPostId(), files);
         List<PostLink> savedLinks = savePostLinks(savedPost.getPostId(), request.links());
 
         historyRecorder.recordHistory(HistoryType.POST, savedPost.getPostId(), ActionType.CREATE, PostHistorySnapshot.from(savedPost));
         postNotificationService.notifyProjectMembers(projectId, savedPost);
 
         return PostResponse.from(savedPost, savedFiles, savedLinks);
+    }
+
+    private List<PostFile> uploadAndSaveFiles(Long postId, List<MultipartFile> files) {
+
+        if (files == null || files.isEmpty()) {
+            return List.of();
+        }
+
+        // S3에 파일 업로드
+        List<FileUploadResponse> uploadFiles = s3Service.uploadFiles(files);
+
+        // PostFile 엔티티 생성 및 저장
+        List<PostFile> postFiles = IntStream.range(0, uploadFiles.size())
+                .mapToObj(index -> {
+                    FileUploadResponse uploadFile = uploadFiles.get(index);
+                    return PostFile.of(postId, uploadFile, index+1);
+                })
+                .toList();
+
+        return postService.savePostFiles(postFiles);
     }
 
     /**

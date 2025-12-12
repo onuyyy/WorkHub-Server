@@ -11,6 +11,7 @@ import com.workhub.post.repository.post.PostFileRepository;
 import com.workhub.post.repository.post.PostLinkRepository;
 import com.workhub.post.repository.post.PostRepository;
 import com.workhub.post.service.PostValidator;
+import com.workhub.file.service.S3Service;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Collections;
 import java.util.List;
@@ -47,12 +49,16 @@ class CreatePostServiceTest {
     HistoryRecorder historyRecorder;
     @Mock
     PostNotificationService postNotificationService;
+    @Mock
+    S3Service s3Service;
 
     CreatePostService createPostService;
+    List<MultipartFile> files;
 
     @BeforeEach
     void setUp() {
-        createPostService = new CreatePostService(postService, postValidator, historyRecorder, postNotificationService);
+        createPostService = new CreatePostService(postService, postValidator, historyRecorder, postNotificationService, s3Service);
+        files = List.of();
         willDoNothing().given(postValidator).validateNodeAndProject(anyLong(), anyLong());
         given(postRepository.findByParentPostIdAndDeletedAtIsNull(anyLong())).willReturn(Collections.emptyList());
         given(postFileRepository.findByPostId(anyLong())).willReturn(Collections.emptyList());
@@ -63,11 +69,11 @@ class CreatePostServiceTest {
     @DisplayName("부모 게시물이 없으면 예외를 던진다.")
     void create_withParentNotFound_shouldThrow() {
         PostRequest request = new PostRequest(
-                "title", PostType.NOTICE, "content", "11.1.1", 1L, List.of(), List.of()
+                "title", PostType.NOTICE, "content", "11.1.1", 1L, List.of()
         );
         given(postRepository.existsByPostIdAndDeletedAtIsNull(1L)).willReturn(false);
 
-        assertThatThrownBy(() -> createPostService.create(10L, 20L, 30L, request))
+        assertThatThrownBy(() -> createPostService.create(10L, 20L, 30L, request, files))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PARENT_POST_NOT_FOUND);
     }
@@ -76,11 +82,11 @@ class CreatePostServiceTest {
     @DisplayName("부모 게시글이 이미 삭제된 경우 예외를 던진다")
     void create_withDeletedParent_shouldThrowAlreadyDeleted() {
         PostRequest request = new PostRequest(
-                "title", PostType.NOTICE, "content", "11.1.1", 1L, List.of(), List.of()
+                "title", PostType.NOTICE, "content", "11.1.1", 1L, List.of()
         );
         given(postRepository.existsByPostIdAndDeletedAtIsNull(1L)).willReturn(false);
 
-        assertThatThrownBy(() -> createPostService.create(10L, 20L, 30L, request))
+        assertThatThrownBy(() -> createPostService.create(10L, 20L, 30L, request, files))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PARENT_POST_NOT_FOUND);
     }
@@ -98,10 +104,10 @@ class CreatePostServiceTest {
         given(postRepository.save(any(Post.class))).willReturn(saved);
 
         PostRequest request = new PostRequest(
-                "title", PostType.NOTICE, "content", "127.0.0.1", null, List.of(), List.of()
+                "title", PostType.NOTICE, "content", "127.0.0.1", null, List.of()
         );
 
-        PostResponse result = createPostService.create(10L, 20L, 30L, request);
+        PostResponse result = createPostService.create(10L, 20L, 30L, request, files);
 
         assertThat(result.postId()).isEqualTo(10L);
         assertThat(result.title()).isEqualTo("title");
@@ -117,13 +123,13 @@ class CreatePostServiceTest {
     @DisplayName("프로젝트 상태가 유효하지 않으면 게시글을 생성할 수 없다")
     void create_withInvalidProjectStatus_shouldThrow() {
         PostRequest request = new PostRequest(
-                "title", PostType.NOTICE, "content", "127.0.0.1", null, List.of(), List.of()
+                "title", PostType.NOTICE, "content", "127.0.0.1", null, List.of()
         );
         willDoNothing().given(postValidator).validateNodeAndProject(anyLong(), anyLong());
         willThrow(new BusinessException(ErrorCode.INVALID_PROJECT_STATUS_FOR_POST))
                 .given(postValidator).validateNodeAndProject(20L, 10L);
 
-        assertThatThrownBy(() -> createPostService.create(10L, 20L, 30L, request))
+        assertThatThrownBy(() -> createPostService.create(10L, 20L, 30L, request, files))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_PROJECT_STATUS_FOR_POST);
     }

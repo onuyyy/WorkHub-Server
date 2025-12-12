@@ -23,6 +23,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @Tag(name = "게시물 관리", description = "프로젝트 단계별 게시물 CRUD API")
 @RequestMapping("/api/v1/projects/{projectId}/nodes/{nodeId}/posts")
@@ -30,7 +33,7 @@ public interface PostApi {
 
     @Operation(
             summary = "게시물 작성",
-            description = "프로젝트 단계에서 새 게시물을 작성합니다.",
+            description = "프로젝트 단계에서 파일과 함께 새 게시물을 작성합니다.",
             parameters = {
                     @Parameter(name = "projectId", description = "프로젝트 식별자", in = ParameterIn.PATH, required = true),
                     @Parameter(name = "nodeId", description = "프로젝트 단계 식별자", in = ParameterIn.PATH, required = true)
@@ -46,11 +49,14 @@ public interface PostApi {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청 (필수 값 누락 또는 형식 오류)"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류 (게시물 저장 실패)")
     })
-    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     ResponseEntity<ApiResponse<PostResponse>> createPost(
             @PathVariable Long projectId,
             @PathVariable Long nodeId,
-            @Valid @RequestBody PostRequest request,
+            @Parameter(description = "게시물 데이터 (JSON)", required = true)
+            @RequestPart("data") @Valid PostRequest request,
+            @Parameter(description = "첨부 파일 목록", required = false)
+            @RequestPart(value = "files", required = false) List<MultipartFile> files,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails
     );
 
