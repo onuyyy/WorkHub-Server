@@ -2,6 +2,7 @@ package com.workhub.userTable.service;
 
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
+import com.workhub.global.security.CustomUserDetails;
 import com.workhub.userTable.dto.user.request.AdminPasswordResetRequest;
 import com.workhub.userTable.dto.user.request.UserLoginRecord;
 import com.workhub.userTable.dto.user.request.UserPasswordChangeRequest;
@@ -50,17 +51,24 @@ public class UserService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_EXISTS));
     }
 
-    public Authentication login(UserLoginRecord userLoginRecord) {
+    public LoginResult login(UserLoginRecord userLoginRecord) {
         UsernamePasswordAuthenticationToken authRequest = new UsernamePasswordAuthenticationToken(
                 userLoginRecord.loginId(),
                 userLoginRecord.password()
         );
 
+        Authentication authentication;
         try {
-            return authenticationManager.authenticate(authRequest);
+            authentication = authenticationManager.authenticate(authRequest);
         } catch (AuthenticationException exception) {
             throw new BusinessException(ErrorCode.INVALID_LOGIN_CREDENTIALS);
         }
+
+        Long userId = ((CustomUserDetails) authentication.getPrincipal()).getUserId();
+        UserTable user = getUserById(userId);
+        UserLoginResponse loginResponse = UserLoginResponse.from(user);
+
+        return new LoginResult(authentication, loginResponse);
     }
 
     @Transactional

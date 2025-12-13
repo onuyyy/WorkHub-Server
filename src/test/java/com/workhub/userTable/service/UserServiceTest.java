@@ -2,12 +2,15 @@ package com.workhub.userTable.service;
 
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
+import com.workhub.global.security.CustomUserDetails;
+import com.workhub.userTable.dto.user.response.LoginResult;
 import com.workhub.userTable.dto.user.response.UserDetailResponse;
 import com.workhub.userTable.dto.user.response.UserListResponse;
 import com.workhub.userTable.dto.user.request.UserLoginRecord;
 import com.workhub.userTable.dto.user.request.AdminPasswordResetRequest;
 import com.workhub.userTable.dto.user.request.UserPasswordChangeRequest;
 import com.workhub.userTable.dto.user.request.UserRegisterRecord;
+import com.workhub.userTable.dto.user.response.UserLoginResponse;
 import com.workhub.userTable.dto.user.response.UserTableResponse;
 import com.workhub.userTable.entity.Status;
 import com.workhub.userTable.entity.UserRole;
@@ -99,15 +102,21 @@ class UserServiceTest {
     class Login {
 
         @Test
-        @DisplayName("정상 인증에 성공하면 Authentication을 반환한다")
+        @DisplayName("정상 인증에 성공하면 Authentication과 로그인 응답을 반환한다")
         void success() {
+            UserTable user = user(1L, "admin", "admin@workhub.com", "01000000000", "Admin User", UserRole.ADMIN, Status.ACTIVE, 1L);
+            CustomUserDetails principal = new CustomUserDetails(user);
+
             Authentication authentication = mock(Authentication.class);
+            given(authentication.getPrincipal()).willReturn(principal);
             given(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                     .willReturn(authentication);
+            given(userRepository.findById(principal.getUserId())).willReturn(Optional.of(user));
 
-            Authentication result = userService.login(new UserLoginRecord("admin", "Password!234"));
+            LoginResult result = userService.login(new UserLoginRecord("admin", "Password!234"));
 
-            assertThat(result).isSameAs(authentication);
+            assertThat(result.authentication()).isSameAs(authentication);
+            assertThat(result.user()).isEqualTo(UserLoginResponse.from(user));
             verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
         }
 

@@ -6,6 +6,7 @@ import com.workhub.userTable.dto.user.request.UserLoginRecord;
 import com.workhub.userTable.dto.user.request.UserPasswordChangeRequest;
 import com.workhub.userTable.dto.user.response.UserDetailResponse;
 import com.workhub.userTable.dto.user.response.UserListResponse;
+import com.workhub.userTable.dto.user.response.UserLoginResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -54,7 +55,7 @@ public interface UserApi {
                             schema = @Schema(implementation = ApiResponse.class))
             )
     })
-    ResponseEntity<ApiResponse<String>> login(UserLoginRecord userLoginRecord, HttpServletRequest request);
+    ResponseEntity<ApiResponse<UserLoginResponse>> login(UserLoginRecord userLoginRecord, HttpServletRequest request);
 
     @Operation(
             summary = "회원 목록 조회",

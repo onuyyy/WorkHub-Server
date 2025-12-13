@@ -6,8 +6,10 @@ import com.workhub.global.security.CustomUserDetails;
 import com.workhub.userTable.api.UserApi;
 import com.workhub.userTable.dto.user.request.UserLoginRecord;
 import com.workhub.userTable.dto.user.request.UserPasswordChangeRequest;
+import com.workhub.userTable.dto.user.response.LoginResult;
 import com.workhub.userTable.dto.user.response.UserDetailResponse;
 import com.workhub.userTable.dto.user.response.UserListResponse;
+import com.workhub.userTable.dto.user.response.UserLoginResponse;
 import com.workhub.userTable.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -34,11 +36,12 @@ public class UserController implements UserApi {
 
     @PostMapping("/login")
     @Override
-    public ResponseEntity<ApiResponse<String>> login(@RequestBody UserLoginRecord userLoginRecord,
-                                                     HttpServletRequest request) {
+    public ResponseEntity<ApiResponse<UserLoginResponse>> login(@RequestBody UserLoginRecord userLoginRecord,
+                                                                HttpServletRequest request) {
 
-        // 서비스에서 실제 인증 (authenticationManager.authenticate 호출)
-        Authentication authentication = userService.login(userLoginRecord);
+        // 서비스에서 실제 인증 (authenticationManager.authenticate 호출) 및 로그인 응답 생성
+        LoginResult loginResult = userService.login(userLoginRecord);
+        Authentication authentication = loginResult.authentication();
 
         // SecurityContext 생성해서 Authentication 넣기
         SecurityContext context = SecurityContextHolder.createEmptyContext();
@@ -52,12 +55,12 @@ public class UserController implements UserApi {
                 context
         );
 
-        return ApiResponse.success("로그인 성공");
+        return ApiResponse.success(loginResult.user(), "로그인 성공");
     }
 
     @GetMapping("/list")
     @Override
-    public List<UserListResponse> getUserTable(){
+    public List<UserListResponse> getUserTable() {
         return userService.getUsers();
     }
 
