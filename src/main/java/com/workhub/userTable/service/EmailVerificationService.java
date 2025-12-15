@@ -2,6 +2,7 @@ package com.workhub.userTable.service;
 
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
+import com.workhub.global.util.SecurityUtil;
 import com.workhub.userTable.entity.EmailVerification;
 import com.workhub.userTable.repository.EmailVerificationRepository;
 import jakarta.mail.MessagingException;
@@ -37,6 +38,7 @@ public class EmailVerificationService {
 
     @Transactional
     public void sendVerificationCode(String email, String userName) {
+        Long userId = SecurityUtil.getCurrentUserIdOrThrow();
         String normalizedEmail = email.toLowerCase();
         String code = generateCode();
         LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(expiryMinutes);

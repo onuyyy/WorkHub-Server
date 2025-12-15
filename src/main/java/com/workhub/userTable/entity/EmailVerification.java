@@ -1,32 +1,34 @@
 package com.workhub.userTable.entity;
 
+import com.workhub.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "email_verification", indexes = @Index(name = "idx_email_verification_email", columnList = "email", unique = true))
+@Table(name = "email_verification")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class EmailVerification {
+public class EmailVerification extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "email_verification_id")
     private Long id;
 
     @Column(nullable = false, length = 255, unique = true)
     private String email;
 
-    @Column(nullable = false, length = 6)
+    @Column(nullable = false, length = 6, name = "verification_code")
     private String code;
 
     @Column(nullable = false)
     private LocalDateTime expiresAt;
 
-    @Column(nullable = false)
+    @Column(nullable = false, name = "is_verified")
     private boolean verified;
 
     public void refresh(String newCode, LocalDateTime newExpiresAt) {
