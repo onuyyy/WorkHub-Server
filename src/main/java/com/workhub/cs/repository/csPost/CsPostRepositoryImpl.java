@@ -26,6 +26,7 @@ public class CsPostRepositoryImpl implements CsPostRepositoryCustom {
         List<CsPost> result =  queryFactory
                 .selectFrom(csPost)
                 .where(
+                        csPost.deletedAt.isNull(),
                         valueContains(searchRequest.searchValue()),
                         statusEq(searchRequest.csPostStatus())
                 )
@@ -38,6 +39,7 @@ public class CsPostRepositoryImpl implements CsPostRepositoryCustom {
                 .select(csPost.count())
                 .from(csPost)
                 .where(
+                        csPost.deletedAt.isNull(),
                         valueContains(searchRequest.searchValue()),
                         statusEq(searchRequest.csPostStatus())
                 )
