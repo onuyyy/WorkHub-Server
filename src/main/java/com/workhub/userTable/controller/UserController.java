@@ -4,12 +4,12 @@ import com.workhub.file.service.UpdateProfileService;
 import com.workhub.global.response.ApiResponse;
 import com.workhub.global.security.CustomUserDetails;
 import com.workhub.userTable.api.UserApi;
+import com.workhub.userTable.dto.email.EmailVerificationConfirmRequest;
 import com.workhub.userTable.dto.user.request.UserLoginRecord;
 import com.workhub.userTable.dto.user.request.UserPasswordChangeRequest;
 import com.workhub.userTable.dto.user.response.LoginResult;
-import com.workhub.userTable.dto.user.response.UserDetailResponse;
-import com.workhub.userTable.dto.user.response.UserListResponse;
 import com.workhub.userTable.dto.user.response.UserLoginResponse;
+import com.workhub.userTable.service.UpdateUserService;
 import com.workhub.userTable.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -24,8 +24,6 @@ import org.springframework.security.web.context.HttpSessionSecurityContextReposi
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
@@ -33,6 +31,8 @@ public class UserController implements UserApi {
 
     private final UserService userService;
     private final UpdateProfileService profileService;
+    private final UpdateUserService updateUserService;
+
 
     @PostMapping("/login")
     @Override
@@ -58,20 +58,6 @@ public class UserController implements UserApi {
         return ApiResponse.success(loginResult.user(), "로그인 성공");
     }
 
-    @GetMapping("/list")
-    @Override
-    public List<UserListResponse> getUserTable() {
-        return userService.getUsers();
-    }
-
-
-    @GetMapping("/{userId}")
-    @Override
-    public ResponseEntity<ApiResponse<UserDetailResponse>> getUser(@PathVariable Long userId){
-        UserDetailResponse response = userService.getUser(userId);
-        return ApiResponse.success(response);
-    }
-
     @PatchMapping("/auth/passwordReset/confirm")
     @Override
     public ResponseEntity<ApiResponse<String>> updatePassword(@AuthenticationPrincipal CustomUserDetails userDetails,
@@ -87,5 +73,13 @@ public class UserController implements UserApi {
         String profile = profileService.updateProfile(file);
         return ApiResponse.success(profile);
 
+    }
+
+    @PostMapping("/confirm")
+    public ResponseEntity<ApiResponse<String>> confirm(
+            @RequestBody @Valid EmailVerificationConfirmRequest request ) {
+
+        updateUserService.verifyCodeAndUpdateEmail(request);
+        return ApiResponse.success("이메일 변경 완료");
     }
 }

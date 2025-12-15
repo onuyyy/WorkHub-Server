@@ -5,6 +5,8 @@ import com.workhub.userTable.api.UserAdminApi;
 import com.workhub.userTable.dto.user.request.AdminPasswordResetRequest;
 import com.workhub.userTable.dto.user.request.UserRegisterRecord;
 import com.workhub.userTable.dto.user.request.UserRoleUpdateRequest;
+import com.workhub.userTable.dto.user.response.UserDetailResponse;
+import com.workhub.userTable.dto.user.response.UserListResponse;
 import com.workhub.userTable.dto.user.response.UserTableResponse;
 import com.workhub.userTable.entity.UserTable;
 import com.workhub.userTable.service.UserService;
@@ -12,6 +14,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/admin/users")
@@ -48,5 +52,19 @@ public class UserAdminController implements UserAdminApi {
     public ResponseEntity<ApiResponse<Object>> deleteUser(@PathVariable Long userId) {
         userService.deleteUser(userId);
         return ApiResponse.success(null, "회원이 비활성화되었습니다.");
+    }
+
+    @GetMapping("/list")
+    @Override
+    public List<UserListResponse> getUserTable() {
+        return userService.getUsers();
+    }
+
+
+    @GetMapping("/{userId}")
+    @Override
+    public ResponseEntity<ApiResponse<UserDetailResponse>> getUser(@PathVariable Long userId){
+        UserDetailResponse response = userService.getUser(userId);
+        return ApiResponse.success(response);
     }
 }

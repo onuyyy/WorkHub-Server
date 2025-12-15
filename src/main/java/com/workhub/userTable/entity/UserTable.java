@@ -68,6 +68,10 @@ public class UserTable extends BaseTimeEntity {
         this.lastedAt = LocalDateTime.now();
     }
 
+    public void updateEmail(String email) {
+        this.email = email;
+    }
+
     public static UserTable of(UserRegisterRecord register, String encodedPassword) {
         return UserTable.builder()
                 .loginId(register.loginId())
