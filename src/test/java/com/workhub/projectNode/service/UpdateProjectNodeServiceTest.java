@@ -1,7 +1,5 @@
 package com.workhub.projectNode.service;
 
-import com.workhub.global.entity.ActionType;
-import com.workhub.global.entity.HistoryType;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import com.workhub.global.history.HistoryRecorder;
@@ -43,6 +41,9 @@ class UpdateProjectNodeServiceTest {
 
     @Mock
     HistoryRecorder historyRecorder;
+
+    @Mock
+    ProjectNodeNotificationService projectNodeNotificationService;
 
     @InjectMocks
     UpdateProjectNodeService updateProjectNodeService;

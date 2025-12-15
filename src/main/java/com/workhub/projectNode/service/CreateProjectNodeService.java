@@ -24,6 +24,7 @@ public class CreateProjectNodeService {
     private final ProjectNodeService projectNodeService;
     private final ProjectNodeValidator projectNodeValidator;
     private final HistoryRecorder historyRecorder;
+    private final ProjectNodeNotificationService projectNodeNotificationService;
 
     /**
      * 프로젝트 노드를 생성하고 관련 히스토리를 저장
@@ -42,6 +43,7 @@ public class CreateProjectNodeService {
 
         Integer nodeOrder = projectNodeService.findMaxNodeOrderByProjectId(projectId) + 1;
         ProjectNode savedProjectNode = saveProjectNodeAndHistory(projectId, request, nodeOrder);
+        projectNodeNotificationService.notifyCreated(projectId, savedProjectNode.getProjectNodeId(), savedProjectNode.getTitle());
 
         return CreateNodeResponse.from(savedProjectNode);
     }

@@ -40,6 +40,9 @@ class CreateProjectNodeServiceTest {
     @Mock
     HistoryRecorder historyRecorder;
 
+    @Mock
+    ProjectNodeNotificationService projectNodeNotificationService;
+
     @InjectMocks
     CreateProjectNodeService createProjectNodeService;
 

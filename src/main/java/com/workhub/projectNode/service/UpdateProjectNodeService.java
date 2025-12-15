@@ -28,6 +28,7 @@ public class UpdateProjectNodeService {
     private final ProjectNodeService projectNodeService;
     private final ProjectNodeValidator projectNodeValidator;
     private final HistoryRecorder historyRecorder;
+    private final ProjectNodeNotificationService projectNodeNotificationService;
 
     /**
      * 프로젝트 노드 상태를 업데이트하고 변경 이력을 저장.
@@ -47,6 +48,7 @@ public class UpdateProjectNodeService {
         original.updateNodeStatus(request.nodeStatus());
 
         historyRecorder.recordHistory(HistoryType.PROJECT_NODE, nodeId, ActionType.UPDATE, snapshot);
+        projectNodeNotificationService.notifyUpdated(projectId, nodeId, original.getTitle(), "상태");
 
     }
 
@@ -81,6 +83,7 @@ public class UpdateProjectNodeService {
                 historyRecorder.recordHistory(HistoryType.PROJECT_NODE, req.projectNodeId(),
                         ActionType.UPDATE, snapshot
                 );
+                projectNodeNotificationService.notifyUpdated(projectId, req.projectNodeId(), node.getTitle(), "순서");
             }
         });
     }
@@ -97,12 +100,31 @@ public class UpdateProjectNodeService {
         projectNodeValidator.validateLoginUserPermission(projectId, loginUser);
 
         ProjectNode original = projectNodeService.findByIdAndProjectId(nodeId, projectId);
+        String beforeTitle = original.getTitle();
+        String beforeDescription = original.getDescription();
         NodeSnapshot snapshot = NodeSnapshot.from(original);
 
         original.update(request);
         historyRecorder.recordHistory(HistoryType.PROJECT_NODE, nodeId, ActionType.UPDATE,snapshot);
 
+        boolean titleChanged = !beforeTitle.equals(original.getTitle());
+        boolean descChanged = !beforeDescription.equals(original.getDescription());
+        projectNodeNotificationService.notifyUpdated(
+                projectId,
+                nodeId,
+                original.getTitle(),
+                buildChangedDesc(titleChanged, descChanged)
+        );
+
         return CreateNodeResponse.from(original);
+    }
+
+    private String buildChangedDesc(boolean titleChanged, boolean descChanged) {
+        StringBuilder sb = new StringBuilder();
+        if (titleChanged) sb.append("제목, ");
+        if (descChanged) sb.append("설명, ");
+        if (sb.length() > 2) sb.setLength(sb.length() - 2);
+        return sb.toString();
     }
     
 }
