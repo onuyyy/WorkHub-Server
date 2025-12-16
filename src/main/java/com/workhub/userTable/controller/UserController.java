@@ -5,6 +5,7 @@ import com.workhub.global.response.ApiResponse;
 import com.workhub.global.security.CustomUserDetails;
 import com.workhub.userTable.api.UserApi;
 import com.workhub.userTable.dto.email.EmailVerificationConfirmRequest;
+import com.workhub.userTable.dto.user.request.UpdatePhoneRequest;
 import com.workhub.userTable.dto.user.request.UserLoginRecord;
 import com.workhub.userTable.dto.user.request.UserPasswordChangeRequest;
 import com.workhub.userTable.dto.user.response.LoginResult;
@@ -81,5 +82,12 @@ public class UserController implements UserApi {
 
         updateUserService.verifyCodeAndUpdateEmail(request);
         return ApiResponse.success("이메일 변경 완료");
+    }
+
+    @PatchMapping("/phone")
+    public ResponseEntity<ApiResponse<String>> updatePhone(@RequestBody UpdatePhoneRequest request) {
+
+        updateUserService.updatePhone(request);
+        return ApiResponse.success("전화번호 변경 성공");
     }
 }

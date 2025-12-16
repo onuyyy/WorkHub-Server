@@ -88,4 +88,8 @@ public class UserTable extends BaseTimeEntity {
     public void updateProfile(String newProfile) {
         this.profileImg = newProfile;
     }
+
+    public void updatePhone(String phone) {
+        this.phone = phone;
+    }
 }

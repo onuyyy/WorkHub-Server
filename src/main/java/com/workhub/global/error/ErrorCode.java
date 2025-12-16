@@ -45,6 +45,7 @@ public enum ErrorCode {
     WITHDRAWN_USER(HttpStatus.BAD_REQUEST, "M-009", "탈퇴한 회원입니다."),
     DORMANT_USER(HttpStatus.BAD_REQUEST, "M-010", "휴면 계정입니다."),
     INVALID_USER_ROLE(HttpStatus.BAD_REQUEST, "M-011", "잘못된 회원 역할입니다."),
+    USER_MISMATCH(HttpStatus.FORBIDDEN, "M-012", "본인의 정보만 수정할 수 있습니다."),
 
     // 고객사
     COMPANY_ALREADY_EXISTS(HttpStatus.BAD_REQUEST, "CO-001", "이미 등록된 고객사입니다."),
