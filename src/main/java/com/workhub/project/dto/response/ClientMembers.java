@@ -7,13 +7,15 @@ import lombok.Builder;
 public record ClientMembers (
         Long clientMemberId,
         String clientMemberLoginId,
-        String clientMemberName
+        String clientMemberName,
+        String profileImg
 ){
     public static ClientMembers from(UserTable user) {
         return ClientMembers.builder()
                 .clientMemberId(user.getUserId())
                 .clientMemberLoginId(user.getLoginId())
                 .clientMemberName(user.getUserName())
+                .profileImg(user.getProfileImg())
                 .build();
     }
 }
