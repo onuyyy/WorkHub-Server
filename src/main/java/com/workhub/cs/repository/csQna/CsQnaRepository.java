@@ -10,5 +10,5 @@ public interface CsQnaRepository extends JpaRepository<CsQna, Long>, CsQnaReposi
     /**
      * 특정 부모 댓글의 모든 자식 댓글을 조회한다.
      */
-    List<CsQna> findByParentQnaId(Long parentQnaId);
+    List<CsQna> findByParentQnaIdAndDeletedAtIsNull(Long parentQnaId);
 }

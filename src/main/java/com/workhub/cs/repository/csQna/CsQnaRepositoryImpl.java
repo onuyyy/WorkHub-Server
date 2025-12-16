@@ -25,7 +25,8 @@ public class CsQnaRepositoryImpl implements CsQnaRepositoryCustom {
                 .selectFrom(csQna)
                 .where(
                         csPostIdEq(csPostId),
-                        csQna.parentQnaId.isNull()
+                        csQna.parentQnaId.isNull(),
+                        isNotDeleted()
                 )
                 .orderBy(csQna.createdAt.desc())
                 .offset(pageable.getOffset())
@@ -38,7 +39,8 @@ public class CsQnaRepositoryImpl implements CsQnaRepositoryCustom {
                 .from(csQna)
                 .where(
                         csPostIdEq(csPostId),
-                        csQna.parentQnaId.isNull()
+                        csQna.parentQnaId.isNull(),
+                        isNotDeleted()
                 )
                 .fetchOne();
 
@@ -51,12 +53,19 @@ public class CsQnaRepositoryImpl implements CsQnaRepositoryCustom {
 
         return queryFactory
                 .selectFrom(csQna)
-                .where(csPostIdEq(csPostId))
+                .where(
+                        csPostIdEq(csPostId),
+                        isNotDeleted()
+                )
                 .orderBy(csQna.createdAt.asc())
                 .fetch();
     }
 
     private BooleanExpression csPostIdEq(Long csPostId) {
         return csPostId == null ? null : QCsQna.csQna.csPostId.eq(csPostId);
+    }
+
+    private BooleanExpression isNotDeleted() {
+        return QCsQna.csQna.deletedAt.isNull();
     }
 }

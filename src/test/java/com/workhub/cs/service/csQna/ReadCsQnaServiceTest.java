@@ -16,11 +16,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class ReadCsQnaServiceTest {
@@ -171,11 +173,24 @@ class ReadCsQnaServiceTest {
                 CsQna.builder().csQnaId(10L).csPostId(csPostId).userId(1L).parentQnaId(null).qnaContent("10번째 댓글").build()
         );
 
+        List<CsQna> allComments = new java.util.ArrayList<>(topLevelComments);
+        for (long i = 1; i <= 10; i++) {
+            allComments.add(
+                    CsQna.builder()
+                            .csQnaId(i)
+                            .csPostId(csPostId)
+                            .userId(1L)
+                            .parentQnaId(null)
+                            .qnaContent(i + "번째 댓글")
+                            .build()
+            );
+        }
+
         Page<CsQna> mockPage = new PageImpl<>(topLevelComments, pageable, 15);
 
         when(csPostAccessValidator.validateProjectAndGetPost(projectId, csPostId))
                 .thenReturn(CsPost.builder().csPostId(csPostId).projectId(projectId).userId(1L).title("t").content("c").build());
-        when(csQnaService.findAllByCsPostId(csPostId)).thenReturn(topLevelComments);
+        when(csQnaService.findAllByCsPostId(csPostId)).thenReturn(allComments);
         when(csQnaService.findCsQnasWithReplies(csPostId, pageable)).thenReturn(mockPage);
 
         Page<CsQnaResponse> result = readCsQnaService.findCsQnas(projectId, csPostId, pageable);
@@ -229,5 +244,45 @@ class ReadCsQnaServiceTest {
         CsQnaResponse secondReply = firstReply.children().get(0);
         assertThat(secondReply.csQnaId()).isEqualTo(3L);
         assertThat(secondReply.children()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("삭제된 댓글은 목록에서 제외한다.")
+    void givenDeletedComments_whenFindCsQnas_thenExcludeThem() {
+        Long projectId = 1L;
+        Long csPostId = 2L;
+        Pageable pageable = PageRequest.of(0, 20);
+
+        CsQna active = CsQna.builder()
+                .csQnaId(10L)
+                .csPostId(csPostId)
+                .userId(3L)
+                .parentQnaId(null)
+                .qnaContent("살아있는 댓글")
+                .build();
+
+        CsQna deleted = CsQna.builder()
+                .csQnaId(11L)
+                .csPostId(csPostId)
+                .userId(4L)
+                .parentQnaId(null)
+                .qnaContent("삭제된 댓글")
+                .build();
+        ReflectionTestUtils.setField(deleted, "deletedAt", LocalDateTime.now());
+
+        List<CsQna> topLevelComments = List.of(active, deleted);
+        List<CsQna> allComments = List.of(active, deleted);
+        Page<CsQna> mockPage = new PageImpl<>(topLevelComments, pageable, 2);
+
+        when(csPostAccessValidator.validateProjectAndGetPost(projectId, csPostId))
+                .thenReturn(CsPost.builder().csPostId(csPostId).projectId(projectId).userId(1L).title("t").content("c").build());
+        when(csQnaService.findAllByCsPostId(csPostId)).thenReturn(allComments);
+        when(csQnaService.findCsQnasWithReplies(csPostId, pageable)).thenReturn(mockPage);
+
+        Page<CsQnaResponse> result = readCsQnaService.findCsQnas(projectId, csPostId, pageable);
+
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().get(0).csQnaId()).isEqualTo(10L);
+        assertThat(result.getTotalElements()).isEqualTo(1);
     }
 }

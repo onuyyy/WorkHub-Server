@@ -79,7 +79,7 @@ public class CsQnaService {
      * @return List<CsQna>
      */
     public List<CsQna> findByParentQnaId(Long parentQnaId) {
-        return csQnaRepository.findByParentQnaId(parentQnaId);
+        return csQnaRepository.findByParentQnaIdAndDeletedAtIsNull(parentQnaId);
     }
 
     /**

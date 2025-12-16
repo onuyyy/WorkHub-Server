@@ -36,20 +36,29 @@ public class ReadCsQnaService {
 
         // 1. 모든 댓글 조회 (부모 댓글 + 답글)
         List<CsQna> allComments = csQnaService.findAllByCsPostId(csPostId);
+        List<CsQna> visibleAllComments = allComments.stream()
+                .filter(comment -> !comment.isDeleted())
+                .toList();
 
         // 2. 최상위 댓글만 페이징
         Page<CsQna> topLevelComments = csQnaService.findCsQnasWithReplies(csPostId, pageable);
+        List<CsQna> visibleTopLevelComments = topLevelComments.getContent().stream()
+                .filter(comment -> !comment.isDeleted())
+                .toList();
+        long visibleTopLevelCount = visibleAllComments.stream()
+                .filter(comment -> comment.getParentQnaId() == null)
+                .count();
 
         // 3. 계층 구조로 변환
         List<CsQnaResponse> hierarchicalComments = buildHierarchy(
-                topLevelComments.getContent(),
-                allComments
+                visibleTopLevelComments,
+                visibleAllComments
         );
 
         return new PageImpl<>(
                 hierarchicalComments,
                 pageable,
-                topLevelComments.getTotalElements()
+                visibleTopLevelCount
         );
     }
 
