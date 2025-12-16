@@ -7,6 +7,8 @@ import com.workhub.cs.entity.CsPost;
 import com.workhub.cs.entity.CsPostFile;
 import com.workhub.cs.entity.CsPostStatus;
 import com.workhub.cs.entity.CsQna;
+import com.workhub.cs.port.AuthorLookupPort;
+import com.workhub.cs.port.dto.AuthorProfile;
 import com.workhub.cs.service.CsPostAccessValidator;
 import com.workhub.cs.service.csQna.CsQnaService;
 import com.workhub.global.entity.ActionType;
@@ -28,6 +30,7 @@ public class UpdateCsPostService {
     private final CsPostAccessValidator csPostAccessValidator;
     private final CsPostNotificationService csPostNotificationService;
     private final CsQnaService csQnaService;
+    private final AuthorLookupPort authorLookupPort;
 
     /**
      * CS POST를 수정한다.
@@ -57,7 +60,11 @@ public class UpdateCsPostService {
                 .collect(Collectors.toSet());
         csPostNotificationService.notifyUpdated(projectId, csPostId, csPost.getTitle(), commenters);
 
-        return CsPostResponse.from(csPost, visibleFiles);
+        String userName = authorLookupPort.findByUserId(csPost.getUserId())
+                .map(AuthorProfile::userName)
+                .orElse(null);
+
+        return CsPostResponse.from(csPost, visibleFiles, userName);
     }
 
     /**

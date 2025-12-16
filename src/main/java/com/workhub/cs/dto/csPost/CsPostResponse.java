@@ -15,12 +15,13 @@ public record CsPostResponse(
         String title,
         String content,
         Long userId,
+        String userName,
         List<CsPostFileResponse> files,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
 
-    public static CsPostResponse from(CsPost post, List<CsPostFile> fileList) {
+    public static CsPostResponse from(CsPost post, List<CsPostFile> fileList, String userName) {
 
         List<CsPostFileResponse> fileResponses =
                 (fileList == null) ? Collections.emptyList() :
@@ -34,19 +35,21 @@ public record CsPostResponse(
                 .title(post.getTitle())
                 .content(post.getContent())
                 .userId(post.getUserId())
+                .userName(userName)
                 .files(fileResponses)
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())
                 .build();
     }
 
-    public static CsPostResponse from(CsPost post) {
+    public static CsPostResponse from(CsPost post, String userName) {
         return CsPostResponse.builder()
                 .csPostId(post.getCsPostId())
                 .deletedAt(post.getDeletedAt())
                 .title(post.getTitle())
                 .content(post.getContent())
                 .userId(post.getUserId())
+                .userName(userName)
                 .files(Collections.emptyList()) // 리스트 조회에서는 파일 불러오지 않음
                 .createdAt(post.getCreatedAt())
                 .updatedAt(post.getUpdatedAt())

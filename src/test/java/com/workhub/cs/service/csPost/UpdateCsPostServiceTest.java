@@ -4,6 +4,8 @@ import com.workhub.cs.dto.csPost.CsPostResponse;
 import com.workhub.cs.dto.csPost.CsPostUpdateRequest;
 import com.workhub.cs.entity.CsPost;
 import com.workhub.cs.entity.CsPostStatus;
+import com.workhub.cs.port.AuthorLookupPort;
+import com.workhub.cs.port.dto.AuthorProfile;
 import com.workhub.cs.service.CsPostAccessValidator;
 import com.workhub.cs.service.csQna.CsQnaService;
 import com.workhub.global.error.ErrorCode;
@@ -20,6 +22,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -43,6 +46,9 @@ class UpdateCsPostServiceTest {
 
     @Mock
     private CsQnaService csQnaService;
+
+    @Mock
+    private AuthorLookupPort authorLookupPort;
 
     @InjectMocks
     private UpdateCsPostService updateCsPostService;
@@ -87,11 +93,13 @@ class UpdateCsPostServiceTest {
 
         when(csPostService.findFilesByCsPostId(csPostId))
                 .thenReturn(List.of());
+        when(authorLookupPort.findByUserId(userId)).thenReturn(Optional.of(new AuthorProfile(userId, "작성자")));
 
         CsPostResponse result = updateCsPostService.update(projectId, csPostId, userId, request);
 
         assertThat(result.title()).isEqualTo("수정 제목");
         assertThat(result.content()).isEqualTo("수정 완료");
+        assertThat(result.userName()).isEqualTo("작성자");
 
         assertThat(original.getTitle()).isEqualTo("수정 제목");
         assertThat(original.getContent()).isEqualTo("수정 완료");

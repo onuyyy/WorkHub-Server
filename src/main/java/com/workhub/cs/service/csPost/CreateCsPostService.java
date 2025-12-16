@@ -4,6 +4,8 @@ import com.workhub.cs.dto.csPost.CsPostRequest;
 import com.workhub.cs.dto.csPost.CsPostResponse;
 import com.workhub.cs.entity.CsPost;
 import com.workhub.cs.entity.CsPostFile;
+import com.workhub.cs.port.AuthorLookupPort;
+import com.workhub.cs.port.dto.AuthorProfile;
 import com.workhub.global.entity.ActionType;
 import com.workhub.project.service.ProjectService;
 import jakarta.transaction.Transactional;
@@ -20,6 +22,7 @@ public class CreateCsPostService {
     private final CsPostService csPostService;
     private final ProjectService projectService;
     private final CsPostNotificationService csPostNotificationService;
+    private final AuthorLookupPort authorLookupPort;
 
     /**
      * CS POST를 작성한다.
@@ -48,7 +51,11 @@ public class CreateCsPostService {
         csPostService.snapShotAndRecordHistory(csPost, csPost.getCsPostId(), ActionType.CREATE);
         csPostNotificationService.notifyCreated(projectId, csPost.getCsPostId(), csPost.getTitle());
 
-        return CsPostResponse.from(csPost, files);
+        String userName = authorLookupPort.findByUserId(userId)
+                .map(AuthorProfile::userName)
+                .orElse(null);
+
+        return CsPostResponse.from(csPost, files, userName);
     }
 
 }

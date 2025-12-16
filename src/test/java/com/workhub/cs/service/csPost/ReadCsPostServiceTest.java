@@ -4,6 +4,8 @@ import com.workhub.cs.dto.csPost.CsPostResponse;
 import com.workhub.cs.dto.csPost.CsPostSearchRequest;
 import com.workhub.cs.entity.CsPost;
 import com.workhub.cs.entity.CsPostStatus;
+import com.workhub.cs.port.AuthorLookupPort;
+import com.workhub.cs.port.dto.AuthorProfile;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import com.workhub.project.entity.Project;
@@ -19,6 +21,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.*;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -31,6 +35,9 @@ class ReadCsPostServiceTest {
 
     @Mock
     private ProjectService projectService;
+
+    @Mock
+    private AuthorLookupPort authorLookupPort;
 
     @InjectMocks
     private ReadCsPostService readCsPostService;
@@ -64,6 +71,7 @@ class ReadCsPostServiceTest {
         );
         when(csPostService.findById(csPostId)).thenReturn(mockSaved);
         when(csPostService.findFilesByCsPostId(csPostId)).thenReturn(List.of());
+        when(authorLookupPort.findByUserId(mockSaved.getUserId())).thenReturn(Optional.of(new AuthorProfile(mockSaved.getUserId(), "작성자")));
 
         CsPostResponse response = readCsPostService.findCsPost(projectId, csPostId);
 
@@ -72,6 +80,7 @@ class ReadCsPostServiceTest {
         verify(csPostService).findFilesByCsPostId(csPostId);
         assertThat(response.content()).isEqualTo("문의 내용");
         assertThat(response.title()).isEqualTo("문의 제목");
+        assertThat(response.userName()).isEqualTo("작성자");
     }
 
     @Test
@@ -115,8 +124,8 @@ class ReadCsPostServiceTest {
         Pageable pageable = PageRequest.of(0, 10, Sort.by("createdAt").descending());
 
         List<CsPost> content = List.of(
-                CsPost.builder().csPostId(1L).title("t1").projectId(1L).build(),
-                CsPost.builder().csPostId(2L).title("t2").projectId(1L).build()
+                CsPost.builder().csPostId(1L).title("t1").projectId(1L).userId(1L).build(),
+                CsPost.builder().csPostId(2L).title("t2").projectId(1L).userId(2L).build()
         );
 
         Page<CsPost> mockPage =
@@ -130,6 +139,12 @@ class ReadCsPostServiceTest {
                         .build()
         );
         when(csPostService.findCsPosts(request, pageable)).thenReturn(mockPage);
+        when(authorLookupPort.findByUserIds(anyList())).thenReturn(
+                Map.of(
+                        1L, new AuthorProfile(1L, "작성자1"),
+                        2L, new AuthorProfile(2L, "작성자2")
+                )
+        );
 
         // when
         Page<CsPostResponse> result = readCsPostService.findCsPosts(projectId, request, pageable);
@@ -146,6 +161,7 @@ class ReadCsPostServiceTest {
 
         // DTO 매핑 검증
         assertThat(result.getContent().get(0).title()).isEqualTo("t1");
+        assertThat(result.getContent().get(0).userName()).isEqualTo("작성자1");
 
     }
 }

@@ -4,6 +4,8 @@ import com.workhub.cs.dto.csPost.CsPostResponse;
 import com.workhub.cs.dto.csPost.CsPostSearchRequest;
 import com.workhub.cs.entity.CsPost;
 import com.workhub.cs.entity.CsPostFile;
+import com.workhub.cs.port.AuthorLookupPort;
+import com.workhub.cs.port.dto.AuthorProfile;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import com.workhub.project.service.ProjectService;
@@ -14,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +26,7 @@ public class ReadCsPostService {
 
     private final CsPostService csPostService;
     private final ProjectService projectService;
+    private final AuthorLookupPort authorLookupPort;
 
     /**
      * CS POST 게시물을 조회합니다.
@@ -42,7 +47,11 @@ public class ReadCsPostService {
                 .filter(file -> file.getDeletedAt() == null)
                 .toList();
 
-        return CsPostResponse.from(csPost, files);
+        String userName = authorLookupPort.findByUserId(csPost.getUserId())
+                .map(AuthorProfile::userName)
+                .orElse(null);
+
+        return CsPostResponse.from(csPost, files, userName);
     }
 
     /**
@@ -57,6 +66,22 @@ public class ReadCsPostService {
         projectService.validateCompletedProject(projectId);
         Page<CsPost> csPosts = csPostService.findCsPosts(searchType, pageable);
 
-        return csPosts.map(CsPostResponse::from);
+        Map<Long, AuthorProfile> authorMap = loadAuthors(csPosts);
+
+        return csPosts.map(post -> {
+            AuthorProfile author = authorMap.get(post.getUserId());
+            String userName = (author != null) ? author.userName() : null;
+            return CsPostResponse.from(post, userName);
+        });
+    }
+
+    private Map<Long, AuthorProfile> loadAuthors(Page<CsPost> csPosts) {
+        List<Long> userIds = csPosts.getContent().stream()
+                .map(CsPost::getUserId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        return authorLookupPort.findByUserIds(userIds);
     }
 }

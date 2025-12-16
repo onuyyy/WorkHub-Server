@@ -4,6 +4,8 @@ import com.workhub.cs.dto.csPost.CsPostFileRequest;
 import com.workhub.cs.dto.csPost.CsPostRequest;
 import com.workhub.cs.dto.csPost.CsPostResponse;
 import com.workhub.cs.entity.CsPost;
+import com.workhub.cs.port.AuthorLookupPort;
+import com.workhub.cs.port.dto.AuthorProfile;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import com.workhub.project.entity.Project;
@@ -19,6 +21,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -37,6 +40,9 @@ class CreateCsPostServiceTest {
 
     @Mock
     private CsPostNotificationService csPostNotificationService;
+
+    @Mock
+    private AuthorLookupPort authorLookupPort;
 
     @InjectMocks
     private CreateCsPostService createCsPostService;
@@ -63,12 +69,14 @@ class CreateCsPostServiceTest {
 
         when(projectService.validateCompletedProject(projectId)).thenReturn(Project.builder().projectId(projectId).projectTitle("p").status(Status.COMPLETED).build());
         when(csPostService.save(any(CsPost.class))).thenReturn(mockSaved);
+        when(authorLookupPort.findByUserId(userId)).thenReturn(Optional.of(new AuthorProfile(userId, "작성자")));
 
         CsPostResponse result = createCsPostService.create(projectId, userId, request);
 
         assertThat(result.csPostId()).isEqualTo(1L);
         assertThat(result.title()).isEqualTo("문의 제목");
         assertThat(result.content()).isEqualTo("문의 내용");
+        assertThat(result.userName()).isEqualTo("작성자");
 
         verify(projectService).validateCompletedProject(projectId);
         verify(csPostService).save(any(CsPost.class));
@@ -91,6 +99,7 @@ class CreateCsPostServiceTest {
         when(projectService.validateCompletedProject(projectId)).thenReturn(Project.builder().projectId(projectId).projectTitle("p").status(Status.COMPLETED).build());
         when(csPostService.save(any(CsPost.class))).thenReturn(mockSaved);
         when(csPostService.saveAllFiles(anyList())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(authorLookupPort.findByUserId(userId)).thenReturn(Optional.of(new AuthorProfile(userId, "작성자")));
 
         createCsPostService.create(projectId, userId, request);
 
@@ -108,6 +117,7 @@ class CreateCsPostServiceTest {
         CsPostRequest request = new CsPostRequest("문의 제목", "문의 내용", null);
         when(projectService.validateCompletedProject(projectId)).thenReturn(Project.builder().projectId(projectId).projectTitle("p").status(Status.COMPLETED).build());
         when(csPostService.save(any(CsPost.class))).thenReturn(mockSaved);
+        when(authorLookupPort.findByUserId(userId)).thenReturn(Optional.of(new AuthorProfile(userId, "작성자")));
 
         createCsPostService.create(projectId, userId, request);
 
