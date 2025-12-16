@@ -2,6 +2,7 @@ package com.workhub.projectNode.service;
 
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
+import com.workhub.projectNode.dto.ProjectNodeCount;
 import com.workhub.projectNode.entity.ProjectNode;
 import com.workhub.projectNode.repository.ProjectNodeRepository;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,10 @@ public class ProjectNodeService {
 
     public Map<Long, Long> getProjectNodeCountMapByProjectIdIn(List<Long> projectIds) {
         return projectNodeRepository.countMapByProjectIdIn(projectIds);
+    }
+
+    public Map<Long, ProjectNodeCount> getProjectNodeTotalAndApprovedCountMapByProjectIdIn(List<Long> projectIds) {
+        return projectNodeRepository.countTotalAndApprovedByProjectIdIn(projectIds);
     }
 
     public void validateNodeToProject(Long nodeId, Long projectId){

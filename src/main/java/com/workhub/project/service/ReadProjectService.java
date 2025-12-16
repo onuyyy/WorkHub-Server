@@ -10,6 +10,7 @@ import com.workhub.project.entity.Project;
 import com.workhub.project.entity.ProjectClientMember;
 import com.workhub.project.entity.ProjectDevMember;
 import com.workhub.project.entity.Status;
+import com.workhub.projectNode.dto.ProjectNodeCount;
 import com.workhub.projectNode.service.ProjectNodeService;
 import com.workhub.userTable.entity.Company;
 import com.workhub.userTable.entity.UserRole;
@@ -141,7 +142,7 @@ public class ReadProjectService {
 
         Set<Long> userIds = collectUserIds(allClientMembers, allDevMembers);
         Map<Long, UserTable> userMap = userService.getUserMapByUserIdIn(List.copyOf(userIds));
-        Map<Long, Long> workflowCountMap = projectNodeService.getProjectNodeCountMapByProjectIdIn(projectIds);
+        Map<Long, ProjectNodeCount> workflowCountMap = projectNodeService.getProjectNodeTotalAndApprovedCountMapByProjectIdIn(projectIds);
 
         // Company 배치 조회 추가 (이미 조회된 projects에서 companyId 추출)
         List<Long> companyIds = projects.stream()
@@ -206,7 +207,7 @@ public class ReadProjectService {
                         batchData.clientMemberMap().getOrDefault(project.getProjectId(), List.of()),
                         batchData.devMemberMap().getOrDefault(project.getProjectId(), List.of()),
                         batchData.userMap(),
-                        batchData.workflowCountMap().getOrDefault(project.getProjectId(), 0L),
+                        batchData.workflowCountMap().get(project.getProjectId()),
                         batchData.companyMap()
                 ))
                 .toList();
@@ -229,9 +230,12 @@ public class ReadProjectService {
             List<ProjectClientMember> clientMembers,
             List<ProjectDevMember> devMembers,
             Map<Long, UserTable> userMap,
-            Long workflowCount,
+            ProjectNodeCount workflowCount,
             Map<Long, Company> companyMap
     ) {
+        long totalWorkflow = workflowCount != null ? workflowCount.totalCount() : 0L;
+        long approvedWorkflow = workflowCount != null ? workflowCount.approvedCount() : 0L;
+
         List<UserTable> clientList = clientMembers.stream()
                 .map(ProjectClientMember::getUserId)
                 .map(userId -> {
@@ -268,7 +272,7 @@ public class ReadProjectService {
             company = companyService.findById(companyId);
         }
 
-        return ProjectListResponse.from(project, clientList, devList, workflowCount, company);
+        return ProjectListResponse.from(project, clientList, devList, approvedWorkflow, totalWorkflow, company);
     }
 
     /**
@@ -285,7 +289,7 @@ public class ReadProjectService {
             Map<Long, List<ProjectClientMember>> clientMemberMap,
             Map<Long, List<ProjectDevMember>> devMemberMap,
             Map<Long, UserTable> userMap,
-            Map<Long, Long> workflowCountMap,
+            Map<Long, ProjectNodeCount> workflowCountMap,
             Map<Long, Company> companyMap
     ) {}
 }

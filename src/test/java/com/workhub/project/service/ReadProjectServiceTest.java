@@ -5,6 +5,7 @@ import com.workhub.global.error.exception.BusinessException;
 import com.workhub.global.security.CustomUserDetails;
 import com.workhub.project.dto.response.PagedProjectListResponse;
 import com.workhub.project.entity.*;
+import com.workhub.projectNode.dto.ProjectNodeCount;
 import com.workhub.projectNode.service.ProjectNodeService;
 import com.workhub.userTable.entity.UserRole;
 import com.workhub.userTable.entity.UserTable;
@@ -162,7 +163,7 @@ class ReadProjectServiceTest {
         List<ProjectClientMember> clientMembers = Arrays.asList(clientMember1);
         List<Project> projects = Arrays.asList(project1);
         Map<Long, UserTable> userMap = Map.of(10L, user1, 20L, user2);
-        Map<Long, Long> workflowCountMap = Map.of(1L, 3L);
+        Map<Long, ProjectNodeCount> workflowCountMap = Map.of(1L, new ProjectNodeCount(3L, 2L));
 
         when(userService.getUserById(1L)).thenReturn(clientUser);
         when(projectService.getClientMemberByUserId(1L)).thenReturn(clientMembers);
@@ -171,7 +172,7 @@ class ReadProjectServiceTest {
         when(projectService.getClientMemberByProjectIdIn(Arrays.asList(1L))).thenReturn(clientMembers);
         when(projectService.getDevMemberByProjectIdIn(Arrays.asList(1L))).thenReturn(Arrays.asList(devMember1));
         when(userService.getUserMapByUserIdIn(anyList())).thenReturn(userMap);
-        when(projectNodeService.getProjectNodeCountMapByProjectIdIn(Arrays.asList(1L))).thenReturn(workflowCountMap);
+        when(projectNodeService.getProjectNodeTotalAndApprovedCountMapByProjectIdIn(Arrays.asList(1L))).thenReturn(workflowCountMap);
 
         // When
         PagedProjectListResponse result = readProjectService.projectListWithPaging(
@@ -196,7 +197,7 @@ class ReadProjectServiceTest {
         List<ProjectDevMember> devMembers = Arrays.asList(devMember1);
         List<Project> projects = Arrays.asList(project1);
         Map<Long, UserTable> userMap = Map.of(10L, user1, 20L, user2);
-        Map<Long, Long> workflowCountMap = Map.of(1L, 5L);
+        Map<Long, ProjectNodeCount> workflowCountMap = Map.of(1L, new ProjectNodeCount(5L, 4L));
 
         when(userService.getUserById(2L)).thenReturn(developerUser);
         when(projectService.getDevMemberByUserId(2L)).thenReturn(devMembers);
@@ -205,7 +206,7 @@ class ReadProjectServiceTest {
         when(projectService.getClientMemberByProjectIdIn(Arrays.asList(1L))).thenReturn(Arrays.asList(clientMember1));
         when(projectService.getDevMemberByProjectIdIn(Arrays.asList(1L))).thenReturn(devMembers);
         when(userService.getUserMapByUserIdIn(anyList())).thenReturn(userMap);
-        when(projectNodeService.getProjectNodeCountMapByProjectIdIn(Arrays.asList(1L))).thenReturn(workflowCountMap);
+        when(projectNodeService.getProjectNodeTotalAndApprovedCountMapByProjectIdIn(Arrays.asList(1L))).thenReturn(workflowCountMap);
 
         // When
         PagedProjectListResponse result = readProjectService.projectListWithPaging(
@@ -214,7 +215,8 @@ class ReadProjectServiceTest {
         // Then
         assertThat(result.projects()).hasSize(1);
         assertThat(result.projects().get(0).projectId()).isEqualTo(1L);
-        assertThat(result.projects().get(0).workflowStep()).isEqualTo(5L);
+        assertThat(result.projects().get(0).totalWorkflow()).isEqualTo(5L);
+        assertThat(result.projects().get(0).approveWorkflow()).isEqualTo(4L);
 
         verify(projectService).getDevMemberByUserId(2L);
     }
@@ -227,7 +229,10 @@ class ReadProjectServiceTest {
 
         List<Project> projects = Arrays.asList(project1, project2);
         Map<Long, UserTable> userMap = Map.of(10L, user1, 20L, user2);
-        Map<Long, Long> workflowCountMap = Map.of(1L, 3L, 2L, 4L);
+        Map<Long, ProjectNodeCount> workflowCountMap = Map.of(
+                1L, new ProjectNodeCount(3L, 2L),
+                2L, new ProjectNodeCount(4L, 1L)
+        );
 
         when(userService.getUserById(3L)).thenReturn(adminUser);
         when(projectService.findProjectsWithPaging(isNull(), any(), any(), any(), any(), any(), anyInt()))
@@ -235,7 +240,7 @@ class ReadProjectServiceTest {
         when(projectService.getClientMemberByProjectIdIn(Arrays.asList(1L, 2L))).thenReturn(Arrays.asList(clientMember1));
         when(projectService.getDevMemberByProjectIdIn(Arrays.asList(1L, 2L))).thenReturn(Arrays.asList(devMember1));
         when(userService.getUserMapByUserIdIn(anyList())).thenReturn(userMap);
-        when(projectNodeService.getProjectNodeCountMapByProjectIdIn(Arrays.asList(1L, 2L))).thenReturn(workflowCountMap);
+        when(projectNodeService.getProjectNodeTotalAndApprovedCountMapByProjectIdIn(Arrays.asList(1L, 2L))).thenReturn(workflowCountMap);
 
         // When
         PagedProjectListResponse result = readProjectService.projectListWithPaging(
@@ -303,7 +308,12 @@ class ReadProjectServiceTest {
         when(projectService.getClientMemberByProjectIdIn(anyList())).thenReturn(Arrays.asList(clientMember1));
         when(projectService.getDevMemberByProjectIdIn(anyList())).thenReturn(Arrays.asList(devMember1));
         when(userService.getUserMapByUserIdIn(anyList())).thenReturn(Map.of(10L, user1, 20L, user2));
-        when(projectNodeService.getProjectNodeCountMapByProjectIdIn(anyList())).thenReturn(Map.of(1L, 3L, 2L, 4L));
+        when(projectNodeService.getProjectNodeTotalAndApprovedCountMapByProjectIdIn(anyList())).thenReturn(
+                Map.of(
+                        1L, new ProjectNodeCount(3L, 2L),
+                        2L, new ProjectNodeCount(4L, 1L)
+                )
+        );
 
         // When
         PagedProjectListResponse result = readProjectService.projectListWithPaging(
@@ -316,7 +326,7 @@ class ReadProjectServiceTest {
         verify(projectService, times(1)).getClientMemberByProjectIdIn(anyList());
         verify(projectService, times(1)).getDevMemberByProjectIdIn(anyList());
         verify(userService, times(1)).getUserMapByUserIdIn(anyList());
-        verify(projectNodeService, times(1)).getProjectNodeCountMapByProjectIdIn(anyList());
+        verify(projectNodeService, times(1)).getProjectNodeTotalAndApprovedCountMapByProjectIdIn(anyList());
     }
 
     @Test
@@ -342,7 +352,7 @@ class ReadProjectServiceTest {
         when(projectService.getClientMemberByProjectIdIn(anyList())).thenReturn(Collections.emptyList());
         when(projectService.getDevMemberByProjectIdIn(anyList())).thenReturn(Collections.emptyList());
         when(userService.getUserMapByUserIdIn(anyList())).thenReturn(Collections.emptyMap());
-        when(projectNodeService.getProjectNodeCountMapByProjectIdIn(anyList())).thenReturn(Collections.emptyMap());
+        when(projectNodeService.getProjectNodeTotalAndApprovedCountMapByProjectIdIn(anyList())).thenReturn(Collections.emptyMap());
 
         // When
         PagedProjectListResponse result = readProjectService.projectListWithPaging(
@@ -410,7 +420,7 @@ class ReadProjectServiceTest {
         List<ProjectClientMember> clientMembers = Arrays.asList(clientMember1);
         List<Project> projects = Arrays.asList(project1);
         Map<Long, UserTable> userMap = Map.of(20L, user2); // user1 (10L) 누락
-        Map<Long, Long> workflowCountMap = Map.of(1L, 3L);
+        Map<Long, ProjectNodeCount> workflowCountMap = Map.of(1L, new ProjectNodeCount(3L, 1L));
 
         when(userService.getUserById(1L)).thenReturn(clientUser);
         when(projectService.getClientMemberByUserId(1L)).thenReturn(clientMembers);
@@ -419,7 +429,7 @@ class ReadProjectServiceTest {
         when(projectService.getClientMemberByProjectIdIn(Arrays.asList(1L))).thenReturn(clientMembers);
         when(projectService.getDevMemberByProjectIdIn(Arrays.asList(1L))).thenReturn(Arrays.asList(devMember1));
         when(userService.getUserMapByUserIdIn(anyList())).thenReturn(userMap);
-        when(projectNodeService.getProjectNodeCountMapByProjectIdIn(Arrays.asList(1L))).thenReturn(workflowCountMap);
+        when(projectNodeService.getProjectNodeTotalAndApprovedCountMapByProjectIdIn(Arrays.asList(1L))).thenReturn(workflowCountMap);
 
         // When
         PagedProjectListResponse result = readProjectService.projectListWithPaging(
@@ -441,7 +451,7 @@ class ReadProjectServiceTest {
         List<ProjectClientMember> clientMembers = Arrays.asList(clientMember1);
         List<Project> projects = Arrays.asList(project1);
         Map<Long, UserTable> userMap = Map.of(10L, user1, 20L, user2);
-        Map<Long, Long> workflowCountMap = Map.of(1L, 3L);
+        Map<Long, ProjectNodeCount> workflowCountMap = Map.of(1L, new ProjectNodeCount(3L, 2L));
 
         when(userService.getUserById(1L)).thenReturn(clientUser);
         when(projectService.getClientMemberByUserId(1L)).thenReturn(clientMembers);
@@ -450,7 +460,7 @@ class ReadProjectServiceTest {
         when(projectService.getClientMemberByProjectIdIn(Arrays.asList(1L))).thenReturn(clientMembers);
         when(projectService.getDevMemberByProjectIdIn(Arrays.asList(1L))).thenReturn(Arrays.asList(devMember1));
         when(userService.getUserMapByUserIdIn(anyList())).thenReturn(userMap);
-        when(projectNodeService.getProjectNodeCountMapByProjectIdIn(Arrays.asList(1L))).thenReturn(workflowCountMap);
+        when(projectNodeService.getProjectNodeTotalAndApprovedCountMapByProjectIdIn(Arrays.asList(1L))).thenReturn(workflowCountMap);
 
         // When
         PagedProjectListResponse result = readProjectService.projectListWithPaging(

@@ -21,7 +21,8 @@ public record ProjectListResponse(
         List<DevMembers> devMembers,
         List<ClientMembers> clientMembers,
         Integer totalMembers,
-        Long workflowStep
+        Long approveWorkflow,
+        Long totalWorkflow
 ) {
     @Builder
     public static record CompanyResponse (
@@ -39,7 +40,7 @@ public record ProjectListResponse(
 
 
     public static ProjectListResponse from(Project project, List<UserTable> clientList, List<UserTable> devList,
-                                           Long workflow, Company company) {
+                                           Long approveWorkflow, Long totalWorkflow, Company company) {
 
         CompanyResponse respCompany = CompanyResponse.from(company);
         List<DevMembers> devMembers = devList.stream()
@@ -63,7 +64,8 @@ public record ProjectListResponse(
                 .devMembers(devMembers)
                 .clientMembers(clientMembers)
                 .totalMembers(totalMembers)
-                .workflowStep(workflow)
+                .approveWorkflow(approveWorkflow)
+                .totalWorkflow(totalWorkflow)
                 .build();
     }
 }

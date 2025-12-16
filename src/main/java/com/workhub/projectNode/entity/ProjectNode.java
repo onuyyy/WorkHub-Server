@@ -40,10 +40,6 @@ public class ProjectNode extends BaseTimeEntity {
     @Column(name = "contract_end_date")
     private LocalDate contractEndDate;
 
-    /*@Enumerated(EnumType.STRING)
-    @Column(name = "priority")
-    private Priority priority;*/
-
     @Enumerated(EnumType.STRING)
     @Column(name = "confirm_status")
     private ConfirmStatus confirmStatus;
