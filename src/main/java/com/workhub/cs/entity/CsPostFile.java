@@ -31,6 +31,9 @@ public class CsPostFile extends BaseTimeEntity {
     @Column(name = "file_name", length = 255)
     private String fileName;
 
+    @Column(name = "original_file_name", length = 255)
+    private String originalFileName;
+
     @Column(name = "file_order")
     private Integer fileOrder;
 
@@ -60,6 +63,7 @@ public class CsPostFile extends BaseTimeEntity {
                 .csPostId(csPostId)
                 .fileUrl(validateUrl(uploadFile.fileName()))
                 .fileName(uploadFile.fileName())
+                .originalFileName(uploadFile.originalFileName())
                 .fileOrder(validateOrder(order))
                 .build();
     }

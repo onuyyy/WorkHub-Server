@@ -102,8 +102,8 @@ class CreateCsPostServiceTest {
         );
 
         List<FileUploadResponse> uploadResponses = List.of(
-                FileUploadResponse.from("file1.png", "https://example.com/file1"),
-                FileUploadResponse.from("file2.png", "https://example.com/file2")
+                FileUploadResponse.from("file1.png", "file1.png", "https://example.com/file1"),
+                FileUploadResponse.from("file2.png", "file2.png", "https://example.com/file2")
         );
 
         CsPostRequest request = new CsPostRequest("문의 제목", "내용", null);

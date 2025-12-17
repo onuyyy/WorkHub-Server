@@ -149,7 +149,7 @@ class CreatePostServiceTest {
                 .build();
         when(postService.save(any(Post.class))).thenReturn(saved);
 
-        List<FileUploadResponse> uploads = List.of(FileUploadResponse.from("uploaded.txt", ""));
+        List<FileUploadResponse> uploads = List.of(FileUploadResponse.from("uploaded.txt", "hello.txt", ""));
         when(fileService.uploadFiles(files)).thenReturn(uploads);
 
         // return exactly the list passed to savePostFiles to reflect persistence

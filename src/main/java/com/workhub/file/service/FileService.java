@@ -46,9 +46,10 @@ public class FileService {
                         log.error("파일 업로드 실패 : 업로드할 파일이 없습니다.");
                         throw new BusinessException(ErrorCode.INVALID_FILE_NAME);
                     }
-                    return uploadFile(file);
+                    String fileName = uploadFile(file);
+                    String originalFileName = file.getOriginalFilename();
+                    return FileUploadResponse.from(fileName, originalFileName, "");
                 })
-                .map(fileName -> FileUploadResponse.from(fileName, ""))
                 .toList();
     }
 
@@ -125,7 +126,7 @@ public class FileService {
         }
 
         String presignedUrl = s3Service.createPresignedUrl(fileName, PRESIGNED_URL_DURATION);
-        return FileUploadResponse.from(fileName, presignedUrl);
+        return FileUploadResponse.from(fileName, fileName, presignedUrl);
     }
 
     /**

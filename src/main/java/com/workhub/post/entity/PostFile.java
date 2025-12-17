@@ -31,6 +31,9 @@ public class PostFile extends BaseTimeEntity {
     @Column(name = "file_name", length = 255)
     private String fileName;
 
+    @Column(name = "original_file_name", length = 255)
+    private String originalFileName;
+
     @Column(name = "post_id")
     private Long postId;
 
@@ -42,6 +45,7 @@ public class PostFile extends BaseTimeEntity {
                 .postId(postId)
                 .fileUrl(validateUrl(request.fileUrl()))
                 .fileName(request.fileName())
+                .originalFileName(request.originalFileName())
                 .fileOrder(validateOrder(request.fileOrder()))
                 .build();
     }
@@ -62,6 +66,7 @@ public class PostFile extends BaseTimeEntity {
                 .postId(postId)
                 .fileUrl(validateUrl(file.fileUrl()))
                 .fileName(file.fileName())
+                .originalFileName(file.originalFileName())
                 .fileOrder(validateOrder(file.fileOrder()))
                 .build();
     }
