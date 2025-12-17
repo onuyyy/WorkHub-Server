@@ -2,6 +2,7 @@ package com.workhub.cs.entity;
 
 import com.workhub.cs.dto.csPost.CsPostFileRequest;
 import com.workhub.cs.dto.csPost.CsPostFileUpdateRequest;
+import com.workhub.file.dto.FileUploadResponse;
 import com.workhub.global.entity.BaseTimeEntity;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
@@ -39,6 +40,7 @@ public class CsPostFile extends BaseTimeEntity {
     public static CsPostFile of(Long csPostId, CsPostFileRequest request) {
         return CsPostFile.builder()
                 .csPostId(csPostId)
+                .fileUrl(validateUrl(request.fileUrl()))
                 .fileName(request.fileName())
                 .fileOrder(request.fileOrder())
                 .build();
@@ -47,8 +49,18 @@ public class CsPostFile extends BaseTimeEntity {
     public static CsPostFile of(Long csPostId, CsPostFileUpdateRequest request) {
         return CsPostFile.builder()
                 .csPostId(csPostId)
+                .fileUrl(validateUrl(request.fileUrl()))
                 .fileName(request.fileName())
                 .fileOrder(request.fileOrder())
+                .build();
+    }
+
+    public static CsPostFile of(Long csPostId, FileUploadResponse uploadFile, int order) {
+        return CsPostFile.builder()
+                .csPostId(csPostId)
+                .fileUrl(validateUrl(uploadFile.fileName()))
+                .fileName(uploadFile.fileName())
+                .fileOrder(validateOrder(order))
                 .build();
     }
 
@@ -74,5 +86,15 @@ public class CsPostFile extends BaseTimeEntity {
             throw new BusinessException(ErrorCode.INVALID_CS_POST_FILE_ORDER);
         }
         return order;
+    }
+
+    /**
+     * URL 검증
+     */
+    private static String validateUrl(String url) {
+        if (url == null || url.isBlank()) {
+            throw new BusinessException(ErrorCode.INVALID_CS_POST_FILE_CREATE);
+        }
+        return url;
     }
 }

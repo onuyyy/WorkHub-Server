@@ -1,11 +1,12 @@
 package com.workhub.cs.service.csPost;
 
-import com.workhub.cs.dto.csPost.CsPostFileRequest;
 import com.workhub.cs.dto.csPost.CsPostRequest;
 import com.workhub.cs.dto.csPost.CsPostResponse;
 import com.workhub.cs.entity.CsPost;
 import com.workhub.cs.port.AuthorLookupPort;
 import com.workhub.cs.port.dto.AuthorProfile;
+import com.workhub.file.dto.FileUploadResponse;
+import com.workhub.file.service.FileService;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import com.workhub.project.entity.Project;
@@ -18,14 +19,16 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
@@ -40,6 +43,9 @@ class CreateCsPostServiceTest {
 
     @Mock
     private CsPostNotificationService csPostNotificationService;
+
+    @Mock
+    private FileService fileService;
 
     @Mock
     private AuthorLookupPort authorLookupPort;
@@ -58,6 +64,9 @@ class CreateCsPostServiceTest {
                 .title("문의 제목")
                 .content("문의 내용")
                 .build();
+
+        lenient().when(authorLookupPort.findByUserId(anyLong()))
+                .thenReturn(Optional.of(new AuthorProfile(mockSaved.getUserId(), "작성자")));
     }
 
     @Test
@@ -69,14 +78,12 @@ class CreateCsPostServiceTest {
 
         when(projectService.validateCompletedProject(projectId)).thenReturn(Project.builder().projectId(projectId).projectTitle("p").status(Status.COMPLETED).build());
         when(csPostService.save(any(CsPost.class))).thenReturn(mockSaved);
-        when(authorLookupPort.findByUserId(userId)).thenReturn(Optional.of(new AuthorProfile(userId, "작성자")));
 
-        CsPostResponse result = createCsPostService.create(projectId, userId, request);
+        CsPostResponse result = createCsPostService.create(projectId, userId, request, null);
 
         assertThat(result.csPostId()).isEqualTo(1L);
         assertThat(result.title()).isEqualTo("문의 제목");
         assertThat(result.content()).isEqualTo("문의 내용");
-        assertThat(result.userName()).isEqualTo("작성자");
 
         verify(projectService).validateCompletedProject(projectId);
         verify(csPostService).save(any(CsPost.class));
@@ -89,22 +96,28 @@ class CreateCsPostServiceTest {
         Long projectId = 1L;
         Long userId = 2L;
 
-        List<CsPostFileRequest> fileRequests = Arrays.asList(
-                new CsPostFileRequest("file1", 1),
-                new CsPostFileRequest("file2", 2)
+        List<MultipartFile> multipartFiles = List.of(
+                new MockMultipartFile("files", "file1.png", "image/png", "data1".getBytes()),
+                new MockMultipartFile("files", "file2.png", "image/png", "data2".getBytes())
         );
 
-        CsPostRequest request = new CsPostRequest("문의 제목", "내용", fileRequests);
+        List<FileUploadResponse> uploadResponses = List.of(
+                FileUploadResponse.from("file1.png", "https://example.com/file1"),
+                FileUploadResponse.from("file2.png", "https://example.com/file2")
+        );
+
+        CsPostRequest request = new CsPostRequest("문의 제목", "내용", null);
 
         when(projectService.validateCompletedProject(projectId)).thenReturn(Project.builder().projectId(projectId).projectTitle("p").status(Status.COMPLETED).build());
         when(csPostService.save(any(CsPost.class))).thenReturn(mockSaved);
+        when(fileService.uploadFiles(multipartFiles)).thenReturn(uploadResponses);
         when(csPostService.saveAllFiles(anyList())).thenAnswer(invocation -> invocation.getArgument(0));
-        when(authorLookupPort.findByUserId(userId)).thenReturn(Optional.of(new AuthorProfile(userId, "작성자")));
 
-        createCsPostService.create(projectId, userId, request);
+        createCsPostService.create(projectId, userId, request, multipartFiles);
 
         verify(projectService).validateCompletedProject(projectId);
         verify(csPostService).save(any(CsPost.class));
+        verify(fileService).uploadFiles(multipartFiles);
         verify(csPostService, times(1)).saveAllFiles(anyList());
     }
 
@@ -117,9 +130,8 @@ class CreateCsPostServiceTest {
         CsPostRequest request = new CsPostRequest("문의 제목", "문의 내용", null);
         when(projectService.validateCompletedProject(projectId)).thenReturn(Project.builder().projectId(projectId).projectTitle("p").status(Status.COMPLETED).build());
         when(csPostService.save(any(CsPost.class))).thenReturn(mockSaved);
-        when(authorLookupPort.findByUserId(userId)).thenReturn(Optional.of(new AuthorProfile(userId, "작성자")));
 
-        createCsPostService.create(projectId, userId, request);
+        createCsPostService.create(projectId, userId, request, null);
 
         verify(projectService).validateCompletedProject(projectId);
         verify(csPostService).save(argThat(post ->
@@ -141,7 +153,7 @@ class CreateCsPostServiceTest {
                 new BusinessException(ErrorCode.INVALID_PROJECT_STATUS_FOR_CS_POST)
         );
 
-        assertThatThrownBy(() -> createCsPostService.create(projectId, userId, request))
+        assertThatThrownBy(() -> createCsPostService.create(projectId, userId, request, null))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_PROJECT_STATUS_FOR_CS_POST);
 

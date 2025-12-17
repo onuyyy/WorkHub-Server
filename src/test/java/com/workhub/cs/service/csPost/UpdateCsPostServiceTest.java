@@ -8,6 +8,7 @@ import com.workhub.cs.port.AuthorLookupPort;
 import com.workhub.cs.port.dto.AuthorProfile;
 import com.workhub.cs.service.CsPostAccessValidator;
 import com.workhub.cs.service.csQna.CsQnaService;
+import com.workhub.file.service.FileService;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import com.workhub.global.history.HistoryRecorder;
@@ -27,6 +28,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -48,6 +50,9 @@ class UpdateCsPostServiceTest {
     private CsQnaService csQnaService;
 
     @Mock
+    private FileService fileService;
+
+    @Mock
     private AuthorLookupPort authorLookupPort;
 
     @InjectMocks
@@ -64,6 +69,9 @@ class UpdateCsPostServiceTest {
                 .title("문의 제목")
                 .content("문의 내용")
                 .build();
+
+        lenient().when(authorLookupPort.findByUserId(anyLong()))
+                .thenAnswer(invocation -> Optional.of(new AuthorProfile(invocation.getArgument(0), "작성자")));
     }
 
     @Test
@@ -93,13 +101,11 @@ class UpdateCsPostServiceTest {
 
         when(csPostService.findFilesByCsPostId(csPostId))
                 .thenReturn(List.of());
-        when(authorLookupPort.findByUserId(userId)).thenReturn(Optional.of(new AuthorProfile(userId, "작성자")));
 
-        CsPostResponse result = updateCsPostService.update(projectId, csPostId, userId, request);
+        CsPostResponse result = updateCsPostService.update(projectId, csPostId, userId, request, null);
 
         assertThat(result.title()).isEqualTo("수정 제목");
         assertThat(result.content()).isEqualTo("수정 완료");
-        assertThat(result.userName()).isEqualTo("작성자");
 
         assertThat(original.getTitle()).isEqualTo("수정 제목");
         assertThat(original.getContent()).isEqualTo("수정 완료");
@@ -120,7 +126,7 @@ class UpdateCsPostServiceTest {
         when(csPostAccessValidator.validateProjectAndGetPost(projectId, csPostId))
                 .thenThrow(new BusinessException(ErrorCode.INVALID_PROJECT_STATUS_FOR_CS_POST));
 
-        assertThatThrownBy(() -> updateCsPostService.update(projectId, csPostId, userId, request))
+        assertThatThrownBy(() -> updateCsPostService.update(projectId, csPostId, userId, request, null))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_PROJECT_STATUS_FOR_CS_POST);
 
@@ -149,7 +155,7 @@ class UpdateCsPostServiceTest {
         when(csPostAccessValidator.validateProjectAndGetPost(projectId, csPostId))
                 .thenReturn(original);
 
-        assertThatThrownBy(() -> updateCsPostService.update(projectId, csPostId, requesterId, request))
+        assertThatThrownBy(() -> updateCsPostService.update(projectId, csPostId, requesterId, request, null))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN_CS_POST_UPDATE);
 

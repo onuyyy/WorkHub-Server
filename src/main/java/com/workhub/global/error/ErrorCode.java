@@ -89,6 +89,7 @@ public enum ErrorCode {
     INVALID_CS_QNA_CONTENT(HttpStatus.BAD_REQUEST, "C-014", "CS 댓글 내용이 비어있습니다."),
     NOT_MATCHED_CS_QNA_USERID(HttpStatus.BAD_REQUEST, "C-015", "CS 댓글 작성자와 수정자가 다릅니다."),
     ALREADY_DELETED_CS_QNA(HttpStatus.BAD_REQUEST, "C-016", "이미 삭제된 CS 댓글입니다."),
+    INVALID_CS_POST_FILE_CREATE(HttpStatus.BAD_REQUEST, "C-017", "CS 파일 URL이 비어있습니다."),
 
     // AWS S3
     // 파일 관련 에러
