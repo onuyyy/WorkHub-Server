@@ -18,6 +18,7 @@ services:
     env_file:
       - .env
     environment:
+      TZ: Asia/Seoul
       SPRING_PROFILES_ACTIVE: dev
       SPRING_DATASOURCE_URL: ${DB_URL}
       SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}

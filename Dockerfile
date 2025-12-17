@@ -23,6 +23,9 @@ RUN gradle build -x test --no-daemon --parallel
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
+RUN apk add --no-cache tzdata
+ENV TZ=Asia/Seoul
+
 # Copy built jar from build stage
 COPY --from=build /app/build/libs/*.jar app.jar
 
