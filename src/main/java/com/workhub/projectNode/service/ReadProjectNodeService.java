@@ -1,7 +1,7 @@
 package com.workhub.projectNode.service;
 
 import com.workhub.global.util.SecurityUtil;
-import com.workhub.projectNode.dto.NodeListResponse;
+import com.workhub.projectNode.dto.NodeResponse;
 import com.workhub.projectNode.entity.ProjectNode;
 import com.workhub.userTable.entity.UserTable;
 import com.workhub.userTable.service.UserService;
@@ -30,7 +30,7 @@ public class ReadProjectNodeService {
      * @param projectId 프로젝트 ID
      * @return 프로젝트에 속한 노드 리스트 (nodeOrder 기준 정렬)
      */
-    public List<NodeListResponse> getNodeListByProject(Long projectId) {
+    public List<NodeResponse> getNodeListByProject(Long projectId) {
 
         Long loginUser = SecurityUtil.getCurrentUserIdOrThrow();
         projectNodeValidator.validateProjectMemberPermission(projectId, loginUser);
@@ -43,7 +43,7 @@ public class ReadProjectNodeService {
         Map<Long, UserTable> userMap = userService.getUserMapByUserIdIn(devMembers);
 
         return nodeList.stream()
-                .map(node -> NodeListResponse.from(node, userMap.get(node.getDeveloperUserId())))
+                .map(node -> NodeResponse.from(node, userMap.get(node.getDeveloperUserId())))
                 .toList();
     }
 }

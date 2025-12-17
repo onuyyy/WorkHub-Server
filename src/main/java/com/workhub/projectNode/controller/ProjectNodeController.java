@@ -27,9 +27,9 @@ public class ProjectNodeController implements ProjectNodeApi {
 
     @Override
     @GetMapping("/list")
-    public ResponseEntity<ApiResponse<List<NodeListResponse>>> getNodeList(@PathVariable("projectId") Long projectId){
+    public ResponseEntity<ApiResponse<List<NodeResponse>>> getNodeList(@PathVariable("projectId") Long projectId){
 
-        List<NodeListResponse> nodeListByProject = readProjectNodeService.getNodeListByProject(projectId);
+        List<NodeResponse> nodeListByProject = readProjectNodeService.getNodeListByProject(projectId);
 
         return ApiResponse.success(nodeListByProject);
 
@@ -83,4 +83,14 @@ public class ProjectNodeController implements ProjectNodeApi {
         deleteProjectNodeService.deleteProjectNode(projectId, nodeId);
         return ApiResponse.success("프로젝트 노드 삭제 완료.");
     }
+
+    @PatchMapping("{nodeId}/confirm")
+    public ResponseEntity<ApiResponse<String>> requestConfirm(@PathVariable("projectId") Long projectId,
+                                                              @PathVariable("nodeId") Long nodeId,
+                                                              @RequestBody ClientStatusRequest request) {
+
+        updateProjectNodeService.updateConfirm(projectId, nodeId, request);
+        return ApiResponse.success("노드 승인을 요청하였습니다.");
+    }
+
 }

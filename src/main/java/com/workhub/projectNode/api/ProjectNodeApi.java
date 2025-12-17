@@ -25,7 +25,7 @@ public interface ProjectNodeApi {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "200",
                     description = "노드 리스트 조회 성공",
-                    content = @Content(schema = @Schema(implementation = NodeListResponse.class))
+                    content = @Content(schema = @Schema(implementation = NodeResponse.class))
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "404",
@@ -37,7 +37,7 @@ public interface ProjectNodeApi {
             )
     })
     @GetMapping
-    ResponseEntity<ApiResponse<List<NodeListResponse>>> getNodeList(
+    ResponseEntity<ApiResponse<List<NodeResponse>>> getNodeList(
             @Parameter(description = "프로젝트 ID", required = true)
             @PathVariable("projectId") Long projectId
     );
@@ -206,5 +206,42 @@ public interface ProjectNodeApi {
             @PathVariable Long projectId,
             @Parameter(description = "프로젝트 노드 ID", required = true)
             @PathVariable Long nodeId
+    );
+
+    @Operation(
+            summary = "프로젝트 노드 승인 상태 변경",
+            description = "프로젝트 노드의 승인 상태를 변경합니다. " +
+                    "PENDING: 검토 요청 시 노드 상태가 PENDING_REVIEW로 변경되며, 승인 상태가 PENDING이 됩니다. " +
+                    "APPROVED: 승인 시 노드 상태가 DONE으로 변경되며, 승인 상태가 APPROVED가 됩니다. " +
+                    "REJECTED: 반려 시 승인 상태만 REJECTED로 변경되며, 반려 사유가 함께 저장됩니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "노드 승인 상태 변경 성공"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "잘못된 요청 (유효하지 않은 승인 상태 값 등)"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "프로젝트 또는 노드를 찾을 수 없음"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "500",
+                    description = "서버 오류 (상태 변경 실패, 히스토리 저장 실패 등)"
+            )
+    })
+    @PatchMapping("{nodeId}/confirm")
+    ResponseEntity<ApiResponse<String>> requestConfirm(
+            @Parameter(description = "프로젝트 ID", required = true)
+            @PathVariable("projectId") Long projectId,
+
+            @Parameter(description = "노드 ID", required = true)
+            @PathVariable("nodeId") Long nodeId,
+
+            @Parameter(description = "승인 상태 변경 요청 정보 (승인 상태, 반려 사유)", required = true)
+            @RequestBody ClientStatusRequest request
     );
 }

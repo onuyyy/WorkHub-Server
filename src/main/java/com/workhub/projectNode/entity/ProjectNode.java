@@ -66,9 +66,13 @@ public class ProjectNode extends BaseTimeEntity {
         this.nodeOrder++;
     }
 
+    public void updateReject(String msg) { this.rejectText = msg; }
+
     public void updateNodeStatus(NodeStatus nodeStatus) {
         this.nodeStatus = nodeStatus;
     }
+
+    public void updateConfirmStatus(ConfirmStatus confirmStatus) { this.confirmStatus = confirmStatus; }
 
     public void updateNodeOrder(Integer nodeOrder) {
         this.nodeOrder = nodeOrder;

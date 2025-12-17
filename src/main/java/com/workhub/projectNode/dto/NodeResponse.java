@@ -2,6 +2,7 @@ package com.workhub.projectNode.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.workhub.project.dto.response.DevMembers;
+import com.workhub.projectNode.entity.ConfirmStatus;
 import com.workhub.projectNode.entity.NodeStatus;
 import com.workhub.projectNode.entity.ProjectNode;
 import com.workhub.userTable.entity.UserTable;
@@ -11,13 +12,14 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Builder
-public record NodeListResponse(
+public record NodeResponse(
 
         Long projectId,
         Long projectNodeId,
         String title,
         String description,
         NodeStatus nodeStatus,
+        ConfirmStatus confirmStatus,
         Integer nodeOrder,
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm")
         LocalDateTime updatedAt,
@@ -28,13 +30,14 @@ public record NodeListResponse(
 
 ) {
 
-    public static NodeListResponse from(ProjectNode projectNode, UserTable user) {
-        return NodeListResponse.builder()
+    public static NodeResponse from(ProjectNode projectNode, UserTable user) {
+        return NodeResponse.builder()
                 .projectId(projectNode.getProjectId())
                 .projectNodeId(projectNode.getProjectNodeId())
                 .title(projectNode.getTitle())
                 .description(projectNode.getDescription())
                 .nodeStatus(projectNode.getNodeStatus())
+                .confirmStatus(projectNode.getConfirmStatus())
                 .nodeOrder(projectNode.getNodeOrder())
                 .devMembers(DevMembers.from(user))
                 .updatedAt(projectNode.getUpdatedAt())

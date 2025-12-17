@@ -59,6 +59,51 @@ public class ProjectNodeNotificationService {
         );
     }
 
+    public void notifyPending(Long projectId, Long nodeId, String title, String changedDesc) {
+        Set<Long> receivers = targetFinder.findAllClientMembersOfProject(projectId);
+        if (receivers.isEmpty()) return;
+        String url = buildUrl(projectId, nodeId);
+
+        notificationPublisher.publishProjectNode(
+                receivers,
+                NotificationType.REVIEW_REQUEST,
+                title,
+                changedDesc,
+                url,
+                nodeId
+        );
+    }
+
+    public void notifyApproved(Long projectId, Long nodeId, String title, String changedDesc) {
+        Set<Long> receivers = targetFinder.findAllDevMembersOfProject(projectId);
+        if (receivers.isEmpty()) return;
+        String url = buildUrl(projectId, nodeId);
+
+        notificationPublisher.publishProjectNode(
+                receivers,
+                NotificationType.REVIEW_COMPLETED,
+                title,
+                changedDesc,
+                url,
+                nodeId
+        );
+    }
+
+    public void notifyRejected(Long projectId, Long nodeId, String title, String changedDesc) {
+        Set<Long> receivers = targetFinder.findAllDevMembersOfProject(projectId);
+        if (receivers.isEmpty()) return;
+        String url = buildUrl(projectId, nodeId);
+
+        notificationPublisher.publishProjectNode(
+                receivers,
+                NotificationType.REVIEW_REJECTED,
+                title,
+                changedDesc,
+                url,
+                nodeId
+        );
+    }
+
     private String buildUrl(Long projectId, Long nodeId) {
         return "/projects/" + projectId + "/nodes/" + nodeId;
     }

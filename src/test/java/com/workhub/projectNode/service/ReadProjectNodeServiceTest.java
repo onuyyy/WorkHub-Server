@@ -1,7 +1,7 @@
 package com.workhub.projectNode.service;
 
 import com.workhub.global.util.SecurityUtil;
-import com.workhub.projectNode.dto.NodeListResponse;
+import com.workhub.projectNode.dto.NodeResponse;
 import com.workhub.projectNode.entity.NodeStatus;
 import com.workhub.projectNode.entity.ProjectNode;
 import com.workhub.userTable.entity.UserTable;
@@ -109,7 +109,7 @@ class ReadProjectNodeServiceTest {
         given(userService.getUserMapByUserIdIn(anyList())).willReturn(userMap);
 
         // when
-        List<NodeListResponse> result = readProjectNodeService.getNodeListByProject(100L);
+        List<NodeResponse> result = readProjectNodeService.getNodeListByProject(100L);
 
         // then
         assertThat(result).hasSize(2);
@@ -147,7 +147,7 @@ class ReadProjectNodeServiceTest {
         given(userService.getUserMapByUserIdIn(anyList())).willReturn(Map.of());
 
         // when
-        List<NodeListResponse> result = readProjectNodeService.getNodeListByProject(100L);
+        List<NodeResponse> result = readProjectNodeService.getNodeListByProject(100L);
 
         // then
         assertThat(result).isEmpty();
@@ -165,7 +165,7 @@ class ReadProjectNodeServiceTest {
         given(userService.getUserMapByUserIdIn(anyList())).willReturn(userMap);
 
         // when
-        List<NodeListResponse> result = readProjectNodeService.getNodeListByProject(100L);
+        List<NodeResponse> result = readProjectNodeService.getNodeListByProject(100L);
 
         // then
         assertThat(result.get(0).nodeOrder()).isLessThan(result.get(1).nodeOrder());

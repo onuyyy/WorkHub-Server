@@ -8,6 +8,8 @@ import com.workhub.global.history.HistoryRecorder;
 import com.workhub.global.util.SecurityUtil;
 import com.workhub.global.util.StatusValidator;
 import com.workhub.projectNode.dto.*;
+import com.workhub.projectNode.entity.ConfirmStatus;
+import com.workhub.projectNode.entity.NodeStatus;
 import com.workhub.projectNode.entity.ProjectNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,18 +40,10 @@ public class UpdateProjectNodeService {
      */
     public void updateNodeStatus(Long projectId, Long nodeId, UpdateNodeStatusRequest request) {
 
-        Long loginUser = SecurityUtil.getCurrentUserIdOrThrow();
-        projectNodeValidator.validateLoginUserPermission(projectId, loginUser);
+        ProjectNode original = getOriginalAndSaveHistory(projectId, nodeId);
+        updateNodeStatus(original, request.nodeStatus());
 
-        ProjectNode original = projectNodeService.findByIdAndProjectId(nodeId, projectId);
-        NodeSnapshot snapshot = NodeSnapshot.from(original);
-
-        StatusValidator.validateStatusChange(original.getNodeStatus(), request.nodeStatus());
-        original.updateNodeStatus(request.nodeStatus());
-
-        historyRecorder.recordHistory(HistoryType.PROJECT_NODE, nodeId, ActionType.UPDATE, snapshot);
         projectNodeNotificationService.notifyUpdated(projectId, nodeId, original.getTitle(), "상태");
-
     }
 
     /**
@@ -96,16 +90,12 @@ public class UpdateProjectNodeService {
      */
     public CreateNodeResponse updateNode(Long projectId, Long nodeId, UpdateNodeRequest request) {
 
-        Long loginUser = SecurityUtil.getCurrentUserIdOrThrow();
-        projectNodeValidator.validateLoginUserPermission(projectId, loginUser);
+        ProjectNode original = getOriginalAndSaveHistory(projectId, nodeId);
 
-        ProjectNode original = projectNodeService.findByIdAndProjectId(nodeId, projectId);
         String beforeTitle = original.getTitle();
         String beforeDescription = original.getDescription();
-        NodeSnapshot snapshot = NodeSnapshot.from(original);
 
         original.update(request);
-        historyRecorder.recordHistory(HistoryType.PROJECT_NODE, nodeId, ActionType.UPDATE,snapshot);
 
         boolean titleChanged = !beforeTitle.equals(original.getTitle());
         boolean descChanged = !beforeDescription.equals(original.getDescription());
@@ -119,6 +109,84 @@ public class UpdateProjectNodeService {
         return CreateNodeResponse.from(original);
     }
 
+    /**
+     * confirm의 상태 값을 변경합니다.
+     *
+     * @param projectId 프로젝트 ID
+     * @param nodeId    노드 ID
+     * @param request 변경할 상태값
+     */
+    public void updateConfirm(Long projectId, Long nodeId, ClientStatusRequest request) {
+
+        ProjectNode original = getOriginalAndSaveHistory(projectId, nodeId);
+
+        updateNodeAndConfirmStatus(original, request);
+        sendConfirmStatusNotify(projectId, nodeId, original.getTitle(), request.confirmStatus());
+    }
+
+    /**
+     * 노드 Confirm 상태에 따라 적잘한 알림을 보냅니다.
+     */
+    private void sendConfirmStatusNotify(Long projectId, Long nodeId, String title, ConfirmStatus confirmStatus) {
+        switch (confirmStatus) {
+            case PENDING -> {
+                projectNodeNotificationService.notifyPending(projectId, nodeId, title, "관리자가 검토를 요청했습니다.");
+            }
+            case APPROVED -> {
+                projectNodeNotificationService.notifyApproved(projectId, nodeId, title, "프로젝트 노드가 승인되었습니다.");
+            }
+            case REJECTED -> {
+                projectNodeNotificationService.notifyRejected(projectId, nodeId, title, "프로젝트 노드가 반려되었습니다.");
+            }
+        }
+    }
+
+    /**
+     * 수정 전 원본 엔티티를 조회하고, 변경 전 상태를 히스토리에 기록합니다.
+     */
+    private ProjectNode getOriginalAndSaveHistory (Long projectId, Long nodeId) {
+
+        Long loginUser = SecurityUtil.getCurrentUserIdOrThrow();
+        projectNodeValidator.validateLoginUserPermission(projectId, loginUser);
+
+        ProjectNode original = projectNodeService.findByIdAndProjectId(nodeId, projectId);
+        NodeSnapshot snapshot = NodeSnapshot.from(original);
+        historyRecorder.recordHistory(HistoryType.PROJECT_NODE, nodeId, ActionType.UPDATE, snapshot);
+
+        return original;
+    }
+
+    /**
+     * 노드의 현재 상태를 변경합니다.
+     */
+    private void updateNodeStatus(ProjectNode node, NodeStatus nodeStatus) {
+
+        StatusValidator.validateStatusChange(node.getNodeStatus(), nodeStatus);
+        node.updateNodeStatus(nodeStatus);
+    }
+
+    /**
+     * 변경하려는 상태 값에 따라 알맞은 상태로 변경합니다.
+     */
+    private void updateNodeAndConfirmStatus(ProjectNode node, ClientStatusRequest confirmStatus) {
+        switch (confirmStatus.confirmStatus()) {
+            case PENDING -> {
+                if (!node.getNodeStatus().equals(NodeStatus.PENDING_REVIEW)) {
+                    updateNodeStatus(node, NodeStatus.PENDING_REVIEW);
+                }
+                node.updateConfirmStatus(confirmStatus.confirmStatus());
+            }
+            case APPROVED -> {
+                updateNodeStatus(node, NodeStatus.DONE);
+                node.updateConfirmStatus(confirmStatus.confirmStatus());
+            }
+            case REJECTED -> {
+                node.updateConfirmStatus(confirmStatus.confirmStatus());
+                node.updateReject(confirmStatus.rejectMessage());
+            }
+        }
+    }
+
     private String buildChangedDesc(boolean titleChanged, boolean descChanged) {
         StringBuilder sb = new StringBuilder();
         if (titleChanged) sb.append("제목, ");
@@ -126,5 +194,4 @@ public class UpdateProjectNodeService {
         if (sb.length() > 2) sb.setLength(sb.length() - 2);
         return sb.toString();
     }
-    
 }

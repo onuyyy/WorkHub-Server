@@ -38,6 +38,24 @@ public class NotificationTargetFinder {
     }
 
     /**
+     * 프로젝트 전체 멤버(고객) userId 집합을 반환한다.
+     */
+    public Set<Long> findAllClientMembersOfProject(Long projectId) {
+        var clients = projectService.getClientMemberByProjectIdIn(java.util.List.of(projectId));
+        return clients.stream().map(ProjectClientMember::getUserId)
+                .collect(Collectors.toSet());
+    }
+
+    /**
+     * 프로젝트 전체 멤버(개발) userId 집합을 반환한다.
+     */
+    public Set<Long> findAllDevMembersOfProject(Long projectId) {
+        var devs = projectService.getDevMemberByProjectIdIn(java.util.List.of(projectId));
+        return devs.stream().map(ProjectDevMember::getUserId)
+                .collect(Collectors.toSet());
+    }
+
+    /**
      * 게시글 작성자 userId 단일 조회.
      */
     public Long findPostAuthor(Long postId) {
