@@ -3,6 +3,7 @@ package com.workhub.checklist.service.chekList;
 import com.workhub.checklist.dto.checkList.CheckListDetails;
 import com.workhub.checklist.dto.checkList.CheckListItemStatus;
 import com.workhub.checklist.dto.checkList.CheckListResponse;
+import com.workhub.checklist.dto.checkList.CheckListUserInfo;
 import com.workhub.checklist.entity.checkList.CheckList;
 import com.workhub.checklist.entity.checkList.CheckListItem;
 import com.workhub.checklist.entity.checkList.CheckListOption;
@@ -77,17 +78,22 @@ class ReadCheckListServiceTest {
 
         CheckListDetails details = new CheckListDetails(checkList, List.of(item), List.of(option), List.of(file));
 
+        CheckListUserInfo userInfo = CheckListUserInfo.of("홍길동", "010-0000-0000");
+
         CheckListResponse expectedResponse = new CheckListResponse(
                 checkListId,
                 "테스트 체크리스트",
                 nodeId,
                 10L,
+                "홍길동",
+                "010-0000-0000",
                 List.of()
         );
 
         when(checkListService.findByNodeId(nodeId)).thenReturn(checkList);
         when(checkListService.findCheckListDetailsById(checkListId)).thenReturn(details);
-        when(checkListService.buildResponse(details)).thenReturn(expectedResponse);
+        when(checkListService.resolveUserInfo(checkList.getUserId())).thenReturn(userInfo);
+        when(checkListService.buildResponse(details, userInfo)).thenReturn(expectedResponse);
 
         // when
         CheckListResponse response = readCheckListService.findCheckList(projectId, nodeId);
@@ -100,6 +106,7 @@ class ReadCheckListServiceTest {
         verify(checkListAccessValidator).checkProjectMemberOrAdmin(projectId);
         verify(checkListService).findByNodeId(nodeId);
         verify(checkListService).findCheckListDetailsById(checkListId);
-        verify(checkListService).buildResponse(details);
+        verify(checkListService).resolveUserInfo(checkList.getUserId());
+        verify(checkListService).buildResponse(details, userInfo);
     }
 }

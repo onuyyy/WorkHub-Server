@@ -65,7 +65,11 @@ public class UpdateCheckListService {
         }
 
         CheckListDetails details = checkListService.findCheckListDetailsById(checkList.getCheckListId());
-        return checkListService.buildResponse(details);
+
+        return checkListService.buildResponse(
+                details,
+                checkListService.resolveUserInfo(checkList.getUserId())
+        );
     }
 
     /**
@@ -423,4 +427,5 @@ public class UpdateCheckListService {
             throw new BusinessException(ErrorCode.INVALID_CHECK_LIST_UPDATE_COMMAND);
         }
     }
+
 }

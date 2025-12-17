@@ -15,13 +15,25 @@ public class CustomUserDetails implements UserDetails {
     private final Long userId;
     private final String username;
     private final String password;
+    private final String userName;
+    private final String phone;
     private final GrantedAuthority authority;
 
     public CustomUserDetails(UserTable userTable) {
         this.userId = userTable.getUserId();
         this.username = userTable.getLoginId();
         this.password = userTable.getPassword();
+        this.userName = userTable.getUserName();
+        this.phone = userTable.getPhone();
         this.authority = new SimpleGrantedAuthority("ROLE_" + userTable.getRole().name());
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public String getPhone() {
+        return phone;
     }
 
     @Override

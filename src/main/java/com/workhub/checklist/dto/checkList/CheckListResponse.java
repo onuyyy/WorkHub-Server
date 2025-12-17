@@ -9,14 +9,22 @@ public record CheckListResponse(
         String description,
         Long projectNodeId,
         Long userId,
+        String userName,
+        String userPhone,
         List<CheckListItemResponse> items
 ) {
-    public static CheckListResponse from(CheckList checkList, List<CheckListItemResponse> items) {
+    public static CheckListResponse from(
+            CheckList checkList,
+            CheckListUserInfo userInfo,
+            List<CheckListItemResponse> items
+    ) {
         return new CheckListResponse(
                 checkList.getCheckListId(),
                 checkList.getCheckListDescription(),
                 checkList.getProjectNodeId(),
                 checkList.getUserId(),
+                userInfo.userName(),
+                userInfo.userPhone(),
                 items
         );
     }

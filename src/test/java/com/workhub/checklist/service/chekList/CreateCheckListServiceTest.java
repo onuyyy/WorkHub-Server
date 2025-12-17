@@ -44,6 +44,7 @@ class CreateCheckListServiceTest {
     private CheckListOption mockOption1;
     private CheckListOption mockOption2;
     private CheckListOptionFile mockFile1;
+    private CheckListUserInfo ownerInfo;
 
     @BeforeEach
     void init() {
@@ -93,6 +94,9 @@ class CreateCheckListServiceTest {
                 .fileOrder(0)
                 .checkListOptionId(1L)
                 .build();
+
+        ownerInfo = CheckListUserInfo.of("담당자", "010-1111-1111");
+        lenient().when(checkListService.resolveUserInfo(anyLong())).thenReturn(ownerInfo);
     }
 
     @Test

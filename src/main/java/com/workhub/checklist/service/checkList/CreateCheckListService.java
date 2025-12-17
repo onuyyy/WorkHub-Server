@@ -46,7 +46,11 @@ public class CreateCheckListService {
         CheckList checkList = createCheckList(request, userId, nodeId);
         List<CheckListItemResponse> itemResponses = createCheckListItems(checkList.getCheckListId(), request.items(), userId);
 
-        return CheckListResponse.from(checkList, itemResponses);
+        return CheckListResponse.from(
+                checkList,
+                checkListService.resolveUserInfo(checkList.getUserId()),
+                itemResponses
+        );
     }
 
     /**

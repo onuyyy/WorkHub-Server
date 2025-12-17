@@ -29,6 +29,9 @@ public class ReadCheckListService {
         CheckList checkList = checkListService.findByNodeId(nodeId);
         CheckListDetails details = checkListService.findCheckListDetailsById(checkList.getCheckListId());
 
-        return checkListService.buildResponse(details);
+        return checkListService.buildResponse(
+                details,
+                checkListService.resolveUserInfo(checkList.getUserId())
+        );
     }
 }

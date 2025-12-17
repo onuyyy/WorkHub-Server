@@ -16,12 +16,14 @@ import com.workhub.global.entity.HistoryType;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import com.workhub.global.history.HistoryRecorder;
+import com.workhub.global.util.SecurityUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -191,7 +193,7 @@ public class CheckListService {
      * @param details CheckList 상세 정보
      * @return CheckListResponse
      */
-    public CheckListResponse buildResponse(CheckListDetails details) {
+    public CheckListResponse buildResponse(CheckListDetails details, CheckListUserInfo userInfo) {
         Map<Long, List<CheckListOptionFile>> filesByOptionId = details.getFiles().stream()
                 .collect(Collectors.groupingBy(CheckListOptionFile::getCheckListOptionId));
 
@@ -202,7 +204,7 @@ public class CheckListService {
                 .map(item -> toItemResponse(item, optionsByItemId, filesByOptionId))
                 .collect(Collectors.toList());
 
-        return CheckListResponse.from(details.getCheckList(), itemResponses);
+        return CheckListResponse.from(details.getCheckList(), userInfo, itemResponses);
     }
 
     /**
@@ -241,5 +243,26 @@ public class CheckListService {
                         .collect(Collectors.toList());
 
         return CheckListOptionResponse.from(option, fileResponses);
+    }
+
+    /**
+     * 체크리스트의 작성자 정보를 반환
+     * @param ownerUserId 유저 식별자
+     * @return CheckListUserInfo
+     */
+    public CheckListUserInfo resolveUserInfo(Long ownerUserId) {
+        Long currentUserId = SecurityUtil.getCurrentUserIdOrThrow();
+        if (!Objects.equals(ownerUserId, currentUserId)) {
+            return CheckListUserInfo.empty();
+        }
+
+        String userName = SecurityUtil.getCurrentUserRealName().orElse(null);
+        String phone = SecurityUtil.getCurrentUserPhone().orElse(null);
+
+        if (userName == null && phone == null) {
+            return CheckListUserInfo.empty();
+        }
+
+        return CheckListUserInfo.of(userName, phone);
     }
 }

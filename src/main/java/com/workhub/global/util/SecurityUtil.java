@@ -54,6 +54,12 @@ public final class SecurityUtil {
                 .map(principal -> (UserDetails) principal);
     }
 
+    private static Optional<CustomUserDetails> getCustomUserDetails() {
+        return getCurrentUserDetails()
+                .filter(userDetails -> userDetails instanceof CustomUserDetails)
+                .map(userDetails -> (CustomUserDetails) userDetails);
+    }
+
     /**
      * 현재 인증된 사용자의 username(로그인 ID)을 반환
      *
@@ -81,9 +87,8 @@ public final class SecurityUtil {
      * @return Optional<Long>
      */
     public static Optional<Long> getCurrentUserId() {
-        return getCurrentUserDetails()
-                .filter(userDetails -> userDetails instanceof CustomUserDetails)
-                .map(userDetails -> ((CustomUserDetails) userDetails).getUserId());
+        return getCustomUserDetails()
+                .map(CustomUserDetails::getUserId);
     }
 
     /**
@@ -95,6 +100,26 @@ public final class SecurityUtil {
     public static Long getCurrentUserIdOrThrow() {
         return getCurrentUserId()
                 .orElseThrow(() -> new IllegalStateException("인증된 사용자가 없습니다."));
+    }
+
+    /**
+     * 현재 인증된 사용자의 실명(표시 이름)을 반환
+     *
+     * @return Optional<String>
+     */
+    public static Optional<String> getCurrentUserRealName() {
+        return getCustomUserDetails()
+                .map(CustomUserDetails::getUserName);
+    }
+
+    /**
+     * 현재 인증된 사용자의 전화번호를 반환
+     *
+     * @return Optional<String>
+     */
+    public static Optional<String> getCurrentUserPhone() {
+        return getCustomUserDetails()
+                .map(CustomUserDetails::getPhone);
     }
 
     /**

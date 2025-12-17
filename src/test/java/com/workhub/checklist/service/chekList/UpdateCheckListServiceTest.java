@@ -8,6 +8,7 @@ import com.workhub.checklist.dto.checkList.CheckListOptionUpdateRequest;
 import com.workhub.checklist.dto.checkList.CheckListResponse;
 import com.workhub.checklist.dto.checkList.CheckListUpdateCommandType;
 import com.workhub.checklist.dto.checkList.CheckListUpdateRequest;
+import com.workhub.checklist.dto.checkList.CheckListUserInfo;
 import com.workhub.checklist.entity.checkList.CheckList;
 import com.workhub.checklist.entity.checkList.CheckListItem;
 import com.workhub.checklist.entity.checkList.CheckListOption;
@@ -30,6 +31,7 @@ import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -58,11 +60,14 @@ class UpdateCheckListServiceTest {
     private CheckListItem existingItem;
     private CheckListOption existingOption;
     private CheckListOptionFile existingFile;
+    private CheckListUserInfo ownerInfo;
 
     @BeforeEach
     void setUp() {
         securityUtil = mockStatic(SecurityUtil.class);
-        securityUtil.when(SecurityUtil::getCurrentUserIdOrThrow).thenReturn(99L);
+        securityUtil.when(SecurityUtil::getCurrentUserIdOrThrow).thenReturn(5L);
+        securityUtil.when(SecurityUtil::getCurrentUserRealName).thenReturn(Optional.of("담당자"));
+        securityUtil.when(SecurityUtil::getCurrentUserPhone).thenReturn(Optional.of("010-9999-9999"));
 
         checkList = CheckList.builder()
                 .checkListId(1L)
@@ -95,6 +100,8 @@ class UpdateCheckListServiceTest {
                 .fileName("original.png")
                 .fileOrder(0)
                 .build();
+
+        ownerInfo = CheckListUserInfo.of("담당자", "010-9999-9999");
     }
 
     @AfterEach
@@ -120,6 +127,8 @@ class UpdateCheckListServiceTest {
                 "최신 전달사항",
                 checkList.getProjectNodeId(),
                 checkList.getUserId(),
+                ownerInfo.userName(),
+                ownerInfo.userPhone(),
                 List.of()
         );
 
@@ -128,7 +137,8 @@ class UpdateCheckListServiceTest {
         given(checkListService.saveCheckListOption(any(CheckListOption.class))).willReturn(existingOption);
         given(checkListService.saveCheckListOptionFile(any(CheckListOptionFile.class))).willReturn(existingFile);
         given(checkListService.findCheckListDetailsById(checkList.getCheckListId())).willReturn(details);
-        given(checkListService.buildResponse(details)).willReturn(expectedResponse);
+        given(checkListService.resolveUserInfo(checkList.getUserId())).willReturn(ownerInfo);
+        given(checkListService.buildResponse(details, ownerInfo)).willReturn(expectedResponse);
 
         // when
         CheckListResponse response = updateCheckListService.update(1L, 10L, request);
@@ -249,11 +259,14 @@ class UpdateCheckListServiceTest {
                 checkList.getCheckListDescription(),
                 checkList.getProjectNodeId(),
                 checkList.getUserId(),
+                ownerInfo.userName(),
+                ownerInfo.userPhone(),
                 List.of()
         );
 
         given(checkListService.findCheckListDetailsById(checkList.getCheckListId())).willReturn(details);
-        given(checkListService.buildResponse(details)).willReturn(expectedResponse);
+        given(checkListService.resolveUserInfo(checkList.getUserId())).willReturn(ownerInfo);
+        given(checkListService.buildResponse(details, ownerInfo)).willReturn(expectedResponse);
 
         // when
         CheckListResponse response = updateCheckListService.update(1L, 10L, request);
