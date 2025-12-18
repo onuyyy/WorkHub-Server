@@ -1,5 +1,5 @@
 # Build stage
-FROM gradle:8.5-jdk21 AS build
+FROM eclipse-temurin:21-jdk AS build
 WORKDIR /app
 
 # 1. Copy Gradle wrapper files (rarely change)
@@ -11,13 +11,13 @@ COPY gradle.properties* ./
 COPY build.gradle settings.gradle ./
 
 # 3. Download dependencies (cached if dependencies don't change)
-RUN gradle dependencies --no-daemon --refresh-dependencies
+RUN ./gradlew dependencies --no-daemon
 
 # 4. Copy source code (changes most frequently)
 COPY src ./src
 
 # 5. Build application (only reruns if source code changes)
-RUN gradle build -x test --no-daemon --parallel
+RUN ./gradlew build -x test --no-daemon --parallel
 
 # Runtime stage
 FROM eclipse-temurin:21-jre-alpine
