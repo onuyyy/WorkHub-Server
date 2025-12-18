@@ -65,6 +65,25 @@ public class FileService {
     }
 
     /**
+     * 파일명과 원본 파일명으로 다운로드용 Presigned URL을 생성.
+     * @param fileName S3에 저장된 파일명
+     * @param originalFileName 다운로드 시 사용할 원본 파일명
+     * @return Presigned URL이 포함된 FileUploadResponse
+     */
+    public FileUploadResponse getDownloadUrlWithOriginalName(String fileName, String originalFileName) {
+        if (!s3Service.fileExists(fileName)) {
+            throw new BusinessException(ErrorCode.FILE_NOT_FOUND);
+        }
+
+        String presignedUrl = s3Service.createPresignedUrlForDownload(
+                fileName,
+                PRESIGNED_URL_DURATION,
+                originalFileName
+        );
+        return FileUploadResponse.from(fileName, originalFileName, presignedUrl);
+    }
+
+    /**
      * S3에 저장된 파일을 삭제.
      * @param fileName 삭제할 파일명
      * @throws BusinessException 파일명이 유효하지 않거나 삭제 실패 시

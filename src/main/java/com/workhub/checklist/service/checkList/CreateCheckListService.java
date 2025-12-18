@@ -60,7 +60,7 @@ public class CreateCheckListService {
      * @return 저장된 CheckList 엔티티
      */
     private CheckList createCheckList(CheckListCreateRequest request, Long userId, Long nodeId) {
-        CheckList checkList = CheckList.of(request, userId, nodeId);
+        CheckList checkList = CheckList.of(request.description(), userId, nodeId);
         return checkListService.saveCheckList(checkList);
     }
 

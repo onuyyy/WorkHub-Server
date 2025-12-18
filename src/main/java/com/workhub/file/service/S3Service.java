@@ -135,6 +135,49 @@ public class S3Service {
     }
 
     /**
+     * S3 파일의 Presigned URL을 생성 (다운로드용, Content-Disposition 헤더 포함).
+     * @param key S3에 저장된 파일의 키
+     * @param duration URL 유효 기간
+     * @param downloadFilename 다운로드 시 사용할 파일명
+     * @return Presigned URL
+     */
+    public String createPresignedUrlForDownload(String key, Duration duration, String downloadFilename) {
+        // RFC 5987에 따라 파일명을 UTF-8로 인코딩
+        String encodedFilename = encodeFilename(downloadFilename);
+        String contentDisposition = "attachment; filename*=UTF-8''" + encodedFilename;
+
+        GetObjectRequest objectRequest = GetObjectRequest.builder()
+                .bucket(bucket)
+                .key(key)
+                .responseContentDisposition(contentDisposition)
+                .build();
+
+        GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+                .getObjectRequest(objectRequest)
+                .signatureDuration(duration)
+                .build();
+
+        return s3Presigner.presignGetObject(presignRequest)
+                .url()
+                .toString();
+    }
+
+    /**
+     * 파일명을 URL 인코딩.
+     * @param filename 원본 파일명
+     * @return URL 인코딩된 파일명
+     */
+    private String encodeFilename(String filename) {
+        try {
+            return java.net.URLEncoder.encode(filename, "UTF-8")
+                    .replace("+", "%20");
+        } catch (Exception e) {
+            log.warn("Failed to encode filename: {}", filename, e);
+            return filename;
+        }
+    }
+
+    /**
      * public URL에서 S3 키(파일명)를 추출.
      * @param publicUrl S3 파일의 public URL
      * @return S3 키 (prefix 포함)

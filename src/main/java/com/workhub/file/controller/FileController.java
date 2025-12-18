@@ -32,4 +32,19 @@ public class FileController implements FileApi {
         List<FileUploadResponse> presignedUrls = fileService.getDownloadUrls(fileNames);
         return ApiResponse.success(presignedUrls);
     }
+
+    /**
+     * 원본 파일명으로 다운로드할 수 있는 Presigned URL을 생성.
+     * @param fileName S3에 저장된 파일명 (UUID)
+     * @param originalFileName 다운로드 시 사용할 원본 파일명
+     * @return Presigned URL이 포함된 FileUploadResponse
+     */
+    @GetMapping("/download")
+    public ResponseEntity<ApiResponse<FileUploadResponse>> getDownloadUrl(
+            @RequestParam("fileName") String fileName,
+            @RequestParam("originalFileName") String originalFileName) {
+
+        FileUploadResponse response = fileService.getDownloadUrlWithOriginalName(fileName, originalFileName);
+        return ApiResponse.success(response);
+    }
 }

@@ -1,6 +1,5 @@
 package com.workhub.checklist.entity.checkList;
 
-import com.workhub.checklist.dto.checkList.CheckListCreateRequest;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,9 +28,9 @@ public class CheckList {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    public static CheckList of(CheckListCreateRequest request, Long userId, Long projectNodeId) {
+    public static CheckList of(String description, Long userId, Long projectNodeId) {
         return CheckList.builder()
-                .checkListDescription(request.description())
+                .checkListDescription(description)
                 .projectNodeId(projectNodeId)
                 .userId(userId)
                 .build();
