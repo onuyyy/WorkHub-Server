@@ -1,5 +1,6 @@
 package com.workhub.checklist.entity.checkList;
 
+import com.workhub.file.dto.FileUploadResponse;
 import com.workhub.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -41,6 +42,17 @@ public class CheckListOptionFile extends BaseTimeEntity {
                 .build();
     }
 
+    public static CheckListOptionFile fromUpload(Long checkListOptionId,
+                                                 FileUploadResponse uploadFile,
+                                                 Integer fileOrder) {
+        return CheckListOptionFile.builder()
+                .fileUrl(uploadFile.fileName())
+                .fileName(uploadFile.originalFileName())
+                .fileOrder(fileOrder)
+                .checkListOptionId(checkListOptionId)
+                .build();
+    }
+
     private static String extractFileName(String fileUrl) {
         if (fileUrl == null || fileUrl.isEmpty()) {
             return "unknown";
@@ -57,5 +69,12 @@ public class CheckListOptionFile extends BaseTimeEntity {
         if (fileOrder != null) {
             this.fileOrder = fileOrder;
         }
+    }
+
+    public boolean isManagedFile() {
+        if (fileUrl == null) {
+            return false;
+        }
+        return !fileUrl.startsWith("http://") && !fileUrl.startsWith("https://");
     }
 }

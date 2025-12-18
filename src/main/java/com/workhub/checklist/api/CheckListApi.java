@@ -18,6 +18,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @Tag(name = "체크리스트 관리", description = "프로젝트 노드의 체크리스트 API")
 @RequestMapping("/api/v1/projects/{projectId}")
@@ -43,11 +46,12 @@ public interface CheckListApi {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "프로젝트 또는 노드를 찾을 수 없음"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류")
     })
-    @PostMapping(value = "/nodes/{nodeId}/checkLists", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/nodes/{nodeId}/checkLists", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     ResponseEntity<ApiResponse<CheckListResponse>> create(
             @PathVariable Long projectId,
             @PathVariable Long nodeId,
-            @Valid @RequestBody CheckListCreateRequest request,
+            @Valid @RequestPart("data") CheckListCreateRequest request,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails
     );
 
@@ -96,11 +100,12 @@ public interface CheckListApi {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "체크리스트를 찾을 수 없음"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류")
     })
-    @PatchMapping(value = "/nodes/{nodeId}/checkLists", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PatchMapping(value = "/nodes/{nodeId}/checkLists", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     ResponseEntity<ApiResponse<CheckListResponse>> update(
             @PathVariable Long projectId,
             @PathVariable Long nodeId,
-            @Valid @RequestBody CheckListUpdateRequest request
+            @Valid @RequestPart("data") CheckListUpdateRequest request,
+            @RequestPart(value = "newFiles", required = false) List<MultipartFile> newFiles
     );
 
     @Operation(

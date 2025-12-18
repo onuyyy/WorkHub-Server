@@ -29,7 +29,7 @@ public record CheckListOptionFileUpdateRequest(
                     throw new BusinessException(ErrorCode.CHECK_LIST_CREATE_CANNOT_HAVE_ID);
                 }
                 if (fileUrl == null || fileUrl.isBlank()) {
-                    throw new BusinessException(ErrorCode.CHECK_LIST_CREATE_REQUIRES_FILE_URL);
+                    throw new BusinessException(ErrorCode.CHECK_LIST_CREATE_REQUIRES_FILE_INFO);
                 }
             }
             case UPDATE -> {

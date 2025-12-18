@@ -7,20 +7,26 @@ import com.workhub.checklist.entity.checkList.CheckListOption;
 import com.workhub.checklist.entity.checkList.CheckListOptionFile;
 import com.workhub.checklist.event.CheckListCreatedEvent;
 import com.workhub.checklist.service.CheckListAccessValidator;
+import com.workhub.file.dto.FileUploadResponse;
+import com.workhub.file.service.FileService;
 import com.workhub.global.entity.ActionType;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -28,6 +34,7 @@ public class CreateCheckListService {
 
     private final CheckListService checkListService;
     private final CheckListAccessValidator checkListAccessValidator;
+    private final FileService fileService;
     private final ApplicationEventPublisher eventPublisher;
 
     /**
@@ -38,24 +45,50 @@ public class CreateCheckListService {
      * @param request CheckList 생성 요청
      * @return CheckListResponse
      */
-    public CheckListResponse create(Long projectId, Long nodeId, Long userId, CheckListCreateRequest request) {
+    public CheckListResponse create(Long projectId,
+                                    Long nodeId,
+                                    Long userId,
+                                    CheckListCreateRequest request,
+                                    List<MultipartFile> files) {
 
+        // 1) 권한 및 유효성 검증
         checkListAccessValidator.validateProjectAndNode(projectId, nodeId);
         checkListAccessValidator.checkProjectDevMemberOrAdmin(projectId);
-
         validateItemOrders(request.items());
         checkListService.existNodeCheck(nodeId);
 
-        CheckList checkList = createCheckList(request, userId, nodeId);
-        List<CheckListItemResponse> itemResponses = createCheckListItems(checkList.getCheckListId(), request.items(), userId);
+        // 2) S3에 파일 업로드
+        List<FileUploadResponse> uploadResponses = fileService.uploadFiles(files);
 
-        eventPublisher.publishEvent(new CheckListCreatedEvent(projectId, nodeId));
+        // 3) 업로드 컨텍스트 생성
+        CheckListFileUploadContext uploadContext = new CheckListFileUploadContext(uploadResponses);
+        List<String> uploadedFileNames = uploadContext.getUploadedFileNames();
 
-        return CheckListResponse.from(
-                checkList,
-                checkListService.resolveUserInfo(checkList.getUserId()),
-                itemResponses
-        );
+        try {
+            // 4) CheckList 엔티티 생성
+            CheckList checkList = createCheckList(request, userId, nodeId);
+            // CheckListItem 및 하위 엔티티 생성
+            List<CheckListItemResponse> itemResponses =
+                    createCheckListItems(checkList.getCheckListId(), request.items(), userId, uploadContext);
+
+            // 6) 미소비 파일 검증
+            if (uploadContext.hasUnconsumedFiles()) {
+                List<String> unconsumed = uploadContext.getUnconsumedFileNames();
+                log.error("체크리스트 생성 실패 - 미사용 파일 {} 개: {}", unconsumed.size(), unconsumed);
+                throw new BusinessException(ErrorCode.CHECK_LIST_FILE_MAPPING_NOT_FOUND);
+            }
+
+            eventPublisher.publishEvent(new CheckListCreatedEvent(projectId, nodeId));
+          
+            return CheckListResponse.from(
+                    checkList,
+                    checkListService.resolveUserInfo(checkList.getUserId()),
+                    itemResponses
+            );
+        } catch (Exception e) {
+            rollbackUploadedFiles(uploadedFileNames);
+            throw e;
+        }
     }
 
     /**
@@ -76,10 +109,13 @@ public class CreateCheckListService {
      * @param userId 사용자 식별자
      * @return CheckListItemResponse 목록
      */
-    private List<CheckListItemResponse> createCheckListItems(Long checkListId, List<CheckListItemRequest> itemRequests, Long userId) {
+    private List<CheckListItemResponse> createCheckListItems(Long checkListId,
+                                                            List<CheckListItemRequest> itemRequests,
+                                                            Long userId,
+                                                            CheckListFileUploadContext uploadContext) {
 
         return itemRequests.stream().map(itemRequest ->
-                createCheckListItem(checkListId, itemRequest, userId))
+                createCheckListItem(checkListId, itemRequest, userId, uploadContext))
                 .collect(Collectors.toList());
     }
 
@@ -90,7 +126,10 @@ public class CreateCheckListService {
      * @param userId 사용자 식별자
      * @return CheckListItemResponse
      */
-    private CheckListItemResponse createCheckListItem(Long checkListId, CheckListItemRequest itemRequest, Long userId) {
+    private CheckListItemResponse createCheckListItem(Long checkListId,
+                                                      CheckListItemRequest itemRequest,
+                                                      Long userId,
+                                                      CheckListFileUploadContext uploadContext) {
         // Item 생성 및 저장
         CheckListItem item = CheckListItem.of(checkListId, itemRequest, userId);
         item = checkListService.saveCheckListItem(item);
@@ -99,7 +138,8 @@ public class CreateCheckListService {
         checkListService.snapShotAndRecordHistory(item, item.getCheckListItemId(), ActionType.CREATE);
 
         // Option 목록 생성
-        List<CheckListOptionResponse> optionResponses = createCheckListOptions(item.getCheckListItemId(), itemRequest.options());
+        List<CheckListOptionResponse> optionResponses =
+                createCheckListOptions(item.getCheckListItemId(), itemRequest.options(), uploadContext);
 
         return CheckListItemResponse.from(item, optionResponses);
     }
@@ -110,10 +150,12 @@ public class CreateCheckListService {
      * @param optionRequests CheckListOption 생성 요청 목록
      * @return CheckListOptionResponse 목록
      */
-    private List<CheckListOptionResponse> createCheckListOptions(Long itemId, List<CheckListOptionRequest> optionRequests) {
+    private List<CheckListOptionResponse> createCheckListOptions(Long itemId,
+                                                                 List<CheckListOptionRequest> optionRequests,
+                                                                 CheckListFileUploadContext uploadContext) {
 
         return optionRequests.stream().map(optionRequest ->
-                createCheckListOption(itemId, optionRequest))
+                createCheckListOption(itemId, optionRequest, uploadContext))
                 .collect(Collectors.toList());
     }
 
@@ -123,11 +165,14 @@ public class CreateCheckListService {
      * @param optionRequest CheckListOption 생성 요청
      * @return CheckListOptionResponse
      */
-    private CheckListOptionResponse createCheckListOption(Long itemId, CheckListOptionRequest optionRequest) {
+    private CheckListOptionResponse createCheckListOption(Long itemId,
+                                                         CheckListOptionRequest optionRequest,
+                                                         CheckListFileUploadContext uploadContext) {
         CheckListOption option = CheckListOption.of(itemId, optionRequest);
         checkListService.saveCheckListOption(option);
 
-        List<CheckListOptionFileResponse> fileResponses = createCheckListOptionFiles(option.getCheckListOptionId(), optionRequest.fileUrls());
+        List<CheckListOptionFileResponse> fileResponses =
+                createCheckListOptionFiles(option.getCheckListOptionId(), optionRequest.fileUrls(), uploadContext);
 
         return CheckListOptionResponse.from(option, fileResponses);
     }
@@ -138,21 +183,81 @@ public class CreateCheckListService {
      * @param fileUrls 파일 URL 목록
      * @return CheckListOptionFileResponse 목록
      */
-    private List<CheckListOptionFileResponse> createCheckListOptionFiles(Long optionId, List<String> fileUrls) {
+    private List<CheckListOptionFileResponse> createCheckListOptionFiles(Long optionId,
+                                                                        List<String> fileUrls,
+                                                                        CheckListFileUploadContext uploadContext) {
         if (fileUrls == null || fileUrls.isEmpty()) {
             return new ArrayList<>();
         }
 
         List<CheckListOptionFileResponse> fileResponses = new ArrayList<>();
-
         for (int i = 0; i < fileUrls.size(); i++) {
-            String fileUrl = fileUrls.get(i);
-            CheckListOptionFile file = CheckListOptionFile.of(optionId, fileUrl, i);
-            checkListService.saveCheckListOptionFile(file);
-            fileResponses.add(CheckListOptionFileResponse.from(file));
+            String identifier = fileUrls.get(i);
+            if (identifier == null || identifier.isBlank()) {
+                continue;
+            }
+
+            CheckListOptionFile optionFile = resolveOptionFile(optionId, identifier, i, uploadContext);
+            CheckListOptionFile saved = checkListService.saveCheckListOptionFile(optionFile);
+            fileResponses.add(CheckListOptionFileResponse.from(saved));
         }
 
         return fileResponses;
+    }
+
+    private CheckListOptionFile resolveOptionFile(Long optionId,
+                                                  String identifier,
+                                                  int order,
+                                                  CheckListFileUploadContext uploadContext) {
+        if (uploadContext != null) {
+            Optional<FileUploadResponse> upload = uploadContext.consume(identifier);
+            if (upload.isPresent()) {
+                return CheckListOptionFile.fromUpload(optionId, upload.get(), order);
+            }
+        }
+
+        if (isValidRemoteUrl(identifier)) {
+            return CheckListOptionFile.of(optionId, identifier, order);
+        }
+
+        String availableFiles = uploadContext != null
+                ? String.join(", ", uploadContext.getUploadedFileNames())
+                : "없음";
+
+        log.error("파일 매핑 실패 - 요청 파일: '{}', 업로드된 파일: [{}]", identifier, availableFiles);
+
+        throw new BusinessException(ErrorCode.CHECK_LIST_FILE_MAPPING_NOT_FOUND);
+    }
+
+    private boolean isValidRemoteUrl(String identifier) {
+        if (identifier == null) {
+            return false;
+        }
+
+        if (!identifier.startsWith("http://") && !identifier.startsWith("https://")) {
+            return false;
+        }
+
+        try {
+            new java.net.URL(identifier);
+            return true;
+        } catch (Exception e) {
+            log.warn("유효하지 않은 URL 형식: {}", identifier);
+            return false;
+        }
+    }
+
+    private void rollbackUploadedFiles(List<String> uploadedFileNames) {
+        if (uploadedFileNames == null || uploadedFileNames.isEmpty()) {
+            return;
+        }
+
+        try {
+            log.warn("체크리스트 생성 실패로 업로드된 파일 {}개를 삭제합니다.", uploadedFileNames.size());
+            fileService.deleteFiles(uploadedFileNames);
+        } catch (Exception deleteException) {
+            log.error("체크리스트 업로드 파일 삭제 중 오류 발생: {}", uploadedFileNames, deleteException);
+        }
     }
 
     private void validateItemOrders(List<CheckListItemRequest> itemRequests) {

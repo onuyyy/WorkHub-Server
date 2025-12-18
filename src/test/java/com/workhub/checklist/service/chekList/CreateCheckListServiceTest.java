@@ -8,6 +8,8 @@ import com.workhub.checklist.entity.checkList.CheckListOptionFile;
 import com.workhub.checklist.service.CheckListAccessValidator;
 import com.workhub.checklist.service.checkList.CheckListService;
 import com.workhub.checklist.service.checkList.CreateCheckListService;
+import com.workhub.file.dto.FileUploadResponse;
+import com.workhub.file.service.FileService;
 import com.workhub.checklist.event.CheckListCreatedEvent;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
@@ -15,9 +17,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.Arrays;
@@ -36,6 +40,9 @@ class CreateCheckListServiceTest {
 
     @Mock
     private CheckListAccessValidator checkListAccessValidator;
+
+    @Mock
+    private FileService fileService;
 
     @Mock
     private ApplicationEventPublisher eventPublisher;
@@ -102,6 +109,7 @@ class CreateCheckListServiceTest {
 
         ownerInfo = CheckListUserInfo.of("담당자", "010-1111-1111");
         lenient().when(checkListService.resolveUserInfo(anyLong())).thenReturn(ownerInfo);
+        lenient().when(fileService.uploadFiles(any())).thenReturn(List.of());
     }
 
     @Test
@@ -122,7 +130,7 @@ class CreateCheckListServiceTest {
         when(checkListService.saveCheckListOption(any(CheckListOption.class))).thenReturn(mockOption1);
 
         // when
-        CheckListResponse result = createCheckListService.create(projectId, nodeId, userId, request);
+        CheckListResponse result = createCheckListService.create(projectId, nodeId, userId, request, List.of());
 
         // then
         assertThat(result.checkListId()).isEqualTo(1L);
@@ -158,7 +166,7 @@ class CreateCheckListServiceTest {
         when(checkListService.saveCheckListOptionFile(any(CheckListOptionFile.class))).thenReturn(mockFile1);
 
         // when
-        createCheckListService.create(projectId, nodeId, userId, request);
+        createCheckListService.create(projectId, nodeId, userId, request, List.of());
 
         // then
         verify(checkListAccessValidator).validateProjectAndNode(projectId, nodeId);
@@ -193,7 +201,7 @@ class CreateCheckListServiceTest {
                 .thenReturn(mockOption2);
 
         // when
-        CheckListResponse result = createCheckListService.create(projectId, nodeId, userId, request);
+        CheckListResponse result = createCheckListService.create(projectId, nodeId, userId, request, List.of());
 
         // then
         assertThat(result.items()).hasSize(2);
@@ -222,7 +230,7 @@ class CreateCheckListServiceTest {
         when(checkListService.saveCheckListOption(any(CheckListOption.class))).thenReturn(mockOption1);
 
         // when
-        createCheckListService.create(projectId, nodeId, userId, request);
+        createCheckListService.create(projectId, nodeId, userId, request, List.of());
 
         // then
         verify(checkListAccessValidator).validateProjectAndNode(projectId, nodeId);
@@ -259,7 +267,7 @@ class CreateCheckListServiceTest {
                 .when(checkListAccessValidator).validateProjectAndNode(projectId, nodeId);
 
         // when & then
-        assertThatThrownBy(() -> createCheckListService.create(projectId, nodeId, userId, request))
+        assertThatThrownBy(() -> createCheckListService.create(projectId, nodeId, userId, request, List.of()))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PROJECT_NODE_NOT_FOUND);
 
@@ -286,7 +294,7 @@ class CreateCheckListServiceTest {
         when(checkListService.saveCheckListOptionFile(any(CheckListOptionFile.class))).thenReturn(mockFile1);
 
         // when
-        createCheckListService.create(projectId, nodeId, userId, request);
+        createCheckListService.create(projectId, nodeId, userId, request, List.of());
 
         // then
         verify(checkListService).saveCheckListOptionFile(argThat(file ->
@@ -312,7 +320,7 @@ class CreateCheckListServiceTest {
         doNothing().when(checkListAccessValidator).validateProjectAndNode(projectId, nodeId);
 
         // when & then
-        assertThatThrownBy(() -> createCheckListService.create(projectId, nodeId, userId, request))
+        assertThatThrownBy(() -> createCheckListService.create(projectId, nodeId, userId, request, List.of()))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_CHECK_LIST_ITEM_ORDER);
 
@@ -335,10 +343,71 @@ class CreateCheckListServiceTest {
         doNothing().when(checkListAccessValidator).validateProjectAndNode(projectId, nodeId);
 
         // when & then
-        assertThatThrownBy(() -> createCheckListService.create(projectId, nodeId, userId, request))
+        assertThatThrownBy(() -> createCheckListService.create(projectId, nodeId, userId, request, List.of()))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_CHECK_LIST_OPTION_ORDER);
 
         verify(checkListService, never()).saveCheckList(any(CheckList.class));
+    }
+
+    @Test
+    @DisplayName("업로드한 파일 식별자를 fileUrls에 전달하면 업로드 정보를 사용해 저장한다")
+    void givenUploadedFiles_whenIdentifierMatches_thenFileSavedFromUpload() {
+        // given
+        Long projectId = 1L;
+        Long nodeId = 10L;
+        Long userId = 2L;
+
+        MultipartFile multipartFile = mock(MultipartFile.class);
+        FileUploadResponse uploadResponse = new FileUploadResponse("s3/test-uuid.png", "test.png", "presigned-url");
+        when(fileService.uploadFiles(any())).thenReturn(List.of(uploadResponse));
+
+        CheckListOptionRequest optionRequest = new CheckListOptionRequest("선택지1", 1, List.of("test.png"));
+        CheckListItemRequest itemRequest = new CheckListItemRequest("항목1", 1, null, List.of(optionRequest));
+        CheckListCreateRequest request = new CheckListCreateRequest("전달사항", List.of(itemRequest));
+
+        doNothing().when(checkListAccessValidator).validateProjectAndNode(projectId, nodeId);
+        when(checkListService.saveCheckList(any(CheckList.class))).thenReturn(mockCheckList);
+        when(checkListService.saveCheckListItem(any(CheckListItem.class))).thenReturn(mockItem1);
+        when(checkListService.saveCheckListOption(any(CheckListOption.class))).thenReturn(mockOption1);
+        when(checkListService.saveCheckListOptionFile(any(CheckListOptionFile.class))).thenReturn(mockFile1);
+
+        ArgumentCaptor<CheckListOptionFile> captor = ArgumentCaptor.forClass(CheckListOptionFile.class);
+
+        // when
+        createCheckListService.create(projectId, nodeId, userId, request, List.of(multipartFile));
+
+        // then
+        verify(checkListService).saveCheckListOptionFile(captor.capture());
+        CheckListOptionFile savedFile = captor.getValue();
+        assertThat(savedFile.getFileUrl()).isEqualTo("s3/test-uuid.png");
+        assertThat(savedFile.getFileName()).isEqualTo("test.png");
+    }
+
+    @Test
+    @DisplayName("업로드한 파일을 fileUrls에서 참조하지 않으면 예외가 발생한다")
+    void givenUploadedFileNotConsumed_whenCreate_thenThrows() {
+        // given
+        Long projectId = 1L;
+        Long nodeId = 10L;
+        Long userId = 2L;
+
+        MultipartFile multipartFile = mock(MultipartFile.class);
+        FileUploadResponse uploadResponse = new FileUploadResponse("s3/test-uuid.png", "test.png", "presigned-url");
+        when(fileService.uploadFiles(any())).thenReturn(List.of(uploadResponse));
+
+        CheckListOptionRequest optionRequest = new CheckListOptionRequest("선택지1", 1, List.of("not-found.png"));
+        CheckListItemRequest itemRequest = new CheckListItemRequest("항목1", 1, null, List.of(optionRequest));
+        CheckListCreateRequest request = new CheckListCreateRequest("전달사항", List.of(itemRequest));
+
+        doNothing().when(checkListAccessValidator).validateProjectAndNode(projectId, nodeId);
+        when(checkListService.saveCheckList(any(CheckList.class))).thenReturn(mockCheckList);
+        when(checkListService.saveCheckListItem(any(CheckListItem.class))).thenReturn(mockItem1);
+        when(checkListService.saveCheckListOption(any(CheckListOption.class))).thenReturn(mockOption1);
+
+        // when & then
+        assertThatThrownBy(() -> createCheckListService.create(projectId, nodeId, userId, request, List.of(multipartFile)))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.CHECK_LIST_FILE_MAPPING_NOT_FOUND);
     }
 }

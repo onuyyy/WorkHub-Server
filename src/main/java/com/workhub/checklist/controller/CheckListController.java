@@ -12,9 +12,13 @@ import com.workhub.global.response.ApiResponse;
 import com.workhub.global.security.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -26,16 +30,17 @@ public class CheckListController implements CheckListApi {
     private final UpdateCheckListService updateCheckListService;
 
     @Override
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<CheckListResponse>> create(
             @PathVariable Long projectId,
             @PathVariable Long nodeId,
-            @Valid @RequestBody CheckListCreateRequest request,
+            @Valid @RequestPart("data") CheckListCreateRequest request,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files,
             @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
 
         CheckListResponse response =
-                createCheckListService.create(projectId, nodeId, userDetails.getUserId(), request);
+                createCheckListService.create(projectId, nodeId, userDetails.getUserId(), request, files);
 
         return ApiResponse.created(response, "체크리스트가 생성되었습니다.");
     }
@@ -53,14 +58,15 @@ public class CheckListController implements CheckListApi {
     }
 
     @Override
-    @PatchMapping
+    @PatchMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<CheckListResponse>> update(
             @PathVariable Long projectId,
             @PathVariable Long nodeId,
-            @Valid @RequestBody CheckListUpdateRequest request
+            @Valid @RequestPart("data") CheckListUpdateRequest request,
+            @RequestPart(value = "newFiles", required = false) List<MultipartFile> newFiles
     ) {
 
-        CheckListResponse response = updateCheckListService.update(projectId, nodeId, request);
+        CheckListResponse response = updateCheckListService.update(projectId, nodeId, request, newFiles);
 
         return ApiResponse.success(response, "체크리스트가 수정되었습니다.");
     }

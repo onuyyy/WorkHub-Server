@@ -8,17 +8,23 @@ import com.workhub.checklist.entity.checkList.CheckListOptionFile;
 import com.workhub.checklist.event.CheckListItemStatusChangedEvent;
 import com.workhub.checklist.event.CheckListUpdatedEvent;
 import com.workhub.checklist.service.CheckListAccessValidator;
+import com.workhub.file.dto.FileUploadResponse;
+import com.workhub.file.service.FileService;
 import com.workhub.global.entity.ActionType;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import com.workhub.global.util.SecurityUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * 체크리스트 업데이트 서비스
@@ -33,6 +39,7 @@ import java.util.Objects;
  * 3. changeType에 따라 CREATE/UPDATE/DELETE 수행
  * 4. UPDATE 시 null 필드는 기존 값 유지
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -40,6 +47,7 @@ public class UpdateCheckListService {
 
     private final CheckListService checkListService;
     private final CheckListAccessValidator checkListAccessValidator;
+    private final FileService fileService;
     private final ApplicationEventPublisher eventPublisher;
 
     /**
@@ -50,9 +58,13 @@ public class UpdateCheckListService {
      * @param projectId 프로젝트 ID
      * @param nodeId 노드 ID
      * @param request 업데이트 요청 (변경된 항목만 포함)
+     * @param newFiles 신규 업로드 파일
      * @return 업데이트된 체크리스트 응답
      */
-    public CheckListResponse update(Long projectId, Long nodeId, CheckListUpdateRequest request) {
+    public CheckListResponse update(Long projectId,
+                                    Long nodeId,
+                                    CheckListUpdateRequest request,
+                                    List<MultipartFile> newFiles) {
 
         checkListAccessValidator.validateProjectAndNode(projectId, nodeId);
         checkListAccessValidator.checkProjectDevMemberOrAdmin(projectId);
@@ -63,23 +75,41 @@ public class UpdateCheckListService {
 
         Long currentUserId = SecurityUtil.getCurrentUserIdOrThrow();
 
-        if (request.items() != null) {
-            request.items().forEach(itemRequest ->
-                    handleItemChange(checkList, itemRequest, currentUserId));
+        List<FileUploadResponse> uploadResponses = fileService.uploadFiles(newFiles);
+        CheckListFileUploadContext uploadContext = new CheckListFileUploadContext(uploadResponses);
+        List<String> uploadedFileNames = uploadContext.getUploadedFileNames();
+        List<String> filesToDelete = new ArrayList<>();
+
+        try {
+            if (request.items() != null) {
+                request.items().forEach(itemRequest ->
+                        handleItemChange(checkList, itemRequest, currentUserId, uploadContext, filesToDelete));
+            }
+
+            if (uploadContext.hasUnconsumedFiles()) {
+                List<String> unconsumed = uploadContext.getUnconsumedFileNames();
+                log.error("체크리스트 수정 실패 - 미사용 파일 {} 개: {}", unconsumed.size(), unconsumed);
+                throw new BusinessException(ErrorCode.CHECK_LIST_FILE_MAPPING_NOT_FOUND);
+            }
+
+            CheckListDetails details = checkListService.findCheckListDetailsById(checkList.getCheckListId());
+
+            deleteFilesFromS3(filesToDelete);
+
+            eventPublisher.publishEvent(new CheckListUpdatedEvent(
+                    projectId,
+                    nodeId,
+                    "체크리스트가 수정되었습니다."
+            ));
+          
+            return checkListService.buildResponse(
+                    details,
+                    checkListService.resolveUserInfo(checkList.getUserId())
+            );
+        } catch (Exception e) {
+            rollbackUploadedFiles(uploadedFileNames);
+            throw e;
         }
-
-        CheckListDetails details = checkListService.findCheckListDetailsById(checkList.getCheckListId());
-
-        eventPublisher.publishEvent(new CheckListUpdatedEvent(
-                projectId,
-                nodeId,
-                "체크리스트가 수정되었습니다."
-        ));
-
-        return checkListService.buildResponse(
-                details,
-                checkListService.resolveUserInfo(checkList.getUserId())
-        );
     }
 
     /**
@@ -103,32 +133,30 @@ public class UpdateCheckListService {
      */
     private void handleItemChange(CheckList checkList,
                                   CheckListItemUpdateRequest request,
-                                  Long userId) {
+                                  Long userId,
+                                  CheckListFileUploadContext uploadContext,
+                                  List<String> filesToDelete) {
 
-        // DTO 검증 (changeType에 따른 필수 필드 체크)
         request.validate();
 
         CheckListUpdateCommandType commandType = request.changeType();
 
         switch (commandType) {
-            case CREATE -> createItem(checkList, request, userId);
-            case UPDATE -> updateItem(checkList, request);
-            case DELETE -> deleteItem(checkList, request);
+            case CREATE -> createItem(checkList, request, userId, uploadContext, filesToDelete);
+            case UPDATE -> updateItem(checkList, request, uploadContext, filesToDelete);
+            case DELETE -> deleteItem(checkList, request, filesToDelete);
             default -> throw new BusinessException(ErrorCode.INVALID_CHECK_LIST_UPDATE_COMMAND);
         }
     }
 
     /**
      * 체크리스트 항목 생성
-     *
-     * @param checkList 체크리스트 엔티티
-     * @param request 항목 생성 요청
-     * @param userId 생성자 ID
      */
     private void createItem(CheckList checkList,
                             CheckListItemUpdateRequest request,
-                            Long userId) {
-        // validate()에서 이미 검증됨
+                            Long userId,
+                            CheckListFileUploadContext uploadContext,
+                            List<String> filesToDelete) {
         CheckListItem item = CheckListItem.of(
                 checkList.getCheckListId(),
                 request.itemTitle(),
@@ -140,17 +168,16 @@ public class UpdateCheckListService {
         item = checkListService.saveCheckListItem(item);
         checkListService.snapShotAndRecordHistory(item, item.getCheckListItemId(), ActionType.CREATE);
 
-        processOptionRequests(item.getCheckListItemId(), request.options());
+        processOptionRequests(item.getCheckListItemId(), request.options(), uploadContext, filesToDelete);
     }
 
     /**
      * 체크리스트 항목 수정 (부분 업데이트)
-     * null 필드는 기존 값 유지
-     *
-     * @param checkList 체크리스트 엔티티
-     * @param request 항목 수정 요청 (변경할 필드만 포함)
      */
-    private void updateItem(CheckList checkList, CheckListItemUpdateRequest request) {
+    private void updateItem(CheckList checkList,
+                            CheckListItemUpdateRequest request,
+                            CheckListFileUploadContext uploadContext,
+                            List<String> filesToDelete) {
         Long itemId = requireItemId(request);
         CheckListItem item = checkListService.findCheckListItem(itemId);
         validateItemBelongsToCheckList(item, checkList.getCheckListId());
@@ -158,21 +185,20 @@ public class UpdateCheckListService {
         checkListService.snapShotAndRecordHistory(item, itemId, ActionType.UPDATE);
         item.updateItem(request.itemTitle(), request.itemOrder(), request.templateId());
 
-        processOptionRequests(itemId, request.options());
+        processOptionRequests(itemId, request.options(), uploadContext, filesToDelete);
     }
 
     /**
      * 체크리스트 항목 삭제 (연관된 선택지와 파일도 함께 삭제)
-     *
-     * @param checkList 체크리스트 엔티티
-     * @param request 항목 삭제 요청
      */
-    private void deleteItem(CheckList checkList, CheckListItemUpdateRequest request) {
+    private void deleteItem(CheckList checkList,
+                            CheckListItemUpdateRequest request,
+                            List<String> filesToDelete) {
         Long itemId = requireItemId(request);
         CheckListItem item = checkListService.findCheckListItem(itemId);
         validateItemBelongsToCheckList(item, checkList.getCheckListId());
 
-        deleteOptionsWithFiles(itemId);
+        deleteOptionsWithFiles(itemId, filesToDelete);
 
         checkListService.snapShotAndRecordHistory(item, itemId, ActionType.DELETE);
         checkListService.deleteCheckListItem(item);
@@ -180,51 +206,49 @@ public class UpdateCheckListService {
 
     /**
      * 선택지 변경 요청 일괄 처리
-     *
-     * @param itemId 항목 ID
-     * @param optionRequests 선택지 변경 요청 리스트
      */
-    private void processOptionRequests(Long itemId, List<CheckListOptionUpdateRequest> optionRequests) {
+    private void processOptionRequests(Long itemId,
+                                       List<CheckListOptionUpdateRequest> optionRequests,
+                                       CheckListFileUploadContext uploadContext,
+                                       List<String> filesToDelete) {
         if (optionRequests == null) {
             return;
         }
 
         optionRequests.forEach(optionRequest ->
-                handleOptionChange(itemId, optionRequest));
+                handleOptionChange(itemId, optionRequest, uploadContext, filesToDelete));
     }
 
     /**
      * 선택지 변경 처리 (생성/수정/삭제)
-     *
-     * @param itemId 항목 ID
-     * @param request 선택지 변경 요청
      */
-    private void handleOptionChange(Long itemId, CheckListOptionUpdateRequest request) {
+    private void handleOptionChange(Long itemId,
+                                    CheckListOptionUpdateRequest request,
+                                    CheckListFileUploadContext uploadContext,
+                                    List<String> filesToDelete) {
         if (request == null) {
             return;
         }
 
-        // DTO 검증 (이미 item validate에서 호출되었지만, 명시적 검증)
         request.validate();
 
         CheckListUpdateCommandType commandType = request.changeType();
 
         switch (commandType) {
-            case CREATE -> createOption(itemId, request);
-            case UPDATE -> updateOption(itemId, request);
-            case DELETE -> deleteOption(itemId, request);
+            case CREATE -> createOption(itemId, request, uploadContext, filesToDelete);
+            case UPDATE -> updateOption(itemId, request, uploadContext, filesToDelete);
+            case DELETE -> deleteOption(itemId, request, filesToDelete);
             default -> throw new BusinessException(ErrorCode.INVALID_CHECK_LIST_UPDATE_COMMAND);
         }
     }
 
     /**
      * 선택지 생성
-     *
-     * @param itemId 항목 ID
-     * @param request 선택지 생성 요청
      */
-    private void createOption(Long itemId, CheckListOptionUpdateRequest request) {
-        // validate()에서 이미 검증됨
+    private void createOption(Long itemId,
+                              CheckListOptionUpdateRequest request,
+                              CheckListFileUploadContext uploadContext,
+                              List<String> filesToDelete) {
         CheckListOption option = CheckListOption.of(
                 itemId,
                 request.optionContent(),
@@ -232,32 +256,30 @@ public class UpdateCheckListService {
         );
 
         option = checkListService.saveCheckListOption(option);
-        processFileRequests(option.getCheckListOptionId(), request.files());
+        processFileRequests(option.getCheckListOptionId(), request.files(), uploadContext, filesToDelete);
     }
 
     /**
      * 선택지 수정 (부분 업데이트)
-     * null 필드는 기존 값 유지
-     *
-     * @param itemId 항목 ID
-     * @param request 선택지 수정 요청 (변경할 필드만 포함)
      */
-    private void updateOption(Long itemId, CheckListOptionUpdateRequest request) {
+    private void updateOption(Long itemId,
+                              CheckListOptionUpdateRequest request,
+                              CheckListFileUploadContext uploadContext,
+                              List<String> filesToDelete) {
         Long optionId = requireOptionId(request);
         CheckListOption option = checkListService.findCheckListOption(optionId);
         validateOptionBelongs(option, itemId);
 
         option.updateOption(request.optionContent(), request.optionOrder());
-        processFileRequests(option.getCheckListOptionId(), request.files());
+        processFileRequests(option.getCheckListOptionId(), request.files(), uploadContext, filesToDelete);
     }
 
     /**
      * 선택지 삭제 (연관된 파일도 함께 삭제)
-     *
-     * @param itemId 항목 ID
-     * @param request 선택지 삭제 요청
      */
-    private void deleteOption(Long itemId, CheckListOptionUpdateRequest request) {
+    private void deleteOption(Long itemId,
+                              CheckListOptionUpdateRequest request,
+                              List<String> filesToDelete) {
         Long optionId = requireOptionId(request);
         CheckListOption option = checkListService.findCheckListOption(optionId);
         validateOptionBelongs(option, itemId);
@@ -265,6 +287,7 @@ public class UpdateCheckListService {
         List<CheckListOptionFile> files =
                 checkListService.findOptionFilesByCheckListOptionId(optionId);
         if (!files.isEmpty()) {
+            files.forEach(file -> trackDeletionIfManaged(file, filesToDelete));
             checkListService.deleteCheckListOptionFiles(files);
         }
         checkListService.deleteCheckListOption(option);
@@ -272,63 +295,69 @@ public class UpdateCheckListService {
 
     /**
      * 파일 변경 요청 일괄 처리
-     *
-     * @param optionId 선택지 ID
-     * @param fileRequests 파일 변경 요청 리스트
      */
     private void processFileRequests(Long optionId,
-                                     List<CheckListOptionFileUpdateRequest> fileRequests) {
+                                     List<CheckListOptionFileUpdateRequest> fileRequests,
+                                     CheckListFileUploadContext uploadContext,
+                                     List<String> filesToDelete) {
         if (fileRequests == null) {
             return;
         }
 
-        fileRequests.forEach(fileRequest -> handleFileChange(optionId, fileRequest));
+        fileRequests.forEach(fileRequest ->
+                handleFileChange(optionId, fileRequest, uploadContext, filesToDelete));
     }
 
     /**
      * 파일 변경 처리 (생성/수정/삭제)
-     *
-     * @param optionId 선택지 ID
-     * @param fileRequest 파일 변경 요청
      */
-    private void handleFileChange(Long optionId, CheckListOptionFileUpdateRequest fileRequest) {
+    private void handleFileChange(Long optionId,
+                                  CheckListOptionFileUpdateRequest fileRequest,
+                                  CheckListFileUploadContext uploadContext,
+                                  List<String> filesToDelete) {
         if (fileRequest == null) {
             return;
         }
 
-        // DTO 검증 (이미 option validate에서 호출되었지만, 명시적 검증)
         fileRequest.validate();
 
         CheckListUpdateCommandType commandType = fileRequest.changeType();
 
         switch (commandType) {
-            case CREATE -> createFile(optionId, fileRequest);
+            case CREATE -> createFile(optionId, fileRequest, uploadContext);
             case UPDATE -> updateFile(optionId, fileRequest);
-            case DELETE -> deleteFile(optionId, fileRequest);
+            case DELETE -> deleteFile(optionId, fileRequest, filesToDelete);
             default -> throw new BusinessException(ErrorCode.INVALID_CHECK_LIST_UPDATE_COMMAND);
         }
     }
 
     /**
      * 파일 생성
-     *
-     * @param optionId 선택지 ID
-     * @param fileRequest 파일 생성 요청
      */
-    private void createFile(Long optionId, CheckListOptionFileUpdateRequest fileRequest) {
-        // validate()에서 이미 검증됨
-        CheckListOptionFile file = CheckListOptionFile.of(optionId,
-                fileRequest.fileUrl(), fileRequest.fileOrder());
+    private void createFile(Long optionId,
+                            CheckListOptionFileUpdateRequest fileRequest,
+                            CheckListFileUploadContext uploadContext) {
+        Optional<FileUploadResponse> upload = uploadContext.consume(fileRequest.fileUrl());
+
+        CheckListOptionFile file;
+        if (upload.isPresent()) {
+            file = CheckListOptionFile.fromUpload(optionId, upload.get(), fileRequest.fileOrder());
+        } else if (isValidRemoteUrl(fileRequest.fileUrl())) {
+            file = CheckListOptionFile.of(optionId, fileRequest.fileUrl(), fileRequest.fileOrder());
+        } else {
+            String availableFiles = String.join(", ", uploadContext.getUploadedFileNames());
+
+            log.error("파일 매핑 실패 - 요청 파일: '{}', 업로드된 파일: [{}]",
+                    fileRequest.fileUrl(), availableFiles);
+
+            throw new BusinessException(ErrorCode.CHECK_LIST_FILE_MAPPING_NOT_FOUND);
+        }
+
         checkListService.saveCheckListOptionFile(file);
     }
 
     /**
      * 파일 수정 (부분 업데이트)
-     *
-     * null 필드는 기존 값 유지
-     *
-     * @param optionId 선택지 ID
-     * @param fileRequest 파일 수정 요청 (변경할 필드만 포함)
      */
     private void updateFile(Long optionId, CheckListOptionFileUpdateRequest fileRequest) {
         Long fileId = requireFileId(fileRequest);
@@ -339,28 +368,27 @@ public class UpdateCheckListService {
 
     /**
      * 파일 삭제
-     *
-     * @param optionId 선택지 ID
-     * @param fileRequest 파일 삭제 요청
      */
-    private void deleteFile(Long optionId, CheckListOptionFileUpdateRequest fileRequest) {
+    private void deleteFile(Long optionId,
+                            CheckListOptionFileUpdateRequest fileRequest,
+                            List<String> filesToDelete) {
         Long fileId = requireFileId(fileRequest);
         CheckListOptionFile file = checkListService.findCheckListOptionFile(fileId);
         validateFileBelongs(file, optionId);
+        trackDeletionIfManaged(file, filesToDelete);
         checkListService.deleteCheckListOptionFile(file);
     }
 
     /**
      * 항목에 속한 모든 선택지와 파일 삭제
-     *
-     * @param itemId 항목 ID
      */
-    private void deleteOptionsWithFiles(Long itemId) {
+    private void deleteOptionsWithFiles(Long itemId, List<String> filesToDelete) {
         List<CheckListOption> options = checkListService.findOptionsByCheckListItemId(itemId);
         for (CheckListOption option : options) {
             List<CheckListOptionFile> files =
                     checkListService.findOptionFilesByCheckListOptionId(option.getCheckListOptionId());
             if (!files.isEmpty()) {
+                files.forEach(file -> trackDeletionIfManaged(file, filesToDelete));
                 checkListService.deleteCheckListOptionFiles(files);
             }
         }
@@ -372,12 +400,6 @@ public class UpdateCheckListService {
 
     /**
      * 체크리스트 아이템의 상태(동의/보류) 를 수정
-     * @param projectId 프로젝트 식별자
-     * @param nodeId 노드 식별자
-     * @param checkListId 체크리스트 식별자
-     * @param checkListItemId 체크리스트 아이템 식별자
-     * @param status 상태 값
-     * @return CheckListItemStatus 변경된 상태 값
      */
     public CheckListItemStatus updateStatus(
             Long projectId,
@@ -437,14 +459,62 @@ public class UpdateCheckListService {
 
     private void validateOptionBelongs(CheckListOption option, Long itemId) {
         if (!Objects.equals(option.getCheckListItemId(), itemId)) {
-            throw new BusinessException(ErrorCode.INVALID_CHECK_LIST_UPDATE_COMMAND);
+            throw new BusinessException(ErrorCode.CHECK_LIST_OPTION_NOT_FOUND);
         }
     }
 
     private void validateFileBelongs(CheckListOptionFile file, Long optionId) {
         if (!Objects.equals(file.getCheckListOptionId(), optionId)) {
-            throw new BusinessException(ErrorCode.INVALID_CHECK_LIST_UPDATE_COMMAND);
+            throw new BusinessException(ErrorCode.CHECK_LIST_OPTION_FILE_NOT_FOUND);
         }
     }
 
+    private boolean isValidRemoteUrl(String identifier) {
+        if (identifier == null) {
+            return false;
+        }
+
+        if (!identifier.startsWith("http://") && !identifier.startsWith("https://")) {
+            return false;
+        }
+
+        try {
+            new java.net.URL(identifier);
+            return true;
+        } catch (Exception e) {
+            log.warn("유효하지 않은 URL 형식: {}", identifier);
+            return false;
+        }
+    }
+
+    private void trackDeletionIfManaged(CheckListOptionFile file, List<String> filesToDelete) {
+        if (file != null && file.isManagedFile()) {
+            filesToDelete.add(file.getFileUrl());
+        }
+    }
+
+    private void rollbackUploadedFiles(List<String> uploadedFileNames) {
+        if (uploadedFileNames == null || uploadedFileNames.isEmpty()) {
+            return;
+        }
+
+        try {
+            log.warn("체크리스트 수정 실패로 업로드된 파일 {}개를 삭제합니다.", uploadedFileNames.size());
+            fileService.deleteFiles(uploadedFileNames);
+        } catch (Exception deleteException) {
+            log.error("체크리스트 수정 실패 - 업로드 파일 삭제 중 오류 발생: {}", uploadedFileNames, deleteException);
+        }
+    }
+
+    private void deleteFilesFromS3(List<String> filesToDelete) {
+        if (filesToDelete == null || filesToDelete.isEmpty()) {
+            return;
+        }
+
+        try {
+            fileService.deleteFiles(filesToDelete);
+        } catch (Exception deleteException) {
+            log.error("체크리스트 파일 삭제 중 오류 발생: {}", filesToDelete, deleteException);
+        }
+    }
 }

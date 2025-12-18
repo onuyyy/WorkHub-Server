@@ -18,6 +18,7 @@ import com.workhub.checklist.event.CheckListUpdatedEvent;
 import com.workhub.checklist.service.CheckListAccessValidator;
 import com.workhub.checklist.service.checkList.CheckListService;
 import com.workhub.checklist.service.checkList.UpdateCheckListService;
+import com.workhub.file.service.FileService;
 import com.workhub.global.entity.ActionType;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
@@ -41,6 +42,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -54,6 +56,9 @@ class UpdateCheckListServiceTest {
 
     @Mock
     private CheckListAccessValidator checkListAccessValidator;
+
+    @Mock
+    private FileService fileService;
 
     @Mock
     private ApplicationEventPublisher eventPublisher;
@@ -108,6 +113,8 @@ class UpdateCheckListServiceTest {
                 .build();
 
         ownerInfo = CheckListUserInfo.of("담당자", "010-9999-9999");
+        lenient().when(fileService.uploadFiles(any())).thenReturn(List.of());
+        lenient().doNothing().when(fileService).deleteFiles(any());
     }
 
     @AfterEach
@@ -147,7 +154,7 @@ class UpdateCheckListServiceTest {
         given(checkListService.buildResponse(details, ownerInfo)).willReturn(expectedResponse);
 
         // when
-        CheckListResponse response = updateCheckListService.update(1L, 10L, request);
+        CheckListResponse response = updateCheckListService.update(1L, 10L, request, List.of());
 
         // then
         assertThat(response.checkListId()).isEqualTo(checkList.getCheckListId());
@@ -275,7 +282,7 @@ class UpdateCheckListServiceTest {
         given(checkListService.buildResponse(details, ownerInfo)).willReturn(expectedResponse);
 
         // when
-        CheckListResponse response = updateCheckListService.update(1L, 10L, request);
+        CheckListResponse response = updateCheckListService.update(1L, 10L, request, List.of());
 
         // then
         assertThat(response).isNotNull();
