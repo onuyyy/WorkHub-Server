@@ -12,6 +12,7 @@ import com.workhub.project.entity.ProjectDevMember;
 import com.workhub.project.entity.Status;
 import com.workhub.projectNode.dto.ProjectNodeCount;
 import com.workhub.projectNode.service.ProjectNodeService;
+import com.workhub.userTable.dto.user.response.UserDetailResponse;
 import com.workhub.userTable.entity.Company;
 import com.workhub.userTable.entity.UserRole;
 import com.workhub.userTable.entity.UserTable;
@@ -88,8 +89,8 @@ public class ReadProjectService {
 
         Long userId = SecurityUtil.getCurrentUserId()
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_LOGGED_IN));
-        UserTable user = userService.getUserById(userId);
-        UserRole role = user.getRole();
+        UserDetailResponse user = userService.getUser(userId);
+        UserRole role = user.role();
 
         List<Long> accessibleProjectIds = switch (role) {
             case CLIENT -> {

@@ -7,6 +7,7 @@ import com.workhub.project.dto.response.PagedProjectListResponse;
 import com.workhub.project.entity.*;
 import com.workhub.projectNode.dto.ProjectNodeCount;
 import com.workhub.projectNode.service.ProjectNodeService;
+import com.workhub.userTable.dto.user.response.UserDetailResponse;
 import com.workhub.userTable.entity.UserRole;
 import com.workhub.userTable.entity.UserTable;
 import com.workhub.userTable.entity.Company;
@@ -165,7 +166,7 @@ class ReadProjectServiceTest {
         Map<Long, UserTable> userMap = Map.of(10L, user1, 20L, user2);
         Map<Long, ProjectNodeCount> workflowCountMap = Map.of(1L, new ProjectNodeCount(3L, 2L));
 
-        when(userService.getUserById(1L)).thenReturn(clientUser);
+        when(userService.getUser(1L)).thenReturn(UserDetailResponse.from(clientUser));
         when(projectService.getClientMemberByUserId(1L)).thenReturn(clientMembers);
         when(projectService.findProjectsWithPaging(anyList(), any(), any(), any(), any(), any(), anyInt()))
                 .thenReturn(projects);
@@ -199,7 +200,7 @@ class ReadProjectServiceTest {
         Map<Long, UserTable> userMap = Map.of(10L, user1, 20L, user2);
         Map<Long, ProjectNodeCount> workflowCountMap = Map.of(1L, new ProjectNodeCount(5L, 4L));
 
-        when(userService.getUserById(2L)).thenReturn(developerUser);
+        when(userService.getUser(2L)).thenReturn(UserDetailResponse.from(developerUser));
         when(projectService.getDevMemberByUserId(2L)).thenReturn(devMembers);
         when(projectService.findProjectsWithPaging(anyList(), any(), any(), any(), any(), any(), anyInt()))
                 .thenReturn(projects);
@@ -234,7 +235,7 @@ class ReadProjectServiceTest {
                 2L, new ProjectNodeCount(4L, 1L)
         );
 
-        when(userService.getUserById(3L)).thenReturn(adminUser);
+        when(userService.getUser(3L)).thenReturn(UserDetailResponse.from(adminUser));
         when(projectService.findProjectsWithPaging(isNull(), any(), any(), any(), any(), any(), anyInt()))
                 .thenReturn(projects);
         when(projectService.getClientMemberByProjectIdIn(Arrays.asList(1L, 2L))).thenReturn(Arrays.asList(clientMember1));
@@ -268,7 +269,7 @@ class ReadProjectServiceTest {
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NOT_LOGGED_IN);
 
-        verify(userService, never()).getUserById(anyLong());
+        verify(userService, never()).getUser(anyLong());
     }
 
     @Test
@@ -277,7 +278,7 @@ class ReadProjectServiceTest {
         // Given
         setSecurityContext(clientUser);
 
-        when(userService.getUserById(1L)).thenReturn(clientUser);
+        when(userService.getUser(1L)).thenReturn(UserDetailResponse.from(clientUser));
         when(projectService.getClientMemberByUserId(1L)).thenReturn(Collections.emptyList());
 
         // When
@@ -302,7 +303,7 @@ class ReadProjectServiceTest {
 
         List<Project> projects = Arrays.asList(project1, project2);
 
-        when(userService.getUserById(3L)).thenReturn(adminUser);
+        when(userService.getUser(3L)).thenReturn(UserDetailResponse.from(adminUser));
         when(projectService.findProjectsWithPaging(isNull(), any(), any(), any(), any(), any(), anyInt()))
                 .thenReturn(projects);
         when(projectService.getClientMemberByProjectIdIn(anyList())).thenReturn(Arrays.asList(clientMember1));
@@ -346,7 +347,7 @@ class ReadProjectServiceTest {
                 .build();
         List<Project> projects = Arrays.asList(project1, project2, project3);
 
-        when(userService.getUserById(3L)).thenReturn(adminUser);
+        when(userService.getUser(3L)).thenReturn(UserDetailResponse.from(adminUser));
         when(projectService.findProjectsWithPaging(isNull(), any(), any(), any(), any(), any(), eq(2)))
                 .thenReturn(projects);
         when(projectService.getClientMemberByProjectIdIn(anyList())).thenReturn(Collections.emptyList());
@@ -370,7 +371,7 @@ class ReadProjectServiceTest {
         // Given
         setSecurityContext(adminUser);
 
-        when(userService.getUserById(3L)).thenReturn(adminUser);
+        when(userService.getUser(3L)).thenReturn(UserDetailResponse.from(adminUser));
         when(projectService.findProjectsWithPaging(any(), any(), any(), any(), any(), any(), anyInt()))
                 .thenReturn(Collections.emptyList());
 
@@ -397,7 +398,7 @@ class ReadProjectServiceTest {
         // Given
         setSecurityContext(adminUser);
 
-        when(userService.getUserById(3L)).thenReturn(adminUser);
+        when(userService.getUser(3L)).thenReturn(UserDetailResponse.from(adminUser));
         when(projectService.findProjectsWithPaging(any(), any(), any(), any(), any(), any(), anyInt()))
                 .thenReturn(Collections.emptyList());
 
@@ -422,7 +423,7 @@ class ReadProjectServiceTest {
         Map<Long, UserTable> userMap = Map.of(20L, user2); // user1 (10L) 누락
         Map<Long, ProjectNodeCount> workflowCountMap = Map.of(1L, new ProjectNodeCount(3L, 1L));
 
-        when(userService.getUserById(1L)).thenReturn(clientUser);
+        when(userService.getUser(1L)).thenReturn(UserDetailResponse.from(clientUser));
         when(projectService.getClientMemberByUserId(1L)).thenReturn(clientMembers);
         when(projectService.findProjectsWithPaging(anyList(), any(), any(), any(), any(), any(), anyInt()))
                 .thenReturn(projects);
@@ -453,7 +454,7 @@ class ReadProjectServiceTest {
         Map<Long, UserTable> userMap = Map.of(10L, user1, 20L, user2);
         Map<Long, ProjectNodeCount> workflowCountMap = Map.of(1L, new ProjectNodeCount(3L, 2L));
 
-        when(userService.getUserById(1L)).thenReturn(clientUser);
+        when(userService.getUser(1L)).thenReturn(UserDetailResponse.from(clientUser));
         when(projectService.getClientMemberByUserId(1L)).thenReturn(clientMembers);
         when(projectService.findProjectsWithPaging(anyList(), any(), any(), any(), any(), any(), anyInt()))
                 .thenReturn(projects);
