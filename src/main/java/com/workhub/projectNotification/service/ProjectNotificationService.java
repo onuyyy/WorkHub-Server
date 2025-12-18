@@ -48,6 +48,7 @@ public class ProjectNotificationService {
                 .stream().map(NotificationResponse::from).toList();
     }
 
+    @Transactional
     public void markRead(Long userId, Long id) {
         ProjectNotification n = notificationRepository.findByProjectNotificationIdAndUserId(id, userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOTIFICATION_NOT_FOUND));
