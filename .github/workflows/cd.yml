@@ -25,6 +25,7 @@ jobs:
             cd ${{ secrets.EC2_APP_DIR }}
             git fetch --all
             git reset --hard origin/dev
-            docker compose pull
-            docker compose up -d --build
+            # 앱 프로필만 빌드/재시작 (모니터링 스택은 건드리지 않음)
+            docker compose --profile app pull
+            docker compose --profile app up -d --build app
             docker compose ps
