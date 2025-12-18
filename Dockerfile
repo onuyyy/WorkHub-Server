@@ -1,5 +1,5 @@
 # Build stage
-FROM gradle:8.5-jdk21-alpine AS build
+FROM gradle:8.5-jdk21 AS build
 WORKDIR /app
 
 # 1. Copy Gradle wrapper files (rarely change)

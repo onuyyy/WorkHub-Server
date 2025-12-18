@@ -41,6 +41,9 @@ out/
 ### Environment Variables ###
 .env
 
+### Docker Compose ###
+compose.override.yml
+
 ### Querydsl ###
 /build/generated/
 /WORK_LOG.md
