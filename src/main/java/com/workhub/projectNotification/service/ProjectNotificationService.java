@@ -19,7 +19,6 @@ import java.util.List;
  */
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class ProjectNotificationService {
 
     private final ProjectNotificationRepository notificationRepository;
