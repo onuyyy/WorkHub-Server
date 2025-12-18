@@ -114,6 +114,14 @@ public class SecurityConfig {
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
 
+        // SSE를 위한 추가 설정
+        configuration.setExposedHeaders(Arrays.asList(
+                "Last-Event-ID",  // SSE 재연결용
+                "X-Content-Type-Options",
+                "Cache-Control"
+        ));
+        configuration.setMaxAge(3600L);  // preflight 캐싱 1시간
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;

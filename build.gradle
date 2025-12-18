@@ -59,6 +59,11 @@ tasks.named('test') {
 	useJUnitPlatform()
 }
 
+// plain jar 생성 방지 (Spring Boot fat jar만 생성)
+jar {
+	enabled = false
+}
+
 // Querydsl 설정
 def querydslDir = layout.buildDirectory.dir("generated/querydsl").get().asFile
 
