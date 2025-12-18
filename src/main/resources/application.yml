@@ -11,6 +11,15 @@ spring:
       max-file-size: 50MB
       max-request-size: 50MB
 
+  datasource:
+    hikari:
+      maximum-pool-size: 60  # 최대 커넥션 수
+      minimum-idle: 10       # 최소 유휴 커넥션
+      connection-timeout: 30000  # 커넥션 대기 시간 (30초)
+      idle-timeout: 600000   # 유휴 커넥션 유지 시간 (10분)
+      max-lifetime: 1800000  # 커넥션 최대 수명 (30분)
+      leak-detection-threshold: 60000  # 커넥션 누수 감지 (1분)
+
 server:
   forward-headers-strategy: framework  # Nginx X-Forwarded 헤더 인식
   servlet:
@@ -23,7 +32,7 @@ file:
   upload:
     max-size: 52428800  #  50MB
 
-그리고 management:
+management:
   endpoints:
     web:
       exposure:
