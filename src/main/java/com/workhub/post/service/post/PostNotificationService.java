@@ -23,6 +23,7 @@ public class PostNotificationService {
      */
     protected void notifyCreated(Long projectId, Post post) {
         Set<Long> receivers = notificationTargetFinder.findAllMembersOfProject(projectId);
+        receivers.remove(post.getUserId());
         if (receivers.isEmpty()) {
             return;
         }
@@ -42,6 +43,7 @@ public class PostNotificationService {
      */
     protected void notifyUpdated(Long projectId, Post post) {
         Set<Long> receivers = notificationTargetFinder.findAllMembersOfProject(projectId);
+        receivers.remove(post.getUserId());
         if (receivers.isEmpty()) {
             return;
         }

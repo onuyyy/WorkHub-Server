@@ -29,6 +29,7 @@ public class CommentNotificationService {
         if (comment.getParentCommentId() != null) {
             receivers.add(notificationTargetFinder.findCommentAuthor(comment.getParentCommentId()));
         }
+        receivers.remove(comment.getUserId());
         String relatedUrl = "/projects/" + projectId + "/nodes/" + post.getProjectNodeId()
                 + "/posts/" + post.getPostId() + "/comments";
         notificationPublisher.publishComment(
