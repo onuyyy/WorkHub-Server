@@ -50,9 +50,9 @@ management:
     # Publish latency histograms for HTTP requests so Prometheus/Grafana can calculate response-time percentiles
     distribution:
       percentiles-histogram:
-        "[http.server.requests]": true
+        http.server.requests: true
       slo:
-        "[http.server.requests]": 50ms, 100ms, 250ms, 500ms, 1s, 3s, 5s
+        http.server.requests: 50ms, 100ms, 250ms, 500ms, 1s, 3s, 5s
   prometheus:
     metrics:
       export:
