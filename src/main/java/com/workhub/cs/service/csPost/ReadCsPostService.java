@@ -64,7 +64,7 @@ public class ReadCsPostService {
     public Page<CsPostResponse> findCsPosts(Long projectId, CsPostSearchRequest searchType, Pageable pageable) {
 
         projectService.validateCompletedProject(projectId);
-        Page<CsPost> csPosts = csPostService.findCsPosts(searchType, pageable);
+        Page<CsPost> csPosts = csPostService.findCsPosts(projectId, searchType, pageable);
 
         Map<Long, AuthorProfile> authorMap = loadAuthors(csPosts);
 

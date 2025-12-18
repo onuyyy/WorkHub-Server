@@ -19,13 +19,14 @@ public class CsPostRepositoryImpl implements CsPostRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Page<CsPost> findCsPosts(CsPostSearchRequest searchRequest, Pageable pageable) {
+    public Page<CsPost> findCsPosts(Long projectId, CsPostSearchRequest searchRequest, Pageable pageable) {
 
         QCsPost csPost = QCsPost.csPost;
 
         List<CsPost> result =  queryFactory
                 .selectFrom(csPost)
                 .where(
+                        projectEq(projectId),
                         csPost.deletedAt.isNull(),
                         valueContains(searchRequest.searchValue()),
                         statusEq(searchRequest.csPostStatus())
@@ -39,6 +40,7 @@ public class CsPostRepositoryImpl implements CsPostRepositoryCustom {
                 .select(csPost.count())
                 .from(csPost)
                 .where(
+                        projectEq(projectId),
                         csPost.deletedAt.isNull(),
                         valueContains(searchRequest.searchValue()),
                         statusEq(searchRequest.csPostStatus())
@@ -46,6 +48,10 @@ public class CsPostRepositoryImpl implements CsPostRepositoryCustom {
                 .fetchOne();
 
         return new PageImpl<>(result, pageable, total == null ? 0 : total);
+    }
+
+    private BooleanExpression projectEq(Long projectId) {
+        return projectId == null ? null : QCsPost.csPost.projectId.eq(projectId);
     }
 
     private BooleanExpression valueContains(String value) {

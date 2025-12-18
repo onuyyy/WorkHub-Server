@@ -138,7 +138,7 @@ class ReadCsPostServiceTest {
                         .status(Status.COMPLETED)
                         .build()
         );
-        when(csPostService.findCsPosts(request, pageable)).thenReturn(mockPage);
+        when(csPostService.findCsPosts(projectId, request, pageable)).thenReturn(mockPage);
         when(authorLookupPort.findByUserIds(anyList())).thenReturn(
                 Map.of(
                         1L, new AuthorProfile(1L, "작성자1"),
@@ -151,7 +151,7 @@ class ReadCsPostServiceTest {
 
         // then
         verify(projectService).validateCompletedProject(projectId);
-        verify(csPostService).findCsPosts(request, pageable);
+        verify(csPostService).findCsPosts(projectId, request, pageable);
 
         assertThat(result.getContent()).hasSize(2);
         assertThat(result.getTotalElements()).isEqualTo(2);

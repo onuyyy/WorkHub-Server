@@ -64,8 +64,8 @@ public class CsPostService {
         return csPostFileRepository.findByCsPostId(csPostId);
     }
 
-    public Page<CsPost> findCsPosts(CsPostSearchRequest searchType, Pageable pageable) {
-        return csPostRepository.findCsPosts(searchType, pageable);
+    public Page<CsPost> findCsPosts(Long projectId, CsPostSearchRequest searchType, Pageable pageable) {
+        return csPostRepository.findCsPosts(projectId, searchType, pageable);
     }
 
     /**

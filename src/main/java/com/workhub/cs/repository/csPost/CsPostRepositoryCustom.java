@@ -7,5 +7,5 @@ import org.springframework.data.domain.Pageable;
 
 public interface CsPostRepositoryCustom {
 
-    Page<CsPost> findCsPosts(CsPostSearchRequest searchType, Pageable pageable);
+    Page<CsPost> findCsPosts(Long projectId, CsPostSearchRequest searchType, Pageable pageable);
 }
