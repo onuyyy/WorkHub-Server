@@ -6,6 +6,7 @@ import com.workhub.global.entity.ActionType;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import com.workhub.global.history.HistoryRecorder;
+import com.workhub.global.util.SecurityUtil;
 import com.workhub.project.service.ProjectService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -26,9 +27,10 @@ public class DeleteCsPostService {
      * 프로젝트 소속을 검증한 뒤 CS POST를 삭제한다.
      * @param projectId 프로젝트 식별자
      * @param csPostId 게시글 식별자
+     * @param userId 삭제 요청 사용자 식별자
      * @return 삭제된 게시글 id
      */
-    public Long delete(Long projectId, Long csPostId) {
+    public Long delete(Long projectId, Long csPostId, Long userId) {
 
         projectService.validateCompletedProject(projectId);
         CsPost csPost = csPostService.findById(csPostId);
@@ -42,6 +44,7 @@ public class DeleteCsPostService {
         }
 
         csPost.validateProject(projectId);
+        validateDeletionPermission(csPost, userId);
 
         List<CsPostFile> csPostFiles = csPostService.findFilesByCsPostId(csPostId);
 
@@ -51,6 +54,15 @@ public class DeleteCsPostService {
         markFilesDeleted(csPostFiles);
 
         return csPost.getCsPostId();
+    }
+
+    private void validateDeletionPermission(CsPost csPost, Long userId) {
+        boolean isAdmin = SecurityUtil.hasRole("ADMIN");
+        boolean isAuthor = csPost.getUserId().equals(userId);
+
+        if (!isAdmin && !isAuthor) {
+            throw new BusinessException(ErrorCode.FORBIDDEN_CS_POST_DELETE);
+        }
     }
 
     private void markFilesDeleted(List<CsPostFile> csPostFiles) {

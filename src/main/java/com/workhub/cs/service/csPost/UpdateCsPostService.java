@@ -76,11 +76,11 @@ public class UpdateCsPostService {
                     .collect(Collectors.toSet());
             csPostNotificationService.notifyUpdated(projectId, csPostId, csPost.getTitle(), commenters);
 
-        String userName = authorLookupPort.findByUserId(csPost.getUserId())
-                .map(AuthorProfile::userName)
-                .orElse(null);
+            String userName = authorLookupPort.findByUserId(csPost.getUserId())
+                    .map(AuthorProfile::userName)
+                    .orElse(null);
 
-        return CsPostResponse.from(csPost, visibleFiles, userName);
+            return CsPostResponse.from(csPost, visibleFiles, userName);
 
         } catch (Exception e) {
             // 예외 발생 시 업로드된 S3 파일 삭제 (Best Effort)

@@ -59,11 +59,11 @@ public class CreateCsPostService {
             csPostService.snapShotAndRecordHistory(csPost, csPost.getCsPostId(), ActionType.CREATE);
             csPostNotificationService.notifyCreated(projectId, csPost.getCsPostId(), csPost.getTitle());
 
-        String userName = authorLookupPort.findByUserId(userId)
-                .map(AuthorProfile::userName)
-                .orElse(null);
+            String userName = authorLookupPort.findByUserId(userId)
+                    .map(AuthorProfile::userName)
+                    .orElse(null);
 
-        return CsPostResponse.from(csPost, savedFiles, userName);
+            return CsPostResponse.from(csPost, savedFiles, userName);
 
         } catch (Exception e) {
             // 예외 발생 시 업로드된 S3 파일 삭제 (Best Effort)

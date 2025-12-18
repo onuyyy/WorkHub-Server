@@ -131,10 +131,11 @@ public class CsPostController implements CsPostApi {
     @DeleteMapping("/{csPostId}")
     public ResponseEntity<ApiResponse<Long>> deleteCsPost(
             @PathVariable Long projectId,
-            @PathVariable Long csPostId
+            @PathVariable Long csPostId,
+            @AuthenticationPrincipal CustomUserDetails userDetails
     ) {
-        // todo : security 기능 구현시 userId security에서 꺼내서 넘겨야 함
-        return ApiResponse.success(deleteCsPostService.delete(projectId, csPostId));
+        Long deletedId = deleteCsPostService.delete(projectId, csPostId, userDetails.getUserId());
+        return ApiResponse.success(deletedId);
     }
 
     /**

@@ -82,6 +82,7 @@ public enum ErrorCode {
     INVALID_CS_POST_FILE_ORDER(HttpStatus.BAD_REQUEST, "C-007", "파일 순서(fileOrder)는 0 이상의 값이어야 합니다."),
     INVALID_FILE_UPDATE(HttpStatus.BAD_REQUEST, "C-008", "잘못된 파일 수정 요청입니다."),
     FORBIDDEN_CS_POST_UPDATE(HttpStatus.FORBIDDEN, "C-009", "CS 게시글 수정 권한이 없습니다."),
+    FORBIDDEN_CS_POST_DELETE(HttpStatus.FORBIDDEN, "C-018", "CS 게시글 삭제 권한이 없습니다."),
     ALREADY_DELETED_CS_POST(HttpStatus.BAD_REQUEST, "C-0010", "이미 삭재된 CS 게시글입니다."),
     INVALID_PROJECT_STATUS_FOR_CS_POST(HttpStatus.BAD_REQUEST, "C-0011", "완료된 프로젝트에서만 CS 게시글을 처리할 수 있습니다."),
     NOT_EXISTS_CS_QNA(HttpStatus.BAD_REQUEST, "C-012", "존재하지 않는 CS 댓글입니다."),

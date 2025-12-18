@@ -162,7 +162,8 @@ public interface CsPostApi {
     )
     ResponseEntity<ApiResponse<Long>> deleteCsPost(
             @PathVariable Long projectId,
-            @PathVariable Long csPostId
+            @PathVariable Long csPostId,
+            @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails
     );
 
     @Operation(
