@@ -10,6 +10,10 @@ import com.workhub.projectNode.dto.UpdateNodeRequest;
 import com.workhub.projectNode.dto.UpdateNodeStatusRequest;
 import com.workhub.projectNode.entity.NodeStatus;
 import com.workhub.projectNode.entity.ProjectNode;
+import com.workhub.projectNode.event.ProjectNodeApprovedEvent;
+import com.workhub.projectNode.event.ProjectNodeRejectedEvent;
+import com.workhub.projectNode.event.ProjectNodeReviewRequestedEvent;
+import com.workhub.projectNode.event.ProjectNodeUpdatedEvent;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -18,6 +22,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.time.LocalDate;
@@ -43,7 +48,7 @@ class UpdateProjectNodeServiceTest {
     HistoryRecorder historyRecorder;
 
     @Mock
-    ProjectNodeNotificationService projectNodeNotificationService;
+    ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     UpdateProjectNodeService updateProjectNodeService;
@@ -90,6 +95,7 @@ class UpdateProjectNodeServiceTest {
         assertThat(testNode.getNodeStatus()).isEqualTo(NodeStatus.IN_PROGRESS);
         verify(projectNodeValidator).validateLoginUserPermission(100L, 1L);
         verify(projectNodeService).findByIdAndProjectId(1L, 100L);
+        verify(eventPublisher).publishEvent(any(ProjectNodeUpdatedEvent.class));
     }
 
     @Test
@@ -118,6 +124,7 @@ class UpdateProjectNodeServiceTest {
         assertThat(testNode.getNodeOrder()).isEqualTo(2);
         assertThat(node2.getNodeOrder()).isEqualTo(1);
         verify(projectNodeValidator).validateLoginUserPermission(100L, 1L);
+        verify(eventPublisher, atLeastOnce()).publishEvent(any(ProjectNodeUpdatedEvent.class));
     }
 
     @Test
@@ -161,6 +168,7 @@ class UpdateProjectNodeServiceTest {
         assertThat(response.description()).isEqualTo("수정된 설명");
         verify(projectNodeValidator).validateLoginUserPermission(100L, 1L);
         verify(projectNodeService).findByIdAndProjectId(1L, 100L);
+        verify(eventPublisher).publishEvent(any(ProjectNodeUpdatedEvent.class));
     }
 
     @Test

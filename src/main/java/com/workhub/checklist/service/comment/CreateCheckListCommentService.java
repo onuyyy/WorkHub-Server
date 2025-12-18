@@ -8,6 +8,7 @@ import com.workhub.checklist.entity.checkList.CheckList;
 import com.workhub.checklist.entity.checkList.CheckListItem;
 import com.workhub.checklist.entity.comment.CheckListItemComment;
 import com.workhub.checklist.entity.comment.CheckListItemCommentFile;
+import com.workhub.checklist.event.CheckListCommentCreatedEvent;
 import com.workhub.checklist.service.CheckListAccessValidator;
 import com.workhub.checklist.service.checkList.CheckListService;
 import com.workhub.global.entity.ActionType;
@@ -16,6 +17,7 @@ import com.workhub.global.error.exception.BusinessException;
 import com.workhub.global.util.SecurityUtil;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,6 +28,7 @@ import java.util.List;
 public class CreateCheckListCommentService {
 
     private final CheckListCommentService checkListCommentService;
+    private final ApplicationEventPublisher eventPublisher;
     private final CheckListAccessValidator checkListAccessValidator;
     private final CheckListService checkListService;
 
@@ -51,14 +54,31 @@ public class CreateCheckListCommentService {
         CheckListItem checkListItem = checkListService.findCheckListItem(checkListItemId);
         validateItemBelongsToCheckList(checkListId, checkListItem);
 
-        Long parentCommentId = resolveParent(checkListItemId, request.patentClCommentId());
+        CheckListItemComment parentComment = resolveParent(checkListItemId, request.patentClCommentId());
         Long userId = SecurityUtil.getCurrentUserIdOrThrow();
 
-        CheckListItemComment comment = CheckListItemComment.of(checkListItemId, userId, parentCommentId, request.content());
+        CheckListItemComment comment = CheckListItemComment.of(
+                checkListItemId,
+                userId,
+                parentComment != null ? parentComment.getClCommentId() : null,
+                request.content()
+        );
         comment = checkListCommentService.save(comment);
         checkListService.snapShotAndRecordHistory(comment, comment.getClCommentId(), ActionType.CREATE);
 
         List<CheckListCommentFileResponse> fileResponses = createCommentFiles(comment.getClCommentId(), request.files());
+
+        eventPublisher.publishEvent(new CheckListCommentCreatedEvent(
+                projectId,
+                nodeId,
+                checkListId,
+                checkListItemId,
+                comment.getClCommentId(),
+                comment.getClContent(),
+                checkList.getUserId(),
+                parentComment != null ? parentComment.getUserId() : null,
+                userId
+        ));
 
         return CheckListCommentResponse.from(comment, fileResponses);
     }
@@ -81,7 +101,7 @@ public class CreateCheckListCommentService {
         }
     }
 
-    private Long resolveParent(Long checkListItemId, Long parentCommentId) {
+    private CheckListItemComment resolveParent(Long checkListItemId, Long parentCommentId) {
         if (parentCommentId == null) {
             return null;
         }
@@ -90,7 +110,7 @@ public class CreateCheckListCommentService {
         if (!checkListItemId.equals(parentComment.getCheckListItemId())) {
             throw new BusinessException(ErrorCode.NOT_MATCHED_CHECK_LIST_ITEM_COMMENT);
         }
-        return parentComment.getClCommentId();
+        return parentComment;
     }
 
     /**

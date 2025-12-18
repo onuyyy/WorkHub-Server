@@ -10,8 +10,10 @@ import com.workhub.projectNode.dto.CreateNodeRequest;
 import com.workhub.projectNode.dto.CreateNodeResponse;
 import com.workhub.projectNode.dto.NodeSnapshot;
 import com.workhub.projectNode.entity.ProjectNode;
+import com.workhub.projectNode.event.ProjectNodeCreatedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,7 +26,7 @@ public class CreateProjectNodeService {
     private final ProjectNodeService projectNodeService;
     private final ProjectNodeValidator projectNodeValidator;
     private final HistoryRecorder historyRecorder;
-    private final ProjectNodeNotificationService projectNodeNotificationService;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 프로젝트 노드를 생성하고 관련 히스토리를 저장
@@ -43,7 +45,7 @@ public class CreateProjectNodeService {
 
         Integer nodeOrder = projectNodeService.findMaxNodeOrderByProjectId(projectId) + 1;
         ProjectNode savedProjectNode = saveProjectNodeAndHistory(projectId, request, nodeOrder);
-        projectNodeNotificationService.notifyCreated(projectId, savedProjectNode.getProjectNodeId(), savedProjectNode.getTitle());
+        eventPublisher.publishEvent(new ProjectNodeCreatedEvent(projectId, savedProjectNode));
 
         return CreateNodeResponse.from(savedProjectNode);
     }

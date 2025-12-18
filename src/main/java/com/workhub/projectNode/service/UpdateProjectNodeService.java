@@ -11,8 +11,13 @@ import com.workhub.projectNode.dto.*;
 import com.workhub.projectNode.entity.ConfirmStatus;
 import com.workhub.projectNode.entity.NodeStatus;
 import com.workhub.projectNode.entity.ProjectNode;
+import com.workhub.projectNode.event.ProjectNodeApprovedEvent;
+import com.workhub.projectNode.event.ProjectNodeRejectedEvent;
+import com.workhub.projectNode.event.ProjectNodeReviewRequestedEvent;
+import com.workhub.projectNode.event.ProjectNodeUpdatedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,7 +35,7 @@ public class UpdateProjectNodeService {
     private final ProjectNodeService projectNodeService;
     private final ProjectNodeValidator projectNodeValidator;
     private final HistoryRecorder historyRecorder;
-    private final ProjectNodeNotificationService projectNodeNotificationService;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 프로젝트 노드 상태를 업데이트하고 변경 이력을 저장.
@@ -43,7 +48,7 @@ public class UpdateProjectNodeService {
         ProjectNode original = getOriginalAndSaveHistory(projectId, nodeId);
         updateNodeStatus(original, request.nodeStatus());
 
-        projectNodeNotificationService.notifyUpdated(projectId, nodeId, original.getTitle(), "상태");
+        eventPublisher.publishEvent(new ProjectNodeUpdatedEvent(projectId, nodeId, original.getTitle(), "상태"));
     }
 
     /**
@@ -77,7 +82,7 @@ public class UpdateProjectNodeService {
                 historyRecorder.recordHistory(HistoryType.PROJECT_NODE, req.projectNodeId(),
                         ActionType.UPDATE, snapshot
                 );
-                projectNodeNotificationService.notifyUpdated(projectId, req.projectNodeId(), node.getTitle(), "순서");
+                eventPublisher.publishEvent(new ProjectNodeUpdatedEvent(projectId, req.projectNodeId(), node.getTitle(), "순서"));
             }
         });
     }
@@ -99,12 +104,12 @@ public class UpdateProjectNodeService {
 
         boolean titleChanged = !beforeTitle.equals(original.getTitle());
         boolean descChanged = !beforeDescription.equals(original.getDescription());
-        projectNodeNotificationService.notifyUpdated(
+        eventPublisher.publishEvent(new ProjectNodeUpdatedEvent(
                 projectId,
                 nodeId,
                 original.getTitle(),
                 buildChangedDesc(titleChanged, descChanged)
-        );
+        ));
 
         return CreateNodeResponse.from(original);
     }
@@ -129,15 +134,9 @@ public class UpdateProjectNodeService {
      */
     private void sendConfirmStatusNotify(Long projectId, Long nodeId, String title, ConfirmStatus confirmStatus) {
         switch (confirmStatus) {
-            case PENDING -> {
-                projectNodeNotificationService.notifyPending(projectId, nodeId, title, "관리자가 검토를 요청했습니다.");
-            }
-            case APPROVED -> {
-                projectNodeNotificationService.notifyApproved(projectId, nodeId, title, "프로젝트 노드가 승인되었습니다.");
-            }
-            case REJECTED -> {
-                projectNodeNotificationService.notifyRejected(projectId, nodeId, title, "프로젝트 노드가 반려되었습니다.");
-            }
+            case PENDING -> eventPublisher.publishEvent(new ProjectNodeReviewRequestedEvent(projectId, nodeId, title, "관리자가 검토를 요청했습니다."));
+            case APPROVED -> eventPublisher.publishEvent(new ProjectNodeApprovedEvent(projectId, nodeId, title, "프로젝트 노드가 승인되었습니다."));
+            case REJECTED -> eventPublisher.publishEvent(new ProjectNodeRejectedEvent(projectId, nodeId, title, "프로젝트 노드가 반려되었습니다."));
         }
     }
 

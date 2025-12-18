@@ -7,6 +7,7 @@ import com.workhub.project.dto.ProjectHistorySnapshot;
 import com.workhub.project.dto.request.CreateProjectRequest;
 import com.workhub.project.dto.response.ProjectResponse;
 import com.workhub.project.entity.*;
+import com.workhub.project.event.ProjectCreatedEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -33,7 +35,7 @@ class CreateProjectServiceTest {
     private HistoryRecorder historyRecorder;
 
     @Mock
-    private ProjectEventNotificationService projectEventNotificationService;
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private CreateProjectService createProjectService;
@@ -149,7 +151,7 @@ class CreateProjectServiceTest {
         assertThat(response).isNotNull();
         assertThat(response.projectId()).isEqualTo(1L);
         assertThat(response.projectTitle()).isEqualTo("신규 프로젝트");
-        verify(projectEventNotificationService).notifyProjectCreated(any(Project.class));
+        verify(eventPublisher).publishEvent(any(ProjectCreatedEvent.class));
     }
 
     @Test

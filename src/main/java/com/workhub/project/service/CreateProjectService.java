@@ -3,6 +3,7 @@ package com.workhub.project.service;
 import com.workhub.global.entity.ActionType;
 import com.workhub.global.entity.HistoryType;
 import com.workhub.global.history.HistoryRecorder;
+import com.workhub.project.event.ProjectCreatedEvent;
 import com.workhub.project.dto.ProjectHistorySnapshot;
 import com.workhub.project.dto.request.CreateProjectRequest;
 import com.workhub.project.dto.response.ProjectResponse;
@@ -12,6 +13,7 @@ import com.workhub.project.entity.ProjectDevMember;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,7 +26,7 @@ public class CreateProjectService {
 
     private final ProjectService projectService;
     private final HistoryRecorder historyRecorder;
-    private final ProjectEventNotificationService projectEventNotificationService;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 프로젝트를 생성하고 관련 히스토리 및 멤버 정보를 저장
@@ -36,7 +38,7 @@ public class CreateProjectService {
         Project savedProject = saveProjectAndHistory(request);
         saveClientMembersAndHistory(request.managerIds(), savedProject.getProjectId());
         saveDevMembersAndHistory(request.developerIds(), savedProject.getProjectId());
-        projectEventNotificationService.notifyProjectCreated(savedProject);
+        eventPublisher.publishEvent(new ProjectCreatedEvent(savedProject));
 
         return ProjectResponse.from(savedProject);
     }

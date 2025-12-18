@@ -8,6 +8,7 @@ import com.workhub.projectNode.dto.CreateNodeRequest;
 import com.workhub.projectNode.dto.CreateNodeResponse;
 import com.workhub.projectNode.entity.NodeStatus;
 import com.workhub.projectNode.entity.ProjectNode;
+import com.workhub.projectNode.event.ProjectNodeCreatedEvent;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.time.LocalDate;
@@ -41,7 +43,7 @@ class CreateProjectNodeServiceTest {
     HistoryRecorder historyRecorder;
 
     @Mock
-    ProjectNodeNotificationService projectNodeNotificationService;
+    ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     CreateProjectNodeService createProjectNodeService;
@@ -114,6 +116,7 @@ class CreateProjectNodeServiceTest {
         verify(projectNodeValidator).validateProjectAndDevMember(100L, 10L);
         verify(projectNodeService).findMaxNodeOrderByProjectId(100L);
         verify(projectNodeService).saveProjectNode(any(ProjectNode.class));
+        verify(eventPublisher).publishEvent(any(ProjectNodeCreatedEvent.class));
     }
 
     @Test
@@ -142,6 +145,7 @@ class CreateProjectNodeServiceTest {
         assertThat(response.projectNodeId()).isEqualTo(2L);
 
         verify(projectNodeService).findMaxNodeOrderByProjectId(100L);
+        verify(eventPublisher).publishEvent(any(ProjectNodeCreatedEvent.class));
     }
 
     @Test

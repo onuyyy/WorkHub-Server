@@ -13,6 +13,8 @@ import com.workhub.project.entity.ProjectClientMember;
 import com.workhub.project.entity.ProjectDevMember;
 import com.workhub.project.entity.Role;
 import com.workhub.project.entity.Status;
+import com.workhub.project.event.ProjectStatusChangedEvent;
+import com.workhub.project.event.ProjectUpdatedEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,6 +22,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -39,7 +42,7 @@ class UpdateProjectServiceTest {
     private HistoryRecorder historyRecorder;
 
     @Mock
-    private ProjectEventNotificationService projectEventNotificationService;
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private UpdateProjectService updateProjectService;
@@ -156,6 +159,7 @@ class UpdateProjectServiceTest {
         // 4. 응답 검증
         assertThat(response).isNotNull();
         assertThat(response.projectId()).isEqualTo(1L);
+        verify(eventPublisher).publishEvent(any(ProjectUpdatedEvent.class));
     }
 
     @Test
@@ -208,6 +212,7 @@ class UpdateProjectServiceTest {
                 eq(ActionType.CREATE),
                 eq(newDevMember)
         );
+        verify(eventPublisher).publishEvent(any(ProjectUpdatedEvent.class));
     }
 
     @Test
@@ -238,6 +243,7 @@ class UpdateProjectServiceTest {
                 eq(ActionType.DELETE),
                 any(ProjectDevMember.class)
         );
+        verify(eventPublisher).publishEvent(any(ProjectUpdatedEvent.class));
     }
 
     @Test
@@ -315,6 +321,7 @@ class UpdateProjectServiceTest {
                 eq(ActionType.DELETE),
                 any()
         );
+        verify(eventPublisher).publishEvent(any(ProjectUpdatedEvent.class));
     }
 
     @Test
@@ -370,7 +377,7 @@ class UpdateProjectServiceTest {
         updateProjectService.updateProjectStatus(1L, request);
 
         verify(historyRecorder).recordHistory(eq(HistoryType.PROJECT), eq(1L), eq(ActionType.UPDATE), any(ProjectHistorySnapshot.class));
-        verify(projectEventNotificationService).notifyStatusChanged(mockProject, Status.IN_PROGRESS);
+        verify(eventPublisher).publishEvent(any(ProjectStatusChangedEvent.class));
         assertThat(mockProject.getStatus()).isEqualTo(Status.COMPLETED);
     }
 }

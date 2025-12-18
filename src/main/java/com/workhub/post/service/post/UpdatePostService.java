@@ -5,6 +5,8 @@ import com.workhub.global.entity.HistoryType;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import com.workhub.global.history.HistoryRecorder;
+import com.workhub.post.event.PostUpdatedEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import com.workhub.post.dto.post.PostHistorySnapshot;
 import com.workhub.post.dto.post.request.PostFileUpdateRequest;
 import com.workhub.post.dto.post.request.PostLinkUpdateRequest;
@@ -29,7 +31,7 @@ public class UpdatePostService {
     private final PostService postService;
     private final PostValidator postValidator;
     private final HistoryRecorder historyRecorder;
-    private final PostNotificationService postNotificationService;
+    private final ApplicationEventPublisher eventPublisher;
 
 
     /**
@@ -58,7 +60,7 @@ public class UpdatePostService {
                 .filter(link -> link.getDeletedAt() == null)
                 .toList();
 
-        postNotificationService.notifyUpdated(projectId, target);
+        eventPublisher.publishEvent(new PostUpdatedEvent(projectId, target));
 
         return PostResponse.from(target, visibleFiles, visibleLinks);
     }

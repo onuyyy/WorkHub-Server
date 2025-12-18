@@ -8,11 +8,13 @@ import com.workhub.global.history.HistoryRecorder;
 import com.workhub.post.dto.comment.CommentHistorySnapshot;
 import com.workhub.post.dto.comment.request.CommentRequest;
 import com.workhub.post.dto.comment.response.CommentResponse;
+import com.workhub.post.event.CommentCreatedEvent;
 import com.workhub.post.entity.Post;
 import com.workhub.post.entity.PostComment;
 import com.workhub.post.service.PostValidator;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -22,7 +24,7 @@ public class CreateCommentService {
     private final CommentService commentService;
     private final HistoryRecorder historyRecorder;
     private final PostValidator postValidator;
-    private final CommentNotificationService commentNotificationService;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 댓글을 생성하고 히스토리를 기록한다.
@@ -42,7 +44,7 @@ public class CreateCommentService {
         postComment =  commentService.save(postComment);
 
         snapshotAndRecordHistory(postComment, ActionType.CREATE);
-        commentNotificationService.notifyCreated(projectId, post, postComment);
+        eventPublisher.publishEvent(new CommentCreatedEvent(projectId, post, postComment));
         return CommentResponse.from(postComment);
     }
 

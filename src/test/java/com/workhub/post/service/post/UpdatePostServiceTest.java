@@ -11,15 +11,16 @@ import com.workhub.post.repository.post.PostFileRepository;
 import com.workhub.post.repository.post.PostLinkRepository;
 import com.workhub.post.repository.post.PostRepository;
 import com.workhub.post.service.PostValidator;
+import com.workhub.post.event.PostUpdatedEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,7 +33,7 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.verify;
 
-@ExtendWith(SpringExtension.class)
+@ExtendWith(MockitoExtension.class)
 class UpdatePostServiceTest {
 
     @Mock
@@ -48,16 +49,13 @@ class UpdatePostServiceTest {
     @Mock
     HistoryRecorder historyRecorder;
     @Mock
-    PostNotificationService postNotificationService;
+    ApplicationEventPublisher eventPublisher;
 
     UpdatePostService updatePostService;
 
     @BeforeEach
     void setUp() {
-        updatePostService = new UpdatePostService(postService, postValidator, historyRecorder, postNotificationService);
-        given(postRepository.findByParentPostIdAndDeletedAtIsNull(anyLong())).willReturn(Collections.emptyList());
-        given(postFileRepository.findByPostId(anyLong())).willReturn(Collections.emptyList());
-        given(postLinkRepository.findByPostId(anyLong())).willReturn(Collections.emptyList());
+        updatePostService = new UpdatePostService(postService, postValidator, historyRecorder, eventPublisher);
         willDoNothing().given(postValidator).validateNodeAndProject(anyLong(), anyLong());
     }
 
@@ -90,6 +88,7 @@ class UpdatePostServiceTest {
                 eq(com.workhub.global.entity.ActionType.UPDATE),
                 any(Object.class)
         );
+        verify(eventPublisher).publishEvent(any(PostUpdatedEvent.class));
     }
 
     @Test

@@ -8,6 +8,7 @@ import com.workhub.global.history.HistoryRecorder;
 import com.workhub.post.dto.comment.CommentHistorySnapshot;
 import com.workhub.post.dto.comment.request.CommentRequest;
 import com.workhub.post.dto.comment.response.CommentResponse;
+import com.workhub.post.event.CommentCreatedEvent;
 import com.workhub.post.entity.Post;
 import com.workhub.post.entity.PostComment;
 import com.workhub.post.service.PostValidator;
@@ -20,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.context.ApplicationEventPublisher;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -40,7 +42,7 @@ class CreateCommentServiceTest {
     @Mock
     PostValidator postValidator;
     @Mock
-    CommentNotificationService commentNotificationService;
+    ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     CreateCommentService createCommentService;
@@ -89,6 +91,7 @@ class CreateCommentServiceTest {
                 eq(ActionType.CREATE),
                 eq(CommentHistorySnapshot.from(saved))
         );
+        verify(eventPublisher).publishEvent(any(CommentCreatedEvent.class));
     }
 
     private PostComment mockComment(Long commentId, Long postId, Long parentId, String content) {

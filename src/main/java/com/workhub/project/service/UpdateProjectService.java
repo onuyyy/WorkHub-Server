@@ -3,16 +3,19 @@ package com.workhub.project.service;
 import com.workhub.global.entity.ActionType;
 import com.workhub.global.entity.HistoryType;
 import com.workhub.global.history.HistoryRecorder;
-import com.workhub.project.dto.request.CreateProjectRequest;
 import com.workhub.project.dto.ProjectHistorySnapshot;
-import com.workhub.project.dto.response.ProjectResponse;
+import com.workhub.project.dto.request.CreateProjectRequest;
 import com.workhub.project.dto.request.UpdateStatusRequest;
+import com.workhub.project.dto.response.ProjectResponse;
 import com.workhub.project.entity.Project;
 import com.workhub.project.entity.ProjectClientMember;
 import com.workhub.project.entity.ProjectDevMember;
+import com.workhub.project.event.ProjectStatusChangedEvent;
+import com.workhub.project.event.ProjectUpdatedEvent;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -25,7 +28,7 @@ public class UpdateProjectService {
 
     private final ProjectService projectService;
     private final HistoryRecorder historyRecorder;
-    private final ProjectEventNotificationService projectEventNotificationService;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * 프로젝트 상태를 업데이트하고 변경 이력을 저장.
@@ -41,7 +44,7 @@ public class UpdateProjectService {
 
         original.updateProjectStatus(statusRequest.status());
         historyRecorder.recordHistory(HistoryType.PROJECT, projectId, ActionType.UPDATE, snapshot);
-        projectEventNotificationService.notifyStatusChanged(original, beforeStatus);
+        eventPublisher.publishEvent(new ProjectStatusChangedEvent(original, beforeStatus));
 
     }
 
@@ -80,14 +83,20 @@ public class UpdateProjectService {
         saveDevMembersAndHistory(toAddDevIds, projectId);
 
         // 5. 알림 발행
-        boolean titleChanged = !beforeTitle.equals(updatedProject.getProjectTitle());
-        boolean descChanged = !beforeDescription.equals(updatedProject.getProjectDescription());
-        boolean endDateChanged = (beforeEndDate == null && updatedProject.getContractEndDate() != null)
-                || (beforeEndDate != null && !beforeEndDate.equals(updatedProject.getContractEndDate()));
+        var snapshot = new ProjectUpdatedEvent.ProjectUpdateSnapshot(
+                beforeTitle,
+                beforeDescription,
+                beforeEndDate,
+                existingClientMembers.stream().map(ProjectClientMember::getUserId).toList(),
+                existingDevMembers.stream().map(ProjectDevMember::getUserId).toList()
+        );
 
-        projectEventNotificationService.notifyInfoUpdated(updatedProject, titleChanged, descChanged, endDateChanged);
-        projectEventNotificationService.notifyMembersAdded(updatedProject, toAddClientIds.size() + toAddDevIds.size());
-        projectEventNotificationService.notifyMembersRemoved(updatedProject, toRemoveClientIds.size() + toRemoveDevIds.size());
+        eventPublisher.publishEvent(new ProjectUpdatedEvent(
+                snapshot,
+                updatedProject,
+                request.managerIds(),
+                request.developerIds()
+        ));
 
         return ProjectResponse.from(updatedProject);
     }

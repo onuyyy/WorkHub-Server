@@ -13,6 +13,8 @@ import com.workhub.checklist.entity.checkList.CheckList;
 import com.workhub.checklist.entity.checkList.CheckListItem;
 import com.workhub.checklist.entity.checkList.CheckListOption;
 import com.workhub.checklist.entity.checkList.CheckListOptionFile;
+import com.workhub.checklist.event.CheckListItemStatusChangedEvent;
+import com.workhub.checklist.event.CheckListUpdatedEvent;
 import com.workhub.checklist.service.CheckListAccessValidator;
 import com.workhub.checklist.service.checkList.CheckListService;
 import com.workhub.checklist.service.checkList.UpdateCheckListService;
@@ -29,6 +31,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;
 import java.util.Optional;
@@ -51,6 +54,9 @@ class UpdateCheckListServiceTest {
 
     @Mock
     private CheckListAccessValidator checkListAccessValidator;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private UpdateCheckListService updateCheckListService;
@@ -288,6 +294,7 @@ class UpdateCheckListServiceTest {
         verify(checkListService).deleteCheckListOptionFiles(filesForItemDelete);
         verify(checkListService).deleteCheckListOptions(optionsForDeleteItem);
         verify(checkListService).deleteCheckListItem(itemToDelete);
+        verify(eventPublisher).publishEvent(any(CheckListUpdatedEvent.class));
     }
 
     @Test
@@ -324,6 +331,7 @@ class UpdateCheckListServiceTest {
         verify(checkListAccessValidator).validateProjectAndNode(projectId, nodeId);
         verify(checkListAccessValidator).chekProjectClientMember(projectId);
         verify(checkListService).snapShotAndRecordHistory(item, itemId, ActionType.UPDATE);
+        verify(eventPublisher).publishEvent(any(CheckListItemStatusChangedEvent.class));
     }
 
     @Test

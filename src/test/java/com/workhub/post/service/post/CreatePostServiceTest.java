@@ -13,6 +13,8 @@ import com.workhub.post.entity.Post;
 import com.workhub.post.entity.PostFile;
 import com.workhub.post.entity.PostType;
 import com.workhub.post.service.PostValidator;
+import com.workhub.post.event.PostCreatedEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -45,7 +47,7 @@ class CreatePostServiceTest {
     private HistoryRecorder historyRecorder;
 
     @Mock
-    private PostNotificationService postNotificationService;
+    private ApplicationEventPublisher eventPublisher;
 
     @Mock
     private FileService fileService;
@@ -123,7 +125,7 @@ class CreatePostServiceTest {
         assertThat(result.files()).isEmpty();
         verify(fileService, never()).uploadFiles(any());
         verify(historyRecorder).recordHistory(eq(HistoryType.POST), eq(10L), eq(ActionType.CREATE), any(Object.class));
-        verify(postNotificationService).notifyCreated(10L, saved);
+        verify(eventPublisher).publishEvent(any(PostCreatedEvent.class));
     }
 
     @Test
@@ -174,7 +176,7 @@ class CreatePostServiceTest {
         assertThat(fileCaptor.getValue().get(0).getFileOrder()).isEqualTo(1);
 
         verify(historyRecorder).recordHistory(eq(HistoryType.POST), eq(11L), eq(ActionType.CREATE), any(Object.class));
-        verify(postNotificationService).notifyCreated(10L, saved);
+        verify(eventPublisher).publishEvent(any(PostCreatedEvent.class));
     }
 
     @Test

@@ -8,6 +8,7 @@ import com.workhub.checklist.entity.checkList.CheckListOptionFile;
 import com.workhub.checklist.service.CheckListAccessValidator;
 import com.workhub.checklist.service.checkList.CheckListService;
 import com.workhub.checklist.service.checkList.CreateCheckListService;
+import com.workhub.checklist.event.CheckListCreatedEvent;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.Arrays;
 import java.util.List;
@@ -34,6 +36,9 @@ class CreateCheckListServiceTest {
 
     @Mock
     private CheckListAccessValidator checkListAccessValidator;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private CreateCheckListService createCheckListService;
@@ -130,6 +135,7 @@ class CreateCheckListServiceTest {
         verify(checkListService).saveCheckList(any(CheckList.class));
         verify(checkListService).saveCheckListItem(any(CheckListItem.class));
         verify(checkListService).saveCheckListOption(any(CheckListOption.class));
+        verify(eventPublisher).publishEvent(any(CheckListCreatedEvent.class));
     }
 
     @Test

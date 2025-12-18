@@ -8,17 +8,18 @@ import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import com.workhub.global.history.HistoryRecorder;
 import com.workhub.post.dto.post.PostHistorySnapshot;
-import com.workhub.post.dto.post.request.PostFileRequest;
 import com.workhub.post.dto.post.request.PostLinkRequest;
 import com.workhub.post.dto.post.request.PostRequest;
 import com.workhub.post.dto.post.response.PostResponse;
 import com.workhub.post.entity.Post;
 import com.workhub.post.entity.PostFile;
 import com.workhub.post.entity.PostLink;
+import com.workhub.post.event.PostCreatedEvent;
 import com.workhub.post.service.PostValidator;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -35,7 +36,7 @@ public class CreatePostService {
     private final PostService postService;
     private final PostValidator postValidator;
     private final HistoryRecorder historyRecorder;
-    private final PostNotificationService postNotificationService;
+    private final ApplicationEventPublisher eventPublisher;
     private final FileService fileService;
 
     /**
@@ -75,7 +76,7 @@ public class CreatePostService {
             List<PostLink> savedLinks = savePostLinks(savedPost.getPostId(), request.links());
 
             historyRecorder.recordHistory(HistoryType.POST, savedPost.getPostId(), ActionType.CREATE, PostHistorySnapshot.from(savedPost));
-            postNotificationService.notifyCreated(projectId, savedPost);
+            eventPublisher.publishEvent(new PostCreatedEvent(projectId, savedPost));
 
             return PostResponse.from(savedPost, savedFiles, savedLinks);
 
@@ -124,23 +125,6 @@ public class CreatePostService {
                 .toList();
 
         return postService.savePostFiles(postFiles);
-    }
-
-    /**
-     * 첨부 파일 요청을 엔티티로 변환해 한번에 저장한다.
-     *
-     * @param postId 게시글 ID
-     * @param fileRequests 첨부 파일 요청 목록
-     * @return 저장된 파일 목록, 없으면 빈 리스트
-     */
-    private List<PostFile> savePostFiles(Long postId, List<PostFileRequest> fileRequests) {
-        if (fileRequests == null || fileRequests.isEmpty()) {
-            return List.of();
-        }
-        List<PostFile> files = fileRequests.stream()
-                .map(request -> PostFile.of(postId, request))
-                .toList();
-        return postService.savePostFiles(files);
     }
 
     /**

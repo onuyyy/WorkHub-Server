@@ -7,6 +7,7 @@ import com.workhub.checklist.entity.checkList.CheckList;
 import com.workhub.checklist.entity.checkList.CheckListItem;
 import com.workhub.checklist.entity.comment.CheckListItemComment;
 import com.workhub.checklist.entity.comment.CheckListItemCommentFile;
+import com.workhub.checklist.event.CheckListCommentCreatedEvent;
 import com.workhub.checklist.service.CheckListAccessValidator;
 import com.workhub.checklist.service.checkList.CheckListService;
 import com.workhub.global.entity.ActionType;
@@ -22,6 +23,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.List;
 
@@ -42,6 +44,9 @@ class CreateCheckListCommentServiceTest {
 
     @Mock
     private CheckListService checkListService;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private CreateCheckListCommentService createCheckListCommentService;
@@ -115,6 +120,7 @@ class CreateCheckListCommentServiceTest {
         verify(checkListCommentService).save(any(CheckListItemComment.class));
         verify(checkListService)
                 .snapShotAndRecordHistory(savedComment, savedComment.getClCommentId(), ActionType.CREATE);
+        verify(eventPublisher).publishEvent(any(CheckListCommentCreatedEvent.class));
     }
 
     @Test

@@ -5,12 +5,14 @@ import com.workhub.checklist.entity.checkList.CheckList;
 import com.workhub.checklist.entity.checkList.CheckListItem;
 import com.workhub.checklist.entity.checkList.CheckListOption;
 import com.workhub.checklist.entity.checkList.CheckListOptionFile;
+import com.workhub.checklist.event.CheckListCreatedEvent;
 import com.workhub.checklist.service.CheckListAccessValidator;
 import com.workhub.global.entity.ActionType;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -26,6 +28,7 @@ public class CreateCheckListService {
 
     private final CheckListService checkListService;
     private final CheckListAccessValidator checkListAccessValidator;
+    private final ApplicationEventPublisher eventPublisher;
 
     /**
      * CheckList를 생성한다.
@@ -45,6 +48,8 @@ public class CreateCheckListService {
 
         CheckList checkList = createCheckList(request, userId, nodeId);
         List<CheckListItemResponse> itemResponses = createCheckListItems(checkList.getCheckListId(), request.items(), userId);
+
+        eventPublisher.publishEvent(new CheckListCreatedEvent(projectId, nodeId));
 
         return CheckListResponse.from(
                 checkList,
