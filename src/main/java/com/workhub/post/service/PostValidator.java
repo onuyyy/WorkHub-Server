@@ -29,6 +29,14 @@ public class PostValidator {
     }
 
     /**
+     * 읽기 전용 검증: 노드-프로젝트 소속만 확인하고 상태는 제한하지 않는다.
+     */
+    public void validateNodeAndProjectForRead(Long nodeId, Long projectId) {
+        projectNodeService.validateNodeToProject(nodeId, projectId);
+        // 프로젝트 존재/소속만 확인, 상태는 제한하지 않음
+    }
+
+    /**
      * 게시글이 프로젝트에 속하는지 검증하고 게시글을 반환한다.
      * 게시글의 노드 정보를 기반으로 프로젝트 소속을 확인한다.
      *
@@ -42,4 +50,3 @@ public class PostValidator {
         return post;
     }
 }
-

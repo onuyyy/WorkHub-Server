@@ -40,7 +40,7 @@ public class ReadPostService {
      * @return 조회된 게시글
      */
     public PostResponse findById(Long projectId, Long nodeId, Long postId) {
-        postValidator.validateNodeAndProject(nodeId, projectId);
+        postValidator.validateNodeAndProjectForRead(nodeId, projectId);
         Post post = postService.findById(postId);
         postService.validateNode(post, nodeId);
 
@@ -73,7 +73,7 @@ public class ReadPostService {
                                    String keyword,
                                    PostType postType,
                                    Pageable pageable) {
-        postValidator.validateNodeAndProject(nodeId, projectId);
+        postValidator.validateNodeAndProjectForRead(nodeId, projectId);
 
         Page<Post> parentPage = postService.searchParentPosts(nodeId, keyword, postType, pageable);
 

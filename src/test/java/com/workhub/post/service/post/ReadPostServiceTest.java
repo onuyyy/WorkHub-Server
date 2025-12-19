@@ -48,7 +48,7 @@ class ReadPostServiceTest {
         given(postRepository.findByParentPostIdAndDeletedAtIsNull(anyLong())).willReturn(Collections.emptyList());
         given(postFileRepository.findByPostId(anyLong())).willReturn(Collections.emptyList());
         given(postLinkRepository.findByPostId(anyLong())).willReturn(Collections.emptyList());
-        willDoNothing().given(postValidator).validateNodeAndProject(anyLong(), anyLong());
+        willDoNothing().given(postValidator).validateNodeAndProjectForRead(anyLong(), anyLong());
         given(authorLookupPort.findByUserId(anyLong())).willReturn(Optional.empty());
     }
 
