@@ -30,7 +30,7 @@ public class ProjectNotificationService {
      */
     public NotificationResponse publish(NotificationPublishRequest request) {
         ProjectNotification entity = request.toEntity();
-        ProjectNotification saved = notificationRepository.save(entity);
+        ProjectNotification saved = notificationRepository.saveAndFlush(entity); // PK 확보 후 푸시
         NotificationResponse response = NotificationResponse.from(saved);
         emitterService.send(request.receiverId(), response); // SSE 푸시
         return response;
