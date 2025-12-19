@@ -36,7 +36,7 @@ public class CheckListOptionFile extends BaseTimeEntity {
     public static CheckListOptionFile of(Long checkListOptionId, String fileUrl, Integer fileOrder) {
         return CheckListOptionFile.builder()
                 .fileUrl(fileUrl)
-                .fileName(extractFileName(fileUrl))
+                .fileName(fileUrl)  // 외부 링크는 전체 URL을 fileName에도 저장
                 .fileOrder(fileOrder)
                 .checkListOptionId(checkListOptionId)
                 .build();
@@ -64,7 +64,12 @@ public class CheckListOptionFile extends BaseTimeEntity {
     public void updateFile(String fileUrl, Integer fileOrder) {
         if (fileUrl != null) {
             this.fileUrl = fileUrl;
-            this.fileName = extractFileName(fileUrl);
+            // 외부 링크는 전체 URL을 fileName에 저장, S3 파일은 파일명만 추출
+            if (fileUrl.startsWith("http://") || fileUrl.startsWith("https://")) {
+                this.fileName = fileUrl;
+            } else {
+                this.fileName = extractFileName(fileUrl);
+            }
         }
         if (fileOrder != null) {
             this.fileOrder = fileOrder;

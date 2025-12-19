@@ -275,8 +275,8 @@ class CreateCheckListServiceTest {
     }
 
     @Test
-    @DisplayName("파일 URL에서 파일명이 올바르게 추출되어 저장되는지 검증한다.")
-    void givenFileUrl_whenCreate_thenFileNameExtracted() {
+    @DisplayName("외부 링크는 전체 URL이 fileName에 저장된다.")
+    void givenExternalUrl_whenCreate_thenFullUrlStoredInFileName() {
         // given
         Long projectId = 1L;
         Long nodeId = 10L;
@@ -299,7 +299,7 @@ class CreateCheckListServiceTest {
         // then
         verify(checkListService).saveCheckListOptionFile(argThat(file ->
                 file.getFileUrl().equals(fileUrl) &&
-                        file.getFileName().equals("test-file.png") &&
+                        file.getFileName().equals(fileUrl) &&  // 외부 링크는 전체 URL 저장
                         file.getFileOrder().equals(0)
         ));
     }
