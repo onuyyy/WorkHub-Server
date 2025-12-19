@@ -1,6 +1,7 @@
 package com.workhub.checklist.entity.comment;
 
 import com.workhub.checklist.dto.comment.CheckListCommentFileRequest;
+import com.workhub.file.dto.FileUploadResponse;
 import com.workhub.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -39,5 +40,18 @@ public class CheckListItemCommentFile extends BaseTimeEntity {
                 .fileName(request.fileName())
                 .fileOrder(request.fileOrder())
                 .build();
+    }
+
+    public static CheckListItemCommentFile fromUpload(Long clCommentId, FileUploadResponse uploadFile, Integer fileOrder) {
+        return CheckListItemCommentFile.builder()
+                .clCommentId(clCommentId)
+                .fileUrl(uploadFile.fileName())
+                .fileName(uploadFile.originalFileName())
+                .fileOrder(fileOrder)
+                .build();
+    }
+
+    public boolean isManagedFile() {
+        return fileUrl != null && !fileUrl.isBlank();
     }
 }

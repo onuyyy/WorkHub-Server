@@ -45,13 +45,14 @@ public interface CheckListCommentApi {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한이 없음"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "체크리스트 혹은 항목을 찾을 수 없음")
     })
-    @PostMapping(value = "/{checkListId}/items/{checkListItemId}/comments", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/{checkListId}/items/{checkListItemId}/comments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     ResponseEntity<ApiResponse<CheckListCommentResponse>> create(
             @PathVariable Long projectId,
             @PathVariable Long nodeId,
             @PathVariable Long checkListId,
             @PathVariable Long checkListItemId,
-            @Valid @RequestBody CheckListCommentRequest request
+            @Valid @org.springframework.web.bind.annotation.RequestPart("data") CheckListCommentRequest request,
+            @org.springframework.web.bind.annotation.RequestPart(value = "files", required = false) java.util.List<org.springframework.web.multipart.MultipartFile> files
     );
 
     @Operation(
@@ -76,13 +77,14 @@ public interface CheckListCommentApi {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한이 없음"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "체크리스트 혹은 댓글을 찾을 수 없음")
     })
-    @PatchMapping(value = "/{checkListId}/items/{checkListItemId}/comments/{commentId}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PatchMapping(value = "/{checkListId}/items/{checkListItemId}/comments/{commentId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     ResponseEntity<ApiResponse<CheckListCommentResponse>> update(
             @PathVariable Long projectId,
             @PathVariable Long nodeId,
             @PathVariable Long checkListId,
             @PathVariable Long checkListItemId,
             @PathVariable Long commentId,
-            @Valid @RequestBody CheckListCommentUpdateRequest request
+            @Valid @org.springframework.web.bind.annotation.RequestPart("data") CheckListCommentUpdateRequest request,
+            @org.springframework.web.bind.annotation.RequestPart(value = "newFiles", required = false) java.util.List<org.springframework.web.multipart.MultipartFile> newFiles
     );
 }

@@ -9,13 +9,12 @@ import com.workhub.checklist.service.comment.UpdateCheckListCommentService;
 import com.workhub.global.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -26,34 +25,35 @@ public class CheckListCommentController implements CheckListCommentApi {
     private final UpdateCheckListCommentService updateCheckListCommentService;
 
     @Override
-    @PostMapping("/{checkListId}/items/{checkListItemId}/comments")
+    @PostMapping(value = "/{checkListId}/items/{checkListItemId}/comments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<CheckListCommentResponse>> create(
             @PathVariable Long projectId,
             @PathVariable Long nodeId,
             @PathVariable Long checkListId,
             @PathVariable Long checkListItemId,
-            @Valid @RequestBody CheckListCommentRequest request
-
+            @Valid @RequestPart("data") CheckListCommentRequest request,
+            @RequestPart(value = "files", required = false) List<MultipartFile> files
     ) {
 
         CheckListCommentResponse response =
-                createCheckListCommentService.create(projectId, nodeId, checkListId, checkListItemId, request);
+                createCheckListCommentService.create(projectId, nodeId, checkListId, checkListItemId, request, files);
 
         return ApiResponse.created(response, "체크리스트 댓글이 작성되었습니다.");
     }
 
     @Override
-    @PatchMapping("/{checkListId}/items/{checkListItemId}/comments/{commentId}")
+    @PatchMapping(value = "/{checkListId}/items/{checkListItemId}/comments/{commentId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponse<CheckListCommentResponse>> update(
             @PathVariable Long projectId,
             @PathVariable Long nodeId,
             @PathVariable Long checkListId,
             @PathVariable Long checkListItemId,
             @PathVariable Long commentId,
-            @Valid @RequestBody CheckListCommentUpdateRequest request
+            @Valid @RequestPart("data") CheckListCommentUpdateRequest request,
+            @RequestPart(value = "newFiles", required = false) List<MultipartFile> newFiles
     ) {
         CheckListCommentResponse response = updateCheckListCommentService.update(
-                projectId, nodeId, checkListId, checkListItemId, commentId, request);
+                projectId, nodeId, checkListId, checkListItemId, commentId, request, newFiles);
 
         return ApiResponse.success(response, "체크리스트 댓글이 수정되었습니다.");
     }

@@ -10,6 +10,8 @@ import com.workhub.checklist.entity.comment.CheckListItemCommentFile;
 import com.workhub.checklist.event.CheckListCommentCreatedEvent;
 import com.workhub.checklist.service.CheckListAccessValidator;
 import com.workhub.checklist.service.checkList.CheckListService;
+import com.workhub.file.dto.FileUploadResponse;
+import com.workhub.file.service.FileService;
 import com.workhub.global.entity.ActionType;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
@@ -24,6 +26,8 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -48,6 +52,9 @@ class CreateCheckListCommentServiceTest {
     @Mock
     private ApplicationEventPublisher eventPublisher;
 
+    @Mock
+    private FileService fileService;
+
     @InjectMocks
     private CreateCheckListCommentService createCheckListCommentService;
 
@@ -57,6 +64,7 @@ class CreateCheckListCommentServiceTest {
     void setUp() {
         securityUtil = mockStatic(SecurityUtil.class);
         securityUtil.when(SecurityUtil::getCurrentUserIdOrThrow).thenReturn(88L);
+        lenient().when(fileService.uploadFiles(any())).thenReturn(List.of());
     }
 
     @AfterEach
@@ -107,8 +115,14 @@ class CreateCheckListCommentServiceTest {
                 .snapShotAndRecordHistory(savedComment, savedComment.getClCommentId(), ActionType.CREATE);
 
         // when
-        CheckListCommentResponse response =
-                createCheckListCommentService.create(projectId, nodeId, checkListId, checkListItemId, request);
+        CheckListCommentResponse response = createCheckListCommentService.create(
+                projectId,
+                nodeId,
+                checkListId,
+                checkListItemId,
+                request,
+                null
+        );
 
         // then
         assertThat(response.clCommentId()).isEqualTo(100L);
@@ -164,9 +178,14 @@ class CreateCheckListCommentServiceTest {
         when(checkListCommentService.findById(parentId)).thenReturn(parentComment);
 
         // when & then
-        assertThatThrownBy(() ->
-                createCheckListCommentService.create(projectId, nodeId, checkListId, checkListItemId, request)
-        )
+        assertThatThrownBy(() -> createCheckListCommentService.create(
+                projectId,
+                nodeId,
+                checkListId,
+                checkListItemId,
+                request,
+                null
+        ))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NOT_MATCHED_CHECK_LIST_ITEM_COMMENT);
 
@@ -185,9 +204,7 @@ class CreateCheckListCommentServiceTest {
                 .build();
 
         // when & then
-        assertThatThrownBy(() ->
-                createCheckListCommentService.create(1L, 2L, 3L, 4L, request)
-        )
+        assertThatThrownBy(() -> createCheckListCommentService.create(1L, 2L, 3L, 4L, request, null))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_CHECK_LIST_ITEM_COMMENT_CONTENT);
 
@@ -244,8 +261,26 @@ class CreateCheckListCommentServiceTest {
                 .snapShotAndRecordHistory(savedComment, savedComment.getClCommentId(), ActionType.CREATE);
 
         // when
-        CheckListCommentResponse response =
-                createCheckListCommentService.create(projectId, nodeId, checkListId, checkListItemId, request);
+        List<MultipartFile> uploadFiles = List.of(
+                new MockMultipartFile("files", "file1.jpg", "image/jpeg", new byte[]{1}),
+                new MockMultipartFile("files", "file2.png", "image/png", new byte[]{2})
+        );
+
+        List<FileUploadResponse> uploadResponses = List.of(
+                FileUploadResponse.from("stored-file1", "file1.jpg", ""),
+                FileUploadResponse.from("stored-file2", "file2.png", "")
+        );
+
+        when(fileService.uploadFiles(uploadFiles)).thenReturn(uploadResponses);
+
+        CheckListCommentResponse response = createCheckListCommentService.create(
+                projectId,
+                nodeId,
+                checkListId,
+                checkListItemId,
+                request,
+                uploadFiles
+        );
 
         // then
         assertThat(response.clCommentId()).isEqualTo(100L);
@@ -258,6 +293,7 @@ class CreateCheckListCommentServiceTest {
         assertThat(response.files().get(1).fileOrder()).isEqualTo(1);
 
         verify(checkListCommentService, times(2)).saveCommentFile(any(CheckListItemCommentFile.class));
+        verify(fileService).uploadFiles(uploadFiles);
     }
 
     @Test
@@ -304,8 +340,14 @@ class CreateCheckListCommentServiceTest {
                 .snapShotAndRecordHistory(savedComment, savedComment.getClCommentId(), ActionType.CREATE);
 
         // when
-        CheckListCommentResponse response =
-                createCheckListCommentService.create(projectId, nodeId, checkListId, checkListItemId, request);
+        CheckListCommentResponse response = createCheckListCommentService.create(
+                projectId,
+                nodeId,
+                checkListId,
+                checkListItemId,
+                request,
+                null
+        );
 
         // then
         assertThat(response.clCommentId()).isEqualTo(100L);

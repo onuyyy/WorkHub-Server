@@ -7,15 +7,19 @@ import com.workhub.checklist.entity.checkList.CheckListItem;
 import com.workhub.checklist.entity.comment.CheckListItemComment;
 import com.workhub.checklist.service.CheckListAccessValidator;
 import com.workhub.checklist.service.checkList.CheckListService;
+import com.workhub.file.service.FileService;
 import com.workhub.global.entity.ActionType;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -34,8 +38,17 @@ class UpdateCheckListCommentServiceTest {
     @Mock
     private CheckListService checkListService;
 
+    @Mock
+    private FileService fileService;
+
     @InjectMocks
     private UpdateCheckListCommentService updateCheckListCommentService;
+
+    @BeforeEach
+    void setUp() {
+        lenient().when(fileService.uploadFiles(any())).thenReturn(List.of());
+        lenient().when(checkListCommentService.findCommentFilesByCommentId(anyLong())).thenReturn(List.of());
+    }
 
     @Test
     @DisplayName("체크리스트 댓글을 수정하면 최신 내용이 반환된다")
@@ -78,7 +91,7 @@ class UpdateCheckListCommentServiceTest {
 
         // when
         CheckListCommentResponse response = updateCheckListCommentService.update(
-                projectId, nodeId, checkListId, checkListItemId, commentId, request);
+                projectId, nodeId, checkListId, checkListItemId, commentId, request, null);
 
         // then
         assertThat(response.content()).isEqualTo("updated");
@@ -133,7 +146,7 @@ class UpdateCheckListCommentServiceTest {
 
         // when & then
         assertThatThrownBy(() -> updateCheckListCommentService.update(
-                projectId, nodeId, checkListId, checkListItemId, commentId, request
+                projectId, nodeId, checkListId, checkListItemId, commentId, request, null
         ))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NOT_AUTHORIZED_CHECK_LIST_ITEM_COMMENT_USER);
@@ -183,7 +196,7 @@ class UpdateCheckListCommentServiceTest {
 
         // when
         CheckListCommentResponse response = updateCheckListCommentService.update(
-                projectId, nodeId, checkListId, checkListItemId, commentId, request);
+                projectId, nodeId, checkListId, checkListItemId, commentId, request, null);
 
         // then
         assertThat(response.content()).isEqualTo("updated");
@@ -200,7 +213,7 @@ class UpdateCheckListCommentServiceTest {
                 .build();
 
         // when & then
-        assertThatThrownBy(() -> updateCheckListCommentService.update(1L, 2L, 3L, 4L, 5L, request))
+        assertThatThrownBy(() -> updateCheckListCommentService.update(1L, 2L, 3L, 4L, 5L, request, null))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INVALID_CHECK_LIST_ITEM_COMMENT_CONTENT);
 
@@ -249,7 +262,7 @@ class UpdateCheckListCommentServiceTest {
 
         // when & then
         assertThatThrownBy(() -> updateCheckListCommentService.update(
-                projectId, nodeId, checkListId, checkListItemId, commentId, request
+                projectId, nodeId, checkListId, checkListItemId, commentId, request, null
         ))
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NOT_MATCHED_CHECK_LIST_ITEM_COMMENT);

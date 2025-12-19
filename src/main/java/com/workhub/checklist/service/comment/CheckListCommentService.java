@@ -9,6 +9,8 @@ import com.workhub.global.error.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class CheckListCommentService {
@@ -27,6 +29,14 @@ public class CheckListCommentService {
 
     public CheckListItemCommentFile saveCommentFile(CheckListItemCommentFile commentFile) {
         return checkListItemCommentFileRepository.save(commentFile);
+    }
+
+    public List<CheckListItemCommentFile> findCommentFilesByCommentId(Long commentId) {
+        return checkListItemCommentFileRepository.findAllByClCommentIdOrderByFileOrderAsc(commentId);
+    }
+
+    public void deleteCommentFiles(List<CheckListItemCommentFile> files) {
+        checkListItemCommentFileRepository.deleteAll(files);
     }
 
 }
