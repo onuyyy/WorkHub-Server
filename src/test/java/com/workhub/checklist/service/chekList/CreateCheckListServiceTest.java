@@ -410,4 +410,106 @@ class CreateCheckListServiceTest {
                 .isInstanceOf(BusinessException.class)
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.CHECK_LIST_FILE_MAPPING_NOT_FOUND);
     }
+
+    @Test
+    @DisplayName("업로드 파일과 외부 URL을 혼합하여 생성할 수 있다")
+    void givenMixedFilesAndUrls_whenCreate_thenSuccess() {
+        // given
+        Long projectId = 1L;
+        Long nodeId = 10L;
+        Long userId = 2L;
+
+        MultipartFile multipartFile = mock(MultipartFile.class);
+        FileUploadResponse uploadResponse = new FileUploadResponse("s3/test-uuid.png", "test.png", "presigned-url");
+        when(fileService.uploadFiles(any())).thenReturn(List.of(uploadResponse));
+
+        // 업로드 파일 + 외부 URL 혼합
+        List<String> fileUrls = Arrays.asList(
+                "test.png",  // 업로드된 파일
+                "https://example.com/external.pdf",  // 외부 URL
+                "https://docs.google.com/document/d/123"  // 외부 URL
+        );
+        CheckListOptionRequest optionRequest = new CheckListOptionRequest("선택지1", 1, fileUrls);
+        CheckListItemRequest itemRequest = new CheckListItemRequest("항목1", 1, null, List.of(optionRequest));
+        CheckListCreateRequest request = new CheckListCreateRequest("전달사항", List.of(itemRequest));
+
+        doNothing().when(checkListAccessValidator).validateProjectAndNode(projectId, nodeId);
+        when(checkListService.saveCheckList(any(CheckList.class))).thenReturn(mockCheckList);
+        when(checkListService.saveCheckListItem(any(CheckListItem.class))).thenReturn(mockItem1);
+        when(checkListService.saveCheckListOption(any(CheckListOption.class))).thenReturn(mockOption1);
+        when(checkListService.saveCheckListOptionFile(any(CheckListOptionFile.class))).thenReturn(mockFile1);
+
+        // when
+        CheckListResponse result = createCheckListService.create(projectId, nodeId, userId, request, List.of(multipartFile));
+
+        // then
+        assertThat(result).isNotNull();
+        verify(checkListService, times(3)).saveCheckListOptionFile(any(CheckListOptionFile.class));
+    }
+
+    @Test
+    @DisplayName("외부 URL만 있는 경우 정상적으로 생성된다")
+    void givenOnlyExternalUrls_whenCreate_thenSuccess() {
+        // given
+        Long projectId = 1L;
+        Long nodeId = 10L;
+        Long userId = 2L;
+
+        // 외부 URL만 사용 (업로드 파일 없음)
+        List<String> fileUrls = Arrays.asList(
+                "https://example.com/file1.pdf",
+                "http://example.com/file2.docx",
+                "https://www.youtube.com/watch?v=123"
+        );
+        CheckListOptionRequest optionRequest = new CheckListOptionRequest("선택지1", 1, fileUrls);
+        CheckListItemRequest itemRequest = new CheckListItemRequest("항목1", 1, null, List.of(optionRequest));
+        CheckListCreateRequest request = new CheckListCreateRequest("전달사항", List.of(itemRequest));
+
+        doNothing().when(checkListAccessValidator).validateProjectAndNode(projectId, nodeId);
+        when(checkListService.saveCheckList(any(CheckList.class))).thenReturn(mockCheckList);
+        when(checkListService.saveCheckListItem(any(CheckListItem.class))).thenReturn(mockItem1);
+        when(checkListService.saveCheckListOption(any(CheckListOption.class))).thenReturn(mockOption1);
+        when(checkListService.saveCheckListOptionFile(any(CheckListOptionFile.class))).thenReturn(mockFile1);
+
+        // when
+        CheckListResponse result = createCheckListService.create(projectId, nodeId, userId, request, List.of());
+
+        // then
+        assertThat(result).isNotNull();
+        verify(checkListService, times(3)).saveCheckListOptionFile(any(CheckListOptionFile.class));
+        verify(fileService).uploadFiles(any());  // 빈 리스트로 호출됨
+    }
+
+    @Test
+    @DisplayName("특수문자가 포함된 URL도 외부 링크로 처리된다")
+    void givenUrlWithSpecialCharacters_whenCreate_thenSuccess() {
+        // given
+        Long projectId = 1L;
+        Long nodeId = 10L;
+        Long userId = 2L;
+
+        // 한글, 공백, 특수문자가 포함된 URL (실제로는 인코딩되어 전달되어야 하지만,
+        // http/https로 시작하면 외부 링크로 간주)
+        List<String> fileUrls = Arrays.asList(
+                "https://example.com/파일.pdf",
+                "https://example.com/file name.pdf",
+                "https://example.com/file|special.pdf"
+        );
+        CheckListOptionRequest optionRequest = new CheckListOptionRequest("선택지1", 1, fileUrls);
+        CheckListItemRequest itemRequest = new CheckListItemRequest("항목1", 1, null, List.of(optionRequest));
+        CheckListCreateRequest request = new CheckListCreateRequest("전달사항", List.of(itemRequest));
+
+        doNothing().when(checkListAccessValidator).validateProjectAndNode(projectId, nodeId);
+        when(checkListService.saveCheckList(any(CheckList.class))).thenReturn(mockCheckList);
+        when(checkListService.saveCheckListItem(any(CheckListItem.class))).thenReturn(mockItem1);
+        when(checkListService.saveCheckListOption(any(CheckListOption.class))).thenReturn(mockOption1);
+        when(checkListService.saveCheckListOptionFile(any(CheckListOptionFile.class))).thenReturn(mockFile1);
+
+        // when
+        CheckListResponse result = createCheckListService.create(projectId, nodeId, userId, request, List.of());
+
+        // then
+        assertThat(result).isNotNull();
+        verify(checkListService, times(3)).saveCheckListOptionFile(any(CheckListOptionFile.class));
+    }
 }

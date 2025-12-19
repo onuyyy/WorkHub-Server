@@ -230,21 +230,12 @@ public class CreateCheckListService {
     }
 
     private boolean isValidRemoteUrl(String identifier) {
-        if (identifier == null) {
+        if (identifier == null || identifier.isBlank()) {
             return false;
         }
 
-        if (!identifier.startsWith("http://") && !identifier.startsWith("https://")) {
-            return false;
-        }
-
-        try {
-            new java.net.URL(identifier);
-            return true;
-        } catch (Exception e) {
-            log.warn("유효하지 않은 URL 형식: {}", identifier);
-            return false;
-        }
+        // http:// 또는 https://로 시작하는 문자열은 외부 링크로 간주
+        return identifier.startsWith("http://") || identifier.startsWith("https://");
     }
 
     private void rollbackUploadedFiles(List<String> uploadedFileNames) {
