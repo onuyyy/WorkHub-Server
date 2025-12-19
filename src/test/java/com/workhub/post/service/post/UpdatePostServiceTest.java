@@ -3,15 +3,16 @@ package com.workhub.post.service.post;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import com.workhub.global.history.HistoryRecorder;
-import com.workhub.post.entity.Post;
-import com.workhub.post.entity.PostType;
+import com.workhub.global.port.AuthorLookupPort;
 import com.workhub.post.dto.post.request.PostUpdateRequest;
 import com.workhub.post.dto.post.response.PostResponse;
+import com.workhub.post.entity.Post;
+import com.workhub.post.entity.PostType;
+import com.workhub.post.event.PostUpdatedEvent;
 import com.workhub.post.repository.post.PostFileRepository;
 import com.workhub.post.repository.post.PostLinkRepository;
 import com.workhub.post.repository.post.PostRepository;
 import com.workhub.post.service.PostValidator;
-import com.workhub.post.event.PostUpdatedEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -27,11 +28,9 @@ import java.util.Optional;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.verify;
+import static org.mockito.BDDMockito.willDoNothing;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class UpdatePostServiceTest {
@@ -50,12 +49,14 @@ class UpdatePostServiceTest {
     HistoryRecorder historyRecorder;
     @Mock
     ApplicationEventPublisher eventPublisher;
+    @Mock
+    AuthorLookupPort authorLookupPort;
 
     UpdatePostService updatePostService;
 
     @BeforeEach
     void setUp() {
-        updatePostService = new UpdatePostService(postService, postValidator, historyRecorder, eventPublisher);
+        updatePostService = new UpdatePostService(postService, postValidator, historyRecorder, eventPublisher, authorLookupPort);
         willDoNothing().given(postValidator).validateNodeAndProject(anyLong(), anyLong());
     }
 

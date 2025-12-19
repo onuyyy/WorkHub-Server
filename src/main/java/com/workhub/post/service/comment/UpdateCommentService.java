@@ -5,6 +5,8 @@ import com.workhub.global.entity.HistoryType;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import com.workhub.global.history.HistoryRecorder;
+import com.workhub.global.port.AuthorLookupPort;
+import com.workhub.global.port.dto.AuthorProfile;
 import com.workhub.post.dto.comment.CommentHistorySnapshot;
 import com.workhub.post.dto.comment.request.CommentUpdateRequest;
 import com.workhub.post.dto.comment.response.CommentResponse;
@@ -21,6 +23,7 @@ public class UpdateCommentService {
     private final CommentService commentService;
     private final HistoryRecorder historyRecorder;
     private final PostValidator postValidator;
+    private final AuthorLookupPort authorLookupPort;
 
     /**
      * 댓글을 수정하고 변경 전 내용을 히스토리에 저장한다.
@@ -41,7 +44,10 @@ public class UpdateCommentService {
         snapshotAndRecordHistory(postComment, ActionType.UPDATE);
 
         postComment.updateContent(commentUpdateRequest.commentContext());
-        return CommentResponse.from(postComment);
+        String userName = authorLookupPort.findByUserId(userId)
+                .map(AuthorProfile::userName)
+                .orElse(null);
+        return CommentResponse.from(postComment, userName);
     }
 
     /**

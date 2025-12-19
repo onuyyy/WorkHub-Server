@@ -1,7 +1,7 @@
 package com.workhub.userTable.service;
 
-import com.workhub.cs.port.AuthorLookupPort;
-import com.workhub.cs.port.dto.AuthorProfile;
+import com.workhub.global.port.AuthorLookupPort;
+import com.workhub.global.port.dto.AuthorProfile;
 import com.workhub.userTable.entity.UserTable;
 import com.workhub.userTable.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

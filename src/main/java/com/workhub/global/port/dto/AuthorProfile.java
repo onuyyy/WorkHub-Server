@@ -1,4 +1,4 @@
-package com.workhub.cs.port.dto;
+package com.workhub.global.port.dto;
 
 public record AuthorProfile(
         Long userId,

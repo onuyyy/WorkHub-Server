@@ -1,5 +1,7 @@
 package com.workhub.post.service.comment;
 
+import com.workhub.global.port.AuthorLookupPort;
+import com.workhub.global.port.dto.AuthorProfile;
 import com.workhub.post.dto.comment.response.CommentResponse;
 import com.workhub.post.entity.Post;
 import com.workhub.post.entity.PostComment;
@@ -16,6 +18,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import java.util.Map;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,15 +33,18 @@ class ReadCommentServiceTest {
     CommentService commentService;
     @Mock
     PostValidator postValidator;
+    @Mock
+    AuthorLookupPort authorLookupPort;
 
     @InjectMocks
     ReadCommentService readCommentService;
 
     @BeforeEach
     void setUp() {
-        readCommentService = new ReadCommentService(commentService, postValidator);
+        readCommentService = new ReadCommentService(commentService, postValidator, authorLookupPort);
         given(postValidator.validatePostToProject(anyLong(), anyLong()))
                 .willReturn(Post.builder().build());
+        given(authorLookupPort.findByUserIds(any())).willReturn(Map.of(3L, new AuthorProfile(3L, "작성자")));
     }
 
     @Test

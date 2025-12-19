@@ -1,5 +1,6 @@
 package com.workhub.post.service.comment;
 
+import com.workhub.global.port.AuthorLookupPort;
 import com.workhub.post.dto.comment.response.CommentResponse;
 import com.workhub.post.entity.PostComment;
 import com.workhub.post.service.PostValidator;
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -21,6 +23,7 @@ import java.util.stream.Collectors;
 public class ReadCommentService {
     private final CommentService commentService;
     private final PostValidator postValidator;
+    private final AuthorLookupPort authorLookupPort;
 
     public Page<CommentResponse> findComment(Long projectId, Long postId, Pageable pageable) {
         postValidator.validatePostToProject(postId, projectId);
@@ -52,8 +55,12 @@ public class ReadCommentService {
                 .filter(comment -> comment.getParentCommentId() != null)
                 .collect(Collectors.groupingBy(PostComment::getParentCommentId));
 
+        Set<Long> userIds = allComments.stream().map(PostComment::getUserId).collect(Collectors.toSet());
+        Map<Long, String> userNameMap = authorLookupPort.findByUserIds(userIds.stream().toList()).entrySet().stream()
+                .collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue().userName()));
+
         return topLevelComments.stream()
-                .map(parent -> buildCommentWithChildren(parent, childrenMap))
+                .map(parent -> buildCommentWithChildren(parent, childrenMap, userNameMap))
                 .collect(Collectors.toList());
     }
 
@@ -63,14 +70,15 @@ public class ReadCommentService {
      * @param childrenMap 부모 ID를 키로 하는 자식 댓글 맵
      * @return 자식 댓글을 포함한 CsQnaResponse
      */
-    private CommentResponse buildCommentWithChildren(PostComment postComment, Map<Long, List<PostComment>> childrenMap) {
+    private CommentResponse buildCommentWithChildren(PostComment postComment, Map<Long, List<PostComment>> childrenMap, Map<Long, String> userNameMap) {
         List<PostComment> children = childrenMap.getOrDefault(postComment.getCommentId(), new ArrayList<>());
 
         List<CommentResponse> childResponses = children.stream()
-                .map(child -> buildCommentWithChildren(child, childrenMap))
+                .map(child -> buildCommentWithChildren(child, childrenMap, userNameMap))
                 .collect(Collectors.toList());
 
-        return CommentResponse.from(postComment).withChildren(childResponses);
+        String userName = userNameMap.get(postComment.getUserId());
+        return CommentResponse.from(postComment, userName).withChildren(childResponses);
     }
 
 }

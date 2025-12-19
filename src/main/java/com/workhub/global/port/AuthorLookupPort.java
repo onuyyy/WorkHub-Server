@@ -1,6 +1,6 @@
-package com.workhub.cs.port;
+package com.workhub.global.port;
 
-import com.workhub.cs.port.dto.AuthorProfile;
+import com.workhub.global.port.dto.AuthorProfile;
 
 import java.util.List;
 import java.util.Map;

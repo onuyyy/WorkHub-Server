@@ -1,12 +1,14 @@
 package com.workhub.post.service.post;
 
+import com.workhub.global.port.AuthorLookupPort;
+import com.workhub.global.port.dto.AuthorProfile;
+import com.workhub.post.dto.post.response.PostPageResponse;
+import com.workhub.post.dto.post.response.PostResponse;
+import com.workhub.post.dto.post.response.PostThreadResponse;
 import com.workhub.post.entity.Post;
 import com.workhub.post.entity.PostFile;
 import com.workhub.post.entity.PostLink;
 import com.workhub.post.entity.PostType;
-import com.workhub.post.dto.post.response.PostPageResponse;
-import com.workhub.post.dto.post.response.PostResponse;
-import com.workhub.post.dto.post.response.PostThreadResponse;
 import com.workhub.post.service.PostValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -25,6 +27,7 @@ public class ReadPostService {
 
     private final PostService postService;
     private final PostValidator postValidator;
+    private final AuthorLookupPort authorLookupPort;
     /**
      * 프로젝트/노드 범위 내 게시글을 단건 조회한다.
      *
@@ -45,8 +48,11 @@ public class ReadPostService {
                 .filter(link -> link.getDeletedAt() == null)
                 .toList();
 
+        String userName = authorLookupPort.findByUserId(post.getUserId())
+                .map(AuthorProfile::userName)
+                .orElse(null);
 
-        return PostResponse.from(post, files, links);
+        return PostResponse.from(post, files, links, userName);
     }
 
     /**
