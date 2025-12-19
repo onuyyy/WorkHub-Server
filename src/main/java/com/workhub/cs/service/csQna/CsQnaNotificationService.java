@@ -27,7 +27,7 @@ public class CsQnaNotificationService {
         if (postAuthorId != null) receivers.add(postAuthorId);
         if (parentCommentAuthorId != null) receivers.add(parentCommentAuthorId);
         if (receivers.isEmpty()) return;
-        String url = "/api/v1/projects/" + projectId + "/csPosts/" + csPostId + "/qnas";
+        String url = "/projects/" + projectId + "/csPosts/" + csPostId + "/qnas";
         notificationPublisher.publishCsQna(receivers, NotificationType.CS_QNA_CREATED,
                 "QnA 댓글", "QnA에 댓글이 등록되었습니다.", url, csQnaId);
     }

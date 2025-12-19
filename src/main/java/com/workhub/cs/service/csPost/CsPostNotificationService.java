@@ -27,7 +27,7 @@ public class CsPostNotificationService {
     public void notifyCreated(Long projectId, Long csPostId, String title) {
         Set<Long> receivers = findDevMembers(projectId);
         if (receivers.isEmpty()) return;
-        String url = "/api/v1/projects/" + projectId + "/csPosts";
+        String url = "/projects/" + projectId + "/csPosts";
         notificationPublisher.publishCsPost(receivers, NotificationType.CS_POST_CREATED,
                 title, "CS 게시물이 생성되었습니다.", url, csPostId);
     }
@@ -39,7 +39,7 @@ public class CsPostNotificationService {
         Set<Long> receivers = findDevMembers(projectId);
         receivers.addAll(commenters);
         if (receivers.isEmpty()) return;
-        String url = "/api/v1/projects/" + projectId + "/csPosts";
+        String url = "/projects/" + projectId + "/csPosts";
         notificationPublisher.publishCsPost(receivers, NotificationType.CS_POST_UPDATED,
                 title, "CS 게시물이 수정되었습니다.", url, csPostId);
     }

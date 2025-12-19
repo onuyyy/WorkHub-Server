@@ -13,18 +13,20 @@ public record PostThreadResponse(
         PostType postType,
         String title,
         String contentPreview,
+        String userName,
         LocalDateTime createdAt,
         List<PostThreadResponse> replies
 ) {
     private static final int PREVIEW_LENGTH = 120;
 
-    public static PostThreadResponse from(Post post, List<PostThreadResponse> replies) {
+    public static PostThreadResponse from(Post post, List<PostThreadResponse> replies, String userName) {
         return new PostThreadResponse(
                 post.getPostId(),
                 post.getParentPostId(),
                 post.getType(),
                 post.getTitle(),
                 buildPreview(post.getContent()),
+                userName,
                 post.getCreatedAt(),
                 replies
         );

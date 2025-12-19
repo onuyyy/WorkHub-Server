@@ -17,8 +17,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -76,9 +79,10 @@ public class ReadPostService {
 
         List<Long> parentIds = parentPage.getContent().stream().map(Post::getPostId).toList();
         Map<Long, List<Post>> childrenMap = buildChildrenMap(parentIds);
+        Map<Long, AuthorProfile> authorMap = loadAuthors(parentPage.getContent(), childrenMap);
 
         List<PostThreadResponse> threads = parentPage.getContent().stream()
-                .map(post -> toThreadResponse(post, childrenMap))
+                .map(post -> toThreadResponse(post, childrenMap, authorMap))
                 .toList();
 
         return PostPageResponse.of(threads, parentPage);
@@ -115,10 +119,37 @@ public class ReadPostService {
      * @param childrenMap 부모-자식 매핑
      * @return 스레드 응답
      */
-    private PostThreadResponse toThreadResponse(Post post, Map<Long, List<Post>> childrenMap) {
+    private PostThreadResponse toThreadResponse(Post post,
+                                                Map<Long, List<Post>> childrenMap,
+                                                Map<Long, AuthorProfile> authorMap) {
+        String userName = Optional.ofNullable(authorMap.get(post.getUserId()))
+                .map(AuthorProfile::userName)
+                .orElse(null);
+
         List<PostThreadResponse> replies = childrenMap.getOrDefault(post.getPostId(), List.of()).stream()
-                .map(child -> toThreadResponse(child, childrenMap))
+                .map(child -> toThreadResponse(child, childrenMap, authorMap))
                 .toList();
-        return PostThreadResponse.from(post, replies);
+        return PostThreadResponse.from(post, replies, userName);
+    }
+
+    private Map<Long, AuthorProfile> loadAuthors(List<Post> parents, Map<Long, List<Post>> childrenMap) {
+        Set<Long> userIds = new HashSet<>();
+        parents.forEach(post -> {
+            if (post.getUserId() != null) {
+                userIds.add(post.getUserId());
+            }
+        });
+        childrenMap.values().forEach(children ->
+                children.forEach(child -> {
+                    if (child.getUserId() != null) {
+                        userIds.add(child.getUserId());
+                    }
+                })
+        );
+
+        if (userIds.isEmpty()) {
+            return Map.of();
+        }
+        return authorLookupPort.findByUserIds(new ArrayList<>(userIds));
     }
 }
