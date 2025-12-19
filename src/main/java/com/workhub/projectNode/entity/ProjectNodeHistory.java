@@ -24,7 +24,7 @@ public class ProjectNodeHistory extends BaseHistoryEntity {
         return ProjectNodeHistory.builder()
                 .targetId(targetId)
                 .actionType(actionType)
-                .beforeData(beforeData)  // todo : 어떤 데이터가 들어가야 할 지 상의해봐야 합니다.
+                .beforeData(beforeData)
                 .createdBy(originalCreator)
                 .updatedBy(SecurityUtil.getCurrentUserIdOrThrow())
                 .updatedAt(LocalDateTime.now())

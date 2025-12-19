@@ -23,7 +23,7 @@ public class ProjectDevMemberHistory extends BaseHistoryEntity {
         return ProjectDevMemberHistory.builder()
                 .targetId(targetId)
                 .actionType(actionType)
-                .beforeData(beforeData)  // todo : 프로젝트 멤버 엔티티에 텍스트가 없는데, 이곳에 어떤 내용을 담아야 할 지 정해야 할 거 같습니다.
+                .beforeData(beforeData)
                 .createdBy(originalCreator)
                 .updatedBy(SecurityUtil.getCurrentUserIdOrThrow())
                 .updatedAt(LocalDateTime.now())
