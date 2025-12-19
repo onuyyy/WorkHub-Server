@@ -37,6 +37,7 @@ public class CreateCheckListCommentService {
     private final CheckListAccessValidator checkListAccessValidator;
     private final CheckListService checkListService;
     private final FileService fileService;
+    private final com.workhub.global.port.AuthorLookupPort authorLookupPort;
 
     /**
      * 프로젝트 해당하는 개발사/고객사와 관리자만이 댓글을 작성할 수 있다.
@@ -69,7 +70,11 @@ public class CreateCheckListCommentService {
         publishCommentCreatedEvent(projectId, nodeId, checkListId, checkListItemId,
                 comment, context.checkList(), context.parentComment());
 
-        return CheckListCommentResponse.from(comment, fileResponses);
+        // 6. 사용자 이름 조회 및 응답 생성
+        String userName = authorLookupPort.findByUserIds(List.of(comment.getUserId()))
+                .get(comment.getUserId()).userName();
+
+        return CheckListCommentResponse.from(comment, userName, fileResponses);
     }
 
     // 프로젝트/노드/항목/부모 댓글을 검증하고 결과를 묶는다.

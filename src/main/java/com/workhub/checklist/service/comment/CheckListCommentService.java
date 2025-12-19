@@ -39,4 +39,12 @@ public class CheckListCommentService {
         checkListItemCommentFileRepository.deleteAll(files);
     }
 
+    public List<CheckListItemComment> findAllByCheckListItemId(Long checkListItemId) {
+        return checkListCommentRepository.findAllByCheckListItemId(checkListItemId);
+    }
+
+    public List<CheckListItemComment> findTopLevelCommentsByCheckListItemId(Long checkListItemId) {
+        return checkListCommentRepository.findTopLevelCommentsByCheckListItemId(checkListItemId);
+    }
+
 }

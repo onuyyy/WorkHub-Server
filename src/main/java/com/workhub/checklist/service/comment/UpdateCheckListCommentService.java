@@ -33,6 +33,7 @@ public class UpdateCheckListCommentService {
     private final CheckListAccessValidator checkListAccessValidator;
     private final CheckListService checkListService;
     private final FileService fileService;
+    private final com.workhub.global.port.AuthorLookupPort authorLookupPort;
 
     /**
      * 작성자 또는 관리자만이 댓글을 수정할 수 있다.
@@ -68,7 +69,11 @@ public class UpdateCheckListCommentService {
         List<CheckListCommentFileResponse> fileResponses = replaceCommentFiles(
                 commentId, request.files(), uploadMap, uploadedFileNames);
 
-        return CheckListCommentResponse.from(comment, fileResponses);
+        // 5. 사용자 이름 조회 및 응답 생성
+        String userName = authorLookupPort.findByUserIds(List.of(comment.getUserId()))
+                .get(comment.getUserId()).userName();
+
+        return CheckListCommentResponse.from(comment, userName, fileResponses);
     }
 
     // 수정 가능 여부를 검증하고 대상 댓글을 조회한다.

@@ -15,6 +15,8 @@ import com.workhub.file.service.FileService;
 import com.workhub.global.entity.ActionType;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
+import com.workhub.global.port.AuthorLookupPort;
+import com.workhub.global.port.dto.AuthorProfile;
 import com.workhub.global.util.SecurityUtil;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,7 +31,9 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -55,6 +59,9 @@ class CreateCheckListCommentServiceTest {
     @Mock
     private FileService fileService;
 
+    @Mock
+    private AuthorLookupPort authorLookupPort;
+
     @InjectMocks
     private CreateCheckListCommentService createCheckListCommentService;
 
@@ -65,6 +72,16 @@ class CreateCheckListCommentServiceTest {
         securityUtil = mockStatic(SecurityUtil.class);
         securityUtil.when(SecurityUtil::getCurrentUserIdOrThrow).thenReturn(88L);
         lenient().when(fileService.uploadFiles(any())).thenReturn(List.of());
+        lenient().when(authorLookupPort.findByUserIds(any())).thenAnswer(invocation -> {
+            List<Long> userIds = invocation.getArgument(0);
+            Map<Long, AuthorProfile> result = new HashMap<>();
+            if (userIds != null) {
+                for (Long id : userIds) {
+                    result.put(id, new AuthorProfile(id, "user-" + id));
+                }
+            }
+            return result;
+        });
     }
 
     @AfterEach
@@ -128,6 +145,7 @@ class CreateCheckListCommentServiceTest {
         assertThat(response.clCommentId()).isEqualTo(100L);
         assertThat(response.content()).isEqualTo(content);
         assertThat(response.userId()).isEqualTo(88L);
+        assertThat(response.userName()).isEqualTo("user-88");
 
         verify(checkListAccessValidator).validateProjectAndNode(projectId, nodeId);
         verify(checkListAccessValidator).checkProjectMemberOrAdmin(projectId);
@@ -286,6 +304,7 @@ class CreateCheckListCommentServiceTest {
         assertThat(response.clCommentId()).isEqualTo(100L);
         assertThat(response.content()).isEqualTo(content);
         assertThat(response.userId()).isEqualTo(88L);
+        assertThat(response.userName()).isEqualTo("user-88");
         assertThat(response.files()).hasSize(2);
         assertThat(response.files().get(0).fileName()).isEqualTo("file1.jpg");
         assertThat(response.files().get(1).fileName()).isEqualTo("file2.png");
@@ -352,6 +371,7 @@ class CreateCheckListCommentServiceTest {
         // then
         assertThat(response.clCommentId()).isEqualTo(100L);
         assertThat(response.content()).isEqualTo(content);
+        assertThat(response.userName()).isEqualTo("user-88");
         assertThat(response.files()).isEmpty();
 
         verify(checkListCommentService, never()).saveCommentFile(any(CheckListItemCommentFile.class));

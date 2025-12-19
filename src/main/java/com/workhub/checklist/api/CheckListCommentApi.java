@@ -87,4 +87,32 @@ public interface CheckListCommentApi {
             @Valid @org.springframework.web.bind.annotation.RequestPart("data") CheckListCommentUpdateRequest request,
             @org.springframework.web.bind.annotation.RequestPart(value = "newFiles", required = false) java.util.List<org.springframework.web.multipart.MultipartFile> newFiles
     );
+
+    @Operation(
+            summary = "체크리스트 댓글 조회",
+            description = "특정 체크리스트 항목의 댓글 목록을 조회합니다.",
+            parameters = {
+                    @Parameter(name = "projectId", in = ParameterIn.PATH, description = "프로젝트 식별자", required = true),
+                    @Parameter(name = "nodeId", in = ParameterIn.PATH, description = "노드 식별자", required = true),
+                    @Parameter(name = "checkListId", in = ParameterIn.PATH, description = "체크리스트 식별자", required = true),
+                    @Parameter(name = "checkListItemId", in = ParameterIn.PATH, description = "체크리스트 항목 식별자", required = true)
+            }
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "댓글 조회 성공",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = CheckListCommentResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한이 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "체크리스트 혹은 항목을 찾을 수 없음")
+    })
+    @org.springframework.web.bind.annotation.GetMapping(value = "/{checkListId}/items/{checkListItemId}/comments")
+    ResponseEntity<ApiResponse<java.util.List<CheckListCommentResponse>>> findComments(
+            @PathVariable Long projectId,
+            @PathVariable Long nodeId,
+            @PathVariable Long checkListId,
+            @PathVariable Long checkListItemId
+    );
 }

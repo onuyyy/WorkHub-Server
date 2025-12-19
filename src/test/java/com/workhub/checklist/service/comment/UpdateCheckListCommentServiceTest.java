@@ -11,6 +11,8 @@ import com.workhub.file.service.FileService;
 import com.workhub.global.entity.ActionType;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
+import com.workhub.global.port.AuthorLookupPort;
+import com.workhub.global.port.dto.AuthorProfile;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,7 +21,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -41,6 +45,9 @@ class UpdateCheckListCommentServiceTest {
     @Mock
     private FileService fileService;
 
+    @Mock
+    private AuthorLookupPort authorLookupPort;
+
     @InjectMocks
     private UpdateCheckListCommentService updateCheckListCommentService;
 
@@ -48,6 +55,16 @@ class UpdateCheckListCommentServiceTest {
     void setUp() {
         lenient().when(fileService.uploadFiles(any())).thenReturn(List.of());
         lenient().when(checkListCommentService.findCommentFilesByCommentId(anyLong())).thenReturn(List.of());
+        lenient().when(authorLookupPort.findByUserIds(any())).thenAnswer(invocation -> {
+            List<Long> userIds = invocation.getArgument(0);
+            Map<Long, AuthorProfile> result = new HashMap<>();
+            if (userIds != null) {
+                for (Long id : userIds) {
+                    result.put(id, new AuthorProfile(id, "user-" + id));
+                }
+            }
+            return result;
+        });
     }
 
     @Test
@@ -96,6 +113,7 @@ class UpdateCheckListCommentServiceTest {
         // then
         assertThat(response.content()).isEqualTo("updated");
         assertThat(response.clCommentId()).isEqualTo(commentId);
+        assertThat(response.userName()).isEqualTo("user-88");
 
         verify(checkListAccessValidator).validateProjectAndNode(projectId, nodeId);
         verify(checkListAccessValidator).checkProjectMemberOrAdmin(projectId);
@@ -200,6 +218,7 @@ class UpdateCheckListCommentServiceTest {
 
         // then
         assertThat(response.content()).isEqualTo("updated");
+        assertThat(response.userName()).isEqualTo("user-999");
         verify(checkListAccessValidator).validateAdminOrCommentOwner(comment.getUserId());
         verify(checkListService).snapShotAndRecordHistory(comment, comment.getClCommentId(), ActionType.UPDATE);
     }

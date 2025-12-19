@@ -5,6 +5,7 @@ import com.workhub.checklist.dto.comment.CheckListCommentRequest;
 import com.workhub.checklist.dto.comment.CheckListCommentResponse;
 import com.workhub.checklist.dto.comment.CheckListCommentUpdateRequest;
 import com.workhub.checklist.service.comment.CreateCheckListCommentService;
+import com.workhub.checklist.service.comment.ReadCheckListCommentService;
 import com.workhub.checklist.service.comment.UpdateCheckListCommentService;
 import com.workhub.global.response.ApiResponse;
 import jakarta.validation.Valid;
@@ -22,6 +23,7 @@ import java.util.List;
 public class CheckListCommentController implements CheckListCommentApi {
 
     private final CreateCheckListCommentService createCheckListCommentService;
+    private final ReadCheckListCommentService readCheckListCommentService;
     private final UpdateCheckListCommentService updateCheckListCommentService;
 
     @Override
@@ -58,5 +60,18 @@ public class CheckListCommentController implements CheckListCommentApi {
         return ApiResponse.success(response, "체크리스트 댓글이 수정되었습니다.");
     }
 
+    @Override
+    @GetMapping(value = "/{checkListId}/items/{checkListItemId}/comments", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponse<List<CheckListCommentResponse>>> findComments(
+            @PathVariable Long projectId,
+            @PathVariable Long nodeId,
+            @PathVariable Long checkListId,
+            @PathVariable Long checkListItemId
+    ) {
+        List<CheckListCommentResponse> response = readCheckListCommentService.findComments(
+                projectId, nodeId, checkListId, checkListItemId);
+
+        return ApiResponse.success(response, "체크리스트 댓글이 조회되었습니다.");
+    }
 
 }
