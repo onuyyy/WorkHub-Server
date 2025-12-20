@@ -90,7 +90,7 @@ public class CreateCheckListCommentService {
         CheckListItem checkListItem = checkListService.findCheckListItem(checkListItemId);
         validateItemBelongsToCheckList(checkListId, checkListItem);
 
-        CheckListItemComment parentComment = resolveParent(checkListItemId, request.patentClCommentId());
+        CheckListItemComment parentComment = resolveParent(checkListItemId, request.parentClCommentId());
 
         return new ValidatedContext(checkList, parentComment);
     }

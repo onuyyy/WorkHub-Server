@@ -122,7 +122,7 @@ class CreateCheckListCommentServiceTest {
 
         CheckListCommentRequest request = CheckListCommentRequest.builder()
                 .content(content)
-                .patentClCommentId(null)
+                .parentClCommentId(null)
                 .build();
 
         when(checkListService.findById(checkListId)).thenReturn(checkList);
@@ -188,7 +188,7 @@ class CreateCheckListCommentServiceTest {
 
         CheckListCommentRequest request = CheckListCommentRequest.builder()
                 .content("child")
-                .patentClCommentId(parentId)
+                .parentClCommentId(parentId)
                 .build();
 
         when(checkListService.findById(checkListId)).thenReturn(checkList);
@@ -217,7 +217,7 @@ class CreateCheckListCommentServiceTest {
         // given
         CheckListCommentRequest request = CheckListCommentRequest.builder()
                 .content("   ")
-                .patentClCommentId(null)
+                .parentClCommentId(null)
                 .files(null)
                 .build();
 
@@ -267,7 +267,7 @@ class CreateCheckListCommentServiceTest {
 
         CheckListCommentRequest request = CheckListCommentRequest.builder()
                 .content(content)
-                .patentClCommentId(null)
+                .parentClCommentId(null)
                 .files(files)
                 .build();
 
@@ -348,7 +348,7 @@ class CreateCheckListCommentServiceTest {
 
         CheckListCommentRequest request = CheckListCommentRequest.builder()
                 .content(content)
-                .patentClCommentId(null)
+                .parentClCommentId(null)
                 .files(null)
                 .build();
 

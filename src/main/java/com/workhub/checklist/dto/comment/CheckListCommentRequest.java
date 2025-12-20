@@ -8,7 +8,7 @@ import java.util.List;
 @Builder
 public record CheckListCommentRequest(
     String content,
-    Long patentClCommentId,
+    Long parentClCommentId,
 
     @Valid
     List<CheckListCommentFileRequest> files
