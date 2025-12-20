@@ -40,11 +40,15 @@ public class CheckListCommentService {
     }
 
     public List<CheckListItemComment> findAllByCheckListItemId(Long checkListItemId) {
-        return checkListCommentRepository.findAllByCheckListItemId(checkListItemId);
+        return checkListCommentRepository.findAllByCheckListItemIdAndDeletedAtIsNull(checkListItemId);
     }
 
     public List<CheckListItemComment> findTopLevelCommentsByCheckListItemId(Long checkListItemId) {
         return checkListCommentRepository.findTopLevelCommentsByCheckListItemId(checkListItemId);
+    }
+
+    public List<CheckListItemComment> findChildrenByParentId(Long parentCommentId) {
+        return checkListCommentRepository.findAllByParentClCommentIdAndDeletedAtIsNull(parentCommentId);
     }
 
 }

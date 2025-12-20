@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 
 @Tag(name = "체크리스트 댓글", description = "체크리스트 항목 댓글 API")
 @RequestMapping("/api/v1/projects/{projectId}/nodes/{nodeId}/checkLists")
@@ -114,5 +115,35 @@ public interface CheckListCommentApi {
             @PathVariable Long nodeId,
             @PathVariable Long checkListId,
             @PathVariable Long checkListItemId
+    );
+
+    @Operation(
+            summary = "체크리스트 댓글 삭제",
+            description = "특정 체크리스트 항목의 댓글과 모든 대댓글을 삭제합니다.",
+            parameters = {
+                    @Parameter(name = "projectId", in = ParameterIn.PATH, description = "프로젝트 식별자", required = true),
+                    @Parameter(name = "nodeId", in = ParameterIn.PATH, description = "노드 식별자", required = true),
+                    @Parameter(name = "checkListId", in = ParameterIn.PATH, description = "체크리스트 식별자", required = true),
+                    @Parameter(name = "checkListItemId", in = ParameterIn.PATH, description = "체크리스트 항목 식별자", required = true),
+                    @Parameter(name = "commentId", in = ParameterIn.PATH, description = "댓글 식별자", required = true)
+            }
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "댓글 삭제 성공",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = Long.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한이 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "체크리스트 혹은 댓글을 찾을 수 없음")
+    })
+    @DeleteMapping(value = "/{checkListId}/items/{checkListItemId}/comments/{commentId}")
+    ResponseEntity<ApiResponse<Long>> delete(
+            @PathVariable Long projectId,
+            @PathVariable Long nodeId,
+            @PathVariable Long checkListId,
+            @PathVariable Long checkListItemId,
+            @PathVariable Long commentId
     );
 }

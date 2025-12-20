@@ -9,8 +9,11 @@ import java.util.List;
 
 public interface CheckListItemCommentRepository extends JpaRepository<CheckListItemComment, Long> {
 
-    List<CheckListItemComment> findAllByCheckListItemId(Long checkListItemId);
+    List<CheckListItemComment> findAllByCheckListItemIdAndDeletedAtIsNull(Long checkListItemId);
 
-    @Query("SELECT c FROM CheckListItemComment c WHERE c.checkListItemId = :checkListItemId AND c.parentClCommentId IS NULL ORDER BY c.createdAt ASC")
+    @Query("SELECT c FROM CheckListItemComment c WHERE c.checkListItemId = :checkListItemId " +
+            "AND c.parentClCommentId IS NULL AND c.deletedAt IS NULL ORDER BY c.createdAt ASC")
     List<CheckListItemComment> findTopLevelCommentsByCheckListItemId(@Param("checkListItemId") Long checkListItemId);
+
+    List<CheckListItemComment> findAllByParentClCommentIdAndDeletedAtIsNull(Long parentClCommentId);
 }

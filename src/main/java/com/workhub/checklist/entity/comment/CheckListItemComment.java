@@ -53,4 +53,8 @@ public class CheckListItemComment extends BaseTimeEntity {
         }
         this.clContent = content;
     }
+
+    public void markDeleted() {
+        markDeletedNow();
+    }
 }
