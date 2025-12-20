@@ -30,6 +30,15 @@ public interface UnifiedHistoryRepositoryCustom {
     Page<UnifiedHistory> findByHistoryType(HistoryType historyType, Pageable pageable);
 
     /**
+     * 히스토리 타입 배열 필터링 조회
+     *
+     * @param historyTypes 히스토리 타입 목록
+     * @param pageable     페이징 정보
+     * @return 페이징된 히스토리 목록
+     */
+    Page<UnifiedHistory> findByHistoryTypes(java.util.List<HistoryType> historyTypes, Pageable pageable);
+
+    /**
      * 액션 타입별 필터링 조회
      *
      * @param actionType 액션 타입 (CREATE, UPDATE, DELETE 등)

@@ -1,8 +1,8 @@
 package com.workhub.history.controller;
 
 import com.workhub.global.entity.HistoryType;
-import com.workhub.history.dto.UnifiedHistoryResponse;
 import com.workhub.global.entity.ActionType;
+import com.workhub.history.dto.UnifiedHistoryResponse;
 import com.workhub.history.service.UnifiedHistoryService;
 import com.workhub.global.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +13,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * 통합 히스토리 관리 Controller
@@ -34,7 +36,7 @@ public class UnifiedHistoryController {
      * @param pageable 페이징 정보 (기본: 10개, updated_at 내림차순)
      * @return 페이징된 히스토리 목록
      */
-    @GetMapping("/api/v1/admin/histories")
+    @GetMapping("/api/v1/admin/histories/all")
     public ResponseEntity<ApiResponse<Page<UnifiedHistoryResponse>>> findAllHistory(
             @PageableDefault(size = 10, sort = "updatedAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
@@ -48,20 +50,20 @@ public class UnifiedHistoryController {
     /**
      * 히스토리 타입별 조회 (관리자 전용)
      *
-     * @param historyType 히스토리 타입 (POST, PROJECT, CHECK_LIST_ITEM 등)
+     * @param historyTypes 히스토리 타입 목록 (POST, PROJECT, CHECK_LIST_ITEM 등)
      * @param pageable    페이징 정보
      * @return 페이징된 히스토리 목록
      */
-    @GetMapping("/api/v1/admin/histories/type/{historyType}")
+    @GetMapping("/api/v1/admin/histories")
     public ResponseEntity<ApiResponse<Page<UnifiedHistoryResponse>>> findByHistoryTypeForAdmin(
-            @PathVariable HistoryType historyType,
+            @RequestParam("types") List<HistoryType> historyTypes,
             @PageableDefault(size = 10, sort = "updatedAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
-        log.info("Admin requested history by type: {} with pageable: {}", historyType, pageable);
+        log.info("Admin requested history by types: {} with pageable: {}", historyTypes, pageable);
 
-        Page<UnifiedHistoryResponse> histories = unifiedHistoryService.findByHistoryType(historyType, pageable);
+        Page<UnifiedHistoryResponse> histories = unifiedHistoryService.findByHistoryTypes(historyTypes, pageable);
 
-        return ApiResponse.success(histories, historyType + " 타입의 히스토리가 조회되었습니다.");
+        return ApiResponse.success(histories, "지정한 타입의 히스토리가 조회되었습니다.");
     }
 
     /**

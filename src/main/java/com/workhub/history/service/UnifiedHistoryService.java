@@ -65,6 +65,21 @@ public class UnifiedHistoryService {
     }
 
     /**
+     * 히스토리 타입 배열로 조회 (관리자용)
+     */
+    public Page<UnifiedHistoryResponse> findByHistoryTypes(List<HistoryType> historyTypes, Pageable pageable) {
+        log.debug("Fetching history by types: {} with pageable: {}", historyTypes, pageable);
+
+        if (historyTypes == null || historyTypes.isEmpty()) {
+            throw new IllegalArgumentException("조회할 히스토리 타입을 1개 이상 지정해주세요.");
+        }
+
+        Page<UnifiedHistory> historyPage = unifiedHistoryRepository.findByHistoryTypes(historyTypes, pageable);
+
+        return convertToResponsePage(historyPage, pageable);
+    }
+
+    /**
      * 히스토리 타입별 조회 (일반 사용자용 - IP, userAgent 제외)
      *
      * @param historyType 히스토리 타입 (POST, PROJECT 등)
