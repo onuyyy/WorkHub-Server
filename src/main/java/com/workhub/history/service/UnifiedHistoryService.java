@@ -80,6 +80,17 @@ public class UnifiedHistoryService {
     }
 
     /**
+     * 타겟 ID와 히스토리 타입으로 조회 (일반 사용자용)
+     */
+    public Page<UnifiedHistoryResponse> findByTargetIdAndHistoryTypeForPublic(Long targetId, HistoryType historyType, Pageable pageable) {
+        log.debug("Fetching public history by targetId: {} and historyType: {} with pageable: {}", targetId, historyType, pageable);
+
+        Page<UnifiedHistory> historyPage = unifiedHistoryRepository.findByTargetIdAndHistoryType(targetId, historyType, pageable);
+
+        return convertToPublicResponsePage(historyPage, pageable);
+    }
+
+    /**
      * 액션 타입별 조회
      *
      * @param actionType 액션 타입 (CREATE, UPDATE, DELETE 등)

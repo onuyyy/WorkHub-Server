@@ -121,6 +121,33 @@ public class UnifiedHistoryRepositoryImpl implements UnifiedHistoryRepositoryCus
         return historyType == null ? null : QUnifiedHistory.unifiedHistory.historyType.eq(historyType);
     }
 
+    @Override
+    public Page<UnifiedHistory> findByTargetIdAndHistoryType(Long targetId, HistoryType historyType, Pageable pageable) {
+        QUnifiedHistory history = QUnifiedHistory.unifiedHistory;
+
+        List<UnifiedHistory> content = queryFactory
+                .selectFrom(history)
+                .where(
+                        targetIdEq(targetId),
+                        historyTypeEq(historyType)
+                )
+                .orderBy(history.updatedAt.desc(), history.changeLogId.desc())
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .fetch();
+
+        Long total = queryFactory
+                .select(history.count())
+                .from(history)
+                .where(
+                        targetIdEq(targetId),
+                        historyTypeEq(historyType)
+                )
+                .fetchOne();
+
+        return new PageImpl<>(content, pageable, total == null ? 0 : total);
+    }
+
     /**
      * 액션 타입 조건
      */
@@ -133,5 +160,12 @@ public class UnifiedHistoryRepositoryImpl implements UnifiedHistoryRepositoryCus
      */
     private BooleanExpression updatedByEq(Long updatedBy) {
         return updatedBy == null ? null : QUnifiedHistory.unifiedHistory.updatedBy.eq(updatedBy);
+    }
+
+    /**
+     * 타겟 ID 조건
+     */
+    private BooleanExpression targetIdEq(Long targetId) {
+        return targetId == null ? null : QUnifiedHistory.unifiedHistory.targetId.eq(targetId);
     }
 }

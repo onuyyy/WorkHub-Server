@@ -122,4 +122,25 @@ public class UnifiedHistoryController {
 
         return ApiResponse.success(histories, historyType + " 타입의 히스토리가 조회되었습니다.");
     }
+
+    /**
+     * 특정 타겟의 히스토리를 조회 (일반 사용자용)
+     *
+     * @param targetId    히스토리 대상 ID
+     * @param historyType 히스토리 타입
+     * @param pageable    페이징 정보
+     * @return 페이징된 히스토리 목록 (IP, userAgent 제외)
+     */
+    @GetMapping("/api/v1/histories/{targetId}")
+    public ResponseEntity<ApiResponse<Page<UnifiedHistoryResponse>>> findByTargetId(
+            @PathVariable Long targetId,
+            @RequestParam("historyType") HistoryType historyType,
+            @PageableDefault(size = 10, sort = "updatedAt", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        log.info("Public user requested history by targetId: {} and type: {} with pageable: {}", targetId, historyType, pageable);
+
+        Page<UnifiedHistoryResponse> histories = unifiedHistoryService.findByTargetIdAndHistoryTypeForPublic(targetId, historyType, pageable);
+
+        return ApiResponse.success(histories, "타겟 " + targetId + "의 히스토리가 조회되었습니다.");
+    }
 }

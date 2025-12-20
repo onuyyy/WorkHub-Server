@@ -46,4 +46,14 @@ public interface UnifiedHistoryRepositoryCustom {
      * @return 페이징된 히스토리 목록
      */
     Page<UnifiedHistory> findByUpdatedBy(Long updatedBy, Pageable pageable);
+
+    /**
+     * 타겟 ID와 히스토리 타입으로 조회
+     *
+     * @param targetId    타겟 ID
+     * @param historyType 히스토리 타입
+     * @param pageable    페이징 정보
+     * @return 페이징된 히스토리 목록
+     */
+    Page<UnifiedHistory> findByTargetIdAndHistoryType(Long targetId, HistoryType historyType, Pageable pageable);
 }
