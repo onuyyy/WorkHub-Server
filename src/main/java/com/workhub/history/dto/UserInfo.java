@@ -13,6 +13,7 @@ public class UserInfo {
 
     private Long userId;
     private String userName;
+    private String profileImg;
 
     public static UserInfo from(UserTable user) {
         if (user == null) {
@@ -21,6 +22,7 @@ public class UserInfo {
         return UserInfo.builder()
                 .userId(user.getUserId())
                 .userName(user.getUserName())
+                .profileImg(user.getProfileImg())
                 .build();
     }
 }
