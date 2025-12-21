@@ -8,6 +8,7 @@ import com.workhub.checklist.entity.checkList.CheckListOptionFile;
 import com.workhub.checklist.service.CheckListAccessValidator;
 import com.workhub.checklist.service.checkList.CheckListService;
 import com.workhub.checklist.service.checkList.CreateCheckListService;
+import com.workhub.checklist.service.checkList.CreateCheckListTemplateService;
 import com.workhub.file.dto.FileUploadResponse;
 import com.workhub.file.service.FileService;
 import com.workhub.checklist.event.CheckListCreatedEvent;
@@ -46,6 +47,9 @@ class CreateCheckListServiceTest {
 
     @Mock
     private ApplicationEventPublisher eventPublisher;
+
+    @Mock
+    private CreateCheckListTemplateService createCheckListTemplateService;
 
     @InjectMocks
     private CreateCheckListService createCheckListService;
@@ -122,7 +126,7 @@ class CreateCheckListServiceTest {
 
         CheckListOptionRequest optionRequest = new CheckListOptionRequest("선택지1", 1, null);
         CheckListItemRequest itemRequest = new CheckListItemRequest("항목1", 1, null, List.of(optionRequest));
-        CheckListCreateRequest request = new CheckListCreateRequest("전달사항", List.of(itemRequest));
+        CheckListCreateRequest request = createRequest(List.of(itemRequest));
 
         doNothing().when(checkListAccessValidator).validateProjectAndNode(projectId, nodeId);
         when(checkListService.saveCheckList(any(CheckList.class))).thenReturn(mockCheckList);
@@ -157,7 +161,7 @@ class CreateCheckListServiceTest {
         List<String> fileUrls = Arrays.asList("https://example.com/file1.png", "https://example.com/file2.png");
         CheckListOptionRequest optionRequest = new CheckListOptionRequest("선택지1", 1, fileUrls);
         CheckListItemRequest itemRequest = new CheckListItemRequest("항목1", 1, null, List.of(optionRequest));
-        CheckListCreateRequest request = new CheckListCreateRequest("전달사항", List.of(itemRequest));
+        CheckListCreateRequest request = createRequest(List.of(itemRequest));
 
         doNothing().when(checkListAccessValidator).validateProjectAndNode(projectId, nodeId);
         when(checkListService.saveCheckList(any(CheckList.class))).thenReturn(mockCheckList);
@@ -189,7 +193,7 @@ class CreateCheckListServiceTest {
         CheckListItemRequest item1 = new CheckListItemRequest("항목1", 1, null, List.of(option1, option2));
         CheckListItemRequest item2 = new CheckListItemRequest("항목2", 2, null, List.of(option1));
 
-        CheckListCreateRequest request = new CheckListCreateRequest("전달사항", List.of(item1, item2));
+        CheckListCreateRequest request = createRequest(List.of(item1, item2));
 
         doNothing().when(checkListAccessValidator).validateProjectAndNode(projectId, nodeId);
         when(checkListService.saveCheckList(any(CheckList.class))).thenReturn(mockCheckList);
@@ -222,7 +226,7 @@ class CreateCheckListServiceTest {
 
         CheckListOptionRequest optionRequest = new CheckListOptionRequest("선택지1", 1, null);
         CheckListItemRequest itemRequest = new CheckListItemRequest("항목1", 1, null, List.of(optionRequest));
-        CheckListCreateRequest request = new CheckListCreateRequest("전달사항", List.of(itemRequest));
+        CheckListCreateRequest request = createRequest(List.of(itemRequest));
 
         doNothing().when(checkListAccessValidator).validateProjectAndNode(projectId, nodeId);
         when(checkListService.saveCheckList(any(CheckList.class))).thenReturn(mockCheckList);
@@ -252,6 +256,32 @@ class CreateCheckListServiceTest {
     }
 
     @Test
+    @DisplayName("템플릿 저장을 요청하면 템플릿 서비스가 호출된다.")
+    void givenSaveAsTemplateTrue_whenCreate_thenTemplatesPersisted() {
+        // given
+        Long projectId = 1L;
+        Long nodeId = 10L;
+        Long userId = 2L;
+
+        CheckListOptionRequest optionRequest = new CheckListOptionRequest("선택지1", 1, null);
+        CheckListItemRequest itemRequest1 = new CheckListItemRequest("항목1", 1, null, List.of(optionRequest));
+        CheckListItemRequest itemRequest2 = new CheckListItemRequest("항목2", 2, null, List.of(optionRequest));
+        CheckListCreateRequest request = createRequest(List.of(itemRequest1, itemRequest2), true);
+
+        doNothing().when(checkListAccessValidator).validateProjectAndNode(projectId, nodeId);
+        when(checkListService.saveCheckList(any(CheckList.class))).thenReturn(mockCheckList);
+        when(checkListService.saveCheckListItem(any(CheckListItem.class))).thenReturn(mockItem1).thenReturn(mockItem2);
+        when(checkListService.saveCheckListOption(any(CheckListOption.class))).thenReturn(mockOption1);
+
+        // when
+        createCheckListService.create(projectId, nodeId, userId, request, List.of());
+
+        // then
+        verify(createCheckListTemplateService, times(2))
+                .create(eq(projectId), eq(nodeId), any());
+    }
+
+    @Test
     @DisplayName("프로젝트 또는 노드 검증 실패 시 체크리스트를 생성할 수 없다.")
     void givenInvalidProjectOrNode_whenCreate_thenThrow() {
         // given
@@ -261,7 +291,7 @@ class CreateCheckListServiceTest {
 
         CheckListOptionRequest optionRequest = new CheckListOptionRequest("선택지1", 1, null);
         CheckListItemRequest itemRequest = new CheckListItemRequest("항목1", 1, null, List.of(optionRequest));
-        CheckListCreateRequest request = new CheckListCreateRequest("전달사항", List.of(itemRequest));
+        CheckListCreateRequest request = createRequest(List.of(itemRequest));
 
         doThrow(new BusinessException(ErrorCode.PROJECT_NODE_NOT_FOUND))
                 .when(checkListAccessValidator).validateProjectAndNode(projectId, nodeId);
@@ -285,7 +315,7 @@ class CreateCheckListServiceTest {
         String fileUrl = "https://example.com/path/to/test-file.png";
         CheckListOptionRequest optionRequest = new CheckListOptionRequest("선택지1", 1, List.of(fileUrl));
         CheckListItemRequest itemRequest = new CheckListItemRequest("항목1", 1, null, List.of(optionRequest));
-        CheckListCreateRequest request = new CheckListCreateRequest("전달사항", List.of(itemRequest));
+        CheckListCreateRequest request = createRequest(List.of(itemRequest));
 
         doNothing().when(checkListAccessValidator).validateProjectAndNode(projectId, nodeId);
         when(checkListService.saveCheckList(any(CheckList.class))).thenReturn(mockCheckList);
@@ -315,7 +345,7 @@ class CreateCheckListServiceTest {
         CheckListOptionRequest optionRequest = new CheckListOptionRequest("선택지1", 1, null);
         CheckListItemRequest itemRequest1 = new CheckListItemRequest("항목1", 1, null, List.of(optionRequest));
         CheckListItemRequest itemRequest2 = new CheckListItemRequest("항목2", 1, null, List.of(optionRequest));
-        CheckListCreateRequest request = new CheckListCreateRequest("전달사항", List.of(itemRequest1, itemRequest2));
+        CheckListCreateRequest request = createRequest(List.of(itemRequest1, itemRequest2));
 
         doNothing().when(checkListAccessValidator).validateProjectAndNode(projectId, nodeId);
 
@@ -338,7 +368,7 @@ class CreateCheckListServiceTest {
         CheckListOptionRequest optionRequest1 = new CheckListOptionRequest("선택지1", 1, null);
         CheckListOptionRequest optionRequest2 = new CheckListOptionRequest("선택지2", 1, null);
         CheckListItemRequest itemRequest = new CheckListItemRequest("항목1", 1, null, List.of(optionRequest1, optionRequest2));
-        CheckListCreateRequest request = new CheckListCreateRequest("전달사항", List.of(itemRequest));
+        CheckListCreateRequest request = createRequest(List.of(itemRequest));
 
         doNothing().when(checkListAccessValidator).validateProjectAndNode(projectId, nodeId);
 
@@ -364,7 +394,7 @@ class CreateCheckListServiceTest {
 
         CheckListOptionRequest optionRequest = new CheckListOptionRequest("선택지1", 1, List.of("test.png"));
         CheckListItemRequest itemRequest = new CheckListItemRequest("항목1", 1, null, List.of(optionRequest));
-        CheckListCreateRequest request = new CheckListCreateRequest("전달사항", List.of(itemRequest));
+        CheckListCreateRequest request = createRequest(List.of(itemRequest));
 
         doNothing().when(checkListAccessValidator).validateProjectAndNode(projectId, nodeId);
         when(checkListService.saveCheckList(any(CheckList.class))).thenReturn(mockCheckList);
@@ -398,7 +428,7 @@ class CreateCheckListServiceTest {
 
         CheckListOptionRequest optionRequest = new CheckListOptionRequest("선택지1", 1, List.of("not-found.png"));
         CheckListItemRequest itemRequest = new CheckListItemRequest("항목1", 1, null, List.of(optionRequest));
-        CheckListCreateRequest request = new CheckListCreateRequest("전달사항", List.of(itemRequest));
+        CheckListCreateRequest request = createRequest(List.of(itemRequest));
 
         doNothing().when(checkListAccessValidator).validateProjectAndNode(projectId, nodeId);
         when(checkListService.saveCheckList(any(CheckList.class))).thenReturn(mockCheckList);
@@ -431,7 +461,7 @@ class CreateCheckListServiceTest {
         );
         CheckListOptionRequest optionRequest = new CheckListOptionRequest("선택지1", 1, fileUrls);
         CheckListItemRequest itemRequest = new CheckListItemRequest("항목1", 1, null, List.of(optionRequest));
-        CheckListCreateRequest request = new CheckListCreateRequest("전달사항", List.of(itemRequest));
+        CheckListCreateRequest request = createRequest(List.of(itemRequest));
 
         doNothing().when(checkListAccessValidator).validateProjectAndNode(projectId, nodeId);
         when(checkListService.saveCheckList(any(CheckList.class))).thenReturn(mockCheckList);
@@ -463,7 +493,7 @@ class CreateCheckListServiceTest {
         );
         CheckListOptionRequest optionRequest = new CheckListOptionRequest("선택지1", 1, fileUrls);
         CheckListItemRequest itemRequest = new CheckListItemRequest("항목1", 1, null, List.of(optionRequest));
-        CheckListCreateRequest request = new CheckListCreateRequest("전달사항", List.of(itemRequest));
+        CheckListCreateRequest request = createRequest(List.of(itemRequest));
 
         doNothing().when(checkListAccessValidator).validateProjectAndNode(projectId, nodeId);
         when(checkListService.saveCheckList(any(CheckList.class))).thenReturn(mockCheckList);
@@ -497,7 +527,7 @@ class CreateCheckListServiceTest {
         );
         CheckListOptionRequest optionRequest = new CheckListOptionRequest("선택지1", 1, fileUrls);
         CheckListItemRequest itemRequest = new CheckListItemRequest("항목1", 1, null, List.of(optionRequest));
-        CheckListCreateRequest request = new CheckListCreateRequest("전달사항", List.of(itemRequest));
+        CheckListCreateRequest request = createRequest(List.of(itemRequest));
 
         doNothing().when(checkListAccessValidator).validateProjectAndNode(projectId, nodeId);
         when(checkListService.saveCheckList(any(CheckList.class))).thenReturn(mockCheckList);
@@ -511,5 +541,13 @@ class CreateCheckListServiceTest {
         // then
         assertThat(result).isNotNull();
         verify(checkListService, times(3)).saveCheckListOptionFile(any(CheckListOptionFile.class));
+    }
+
+    private CheckListCreateRequest createRequest(List<CheckListItemRequest> items) {
+        return createRequest(items, false);
+    }
+
+    private CheckListCreateRequest createRequest(List<CheckListItemRequest> items, boolean saveAsTemplate) {
+        return new CheckListCreateRequest("전달사항", items, saveAsTemplate);
     }
 }

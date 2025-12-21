@@ -36,6 +36,7 @@ public class CreateCheckListService {
     private final CheckListAccessValidator checkListAccessValidator;
     private final FileService fileService;
     private final ApplicationEventPublisher eventPublisher;
+    private final CreateCheckListTemplateService createCheckListTemplateService;
 
     /**
      * CheckList를 생성한다.
@@ -70,6 +71,11 @@ public class CreateCheckListService {
             // CheckListItem 및 하위 엔티티 생성
             List<CheckListItemResponse> itemResponses =
                     createCheckListItems(checkList.getCheckListId(), request.items(), userId, uploadContext);
+
+            // 5) 템플릿으로 저장 (체크박스 체크 시)
+            if (Boolean.TRUE.equals(request.saveAsTemplate())) {
+                saveAsTemplates(projectId, nodeId, request.items());
+            }
 
             // 6) 미소비 파일 검증
             if (uploadContext.hasUnconsumedFiles()) {
@@ -275,6 +281,19 @@ public class CreateCheckListService {
             if (!optionOrders.add(optionRequest.optionOrder())) {
                 throw new BusinessException(ErrorCode.INVALID_CHECK_LIST_OPTION_ORDER);
             }
+        }
+    }
+
+    /**
+     * CheckListItem 목록을 템플릿으로 저장한다.
+     * @param projectId 프로젝트 식별자
+     * @param nodeId 노드 식별자
+     * @param itemRequests CheckListItem 생성 요청 목록
+     */
+    private void saveAsTemplates(Long projectId, Long nodeId, List<CheckListItemRequest> itemRequests) {
+        for (CheckListItemRequest itemRequest : itemRequests) {
+            CheckListTemplateRequest templateRequest = CheckListTemplateRequest.from(itemRequest);
+            createCheckListTemplateService.create(projectId, nodeId, templateRequest);
         }
     }
 }

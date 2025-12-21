@@ -25,4 +25,10 @@ public class CheckListTemplate {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
+    public static CheckListTemplate of(String itemTitle, String description) {
+        return CheckListTemplate.builder()
+                .itemTitle(itemTitle)
+                .description(description)
+                .build();
+    }
 }

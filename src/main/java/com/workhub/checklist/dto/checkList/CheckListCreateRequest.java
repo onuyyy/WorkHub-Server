@@ -13,6 +13,8 @@ public record CheckListCreateRequest(
 
         @Valid
         @Size(min = 1, message = "최소 1개의 항목이 필요합니다")
-        List<CheckListItemRequest> items
+        List<CheckListItemRequest> items,
+
+        Boolean saveAsTemplate
 ) {
 }

@@ -8,4 +8,6 @@ import java.util.List;
 public interface CheckListItemRepository extends JpaRepository<CheckListItem, Long> {
 
     List<CheckListItem> findAllByCheckListIdOrderByItemOrderAsc(Long checkListId);
+
+    List<CheckListItem> findAllByTemplateIdOrderByItemOrderAsc(Long templateId);
 }

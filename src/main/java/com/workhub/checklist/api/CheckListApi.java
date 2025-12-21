@@ -3,6 +3,8 @@ package com.workhub.checklist.api;
 import com.workhub.checklist.dto.checkList.CheckListCreateRequest;
 import com.workhub.checklist.dto.checkList.CheckListItemStatus;
 import com.workhub.checklist.dto.checkList.CheckListResponse;
+import com.workhub.checklist.dto.checkList.CheckListTemplateRequest;
+import com.workhub.checklist.dto.checkList.CheckListTemplateResponse;
 import com.workhub.checklist.dto.checkList.CheckListUpdateRequest;
 import com.workhub.global.response.ApiResponse;
 import com.workhub.global.security.CustomUserDetails;
@@ -53,6 +55,85 @@ public interface CheckListApi {
             @Valid @RequestPart("data") CheckListCreateRequest request,
             @RequestPart(value = "files", required = false) List<MultipartFile> files,
             @Parameter(hidden = true) @AuthenticationPrincipal CustomUserDetails userDetails
+    );
+
+    @Operation(
+            summary = "체크리스트 템플릿 목록 조회",
+            description = "저장된 체크리스트 템플릿 목록을 조회합니다.",
+            parameters = {
+                    @Parameter(name = "projectId", description = "프로젝트 식별자", in = ParameterIn.PATH, required = true),
+                    @Parameter(name = "nodeId", description = "노드 식별자", in = ParameterIn.PATH, required = true)
+            }
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "체크리스트 템플릿 조회 성공",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = CheckListTemplateResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한이 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "프로젝트 또는 노드를 찾을 수 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류")
+    })
+    @GetMapping(value = "/nodes/{nodeId}/checkLists/templates", produces = MediaType.APPLICATION_JSON_VALUE)
+    ResponseEntity<ApiResponse<List<CheckListTemplateResponse>>> findTemplates(
+            @PathVariable Long projectId,
+            @PathVariable Long nodeId
+    );
+
+    @Operation(
+            summary = "체크리스트 템플릿 단건 조회",
+            description = "템플릿 ID로 특정 템플릿을 조회합니다. 클라이언트에서 작성 폼에 불러올 때 사용합니다.",
+            parameters = {
+                    @Parameter(name = "projectId", description = "프로젝트 식별자", in = ParameterIn.PATH, required = true),
+                    @Parameter(name = "nodeId", description = "노드 식별자", in = ParameterIn.PATH, required = true),
+                    @Parameter(name = "templateId", description = "템플릿 식별자", in = ParameterIn.PATH, required = true)
+            }
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "템플릿 조회 성공",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = CheckListTemplateResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한이 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "템플릿을 찾을 수 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류")
+    })
+    @GetMapping(value = "/nodes/{nodeId}/checkLists/templates/{templateId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    ResponseEntity<ApiResponse<CheckListTemplateResponse>> findTemplateById(
+            @PathVariable Long projectId,
+            @PathVariable Long nodeId,
+            @PathVariable Long templateId
+    );
+
+    @Operation(
+            summary = "체크리스트 템플릿 저장",
+            description = "체크리스트 항목 구성을 템플릿으로 저장합니다.",
+            parameters = {
+                    @Parameter(name = "projectId", description = "프로젝트 식별자", in = ParameterIn.PATH, required = true),
+                    @Parameter(name = "nodeId", description = "노드 식별자", in = ParameterIn.PATH, required = true)
+            }
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "201",
+                    description = "체크리스트 템플릿 저장 성공",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = CheckListTemplateResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한이 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "프로젝트 또는 노드를 찾을 수 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류")
+    })
+    @PostMapping(value = "/nodes/{nodeId}/checkLists/templates", consumes = MediaType.APPLICATION_JSON_VALUE)
+    ResponseEntity<ApiResponse<CheckListTemplateResponse>> createTemplate(
+            @PathVariable Long projectId,
+            @PathVariable Long nodeId,
+            @Valid @RequestBody CheckListTemplateRequest request
     );
 
     @Operation(
