@@ -337,20 +337,25 @@ public class UpdateCheckListService {
     private void createFile(Long optionId,
                             CheckListOptionFileUpdateRequest fileRequest,
                             CheckListFileUploadContext uploadContext) {
-        Optional<FileUploadResponse> upload = uploadContext.consume(fileRequest.fileUrl());
-
         CheckListOptionFile file;
-        if (upload.isPresent()) {
-            file = CheckListOptionFile.fromUpload(optionId, upload.get(), fileRequest.fileOrder());
-        } else if (isValidRemoteUrl(fileRequest.fileUrl())) {
+
+        // 1순위: URL 형식 체크 (기존 S3 파일 또는 외부 링크)
+        if (isValidRemoteUrl(fileRequest.fileUrl())) {
             file = CheckListOptionFile.of(optionId, fileRequest.fileUrl(), fileRequest.fileOrder());
-        } else {
-            String availableFiles = String.join(", ", uploadContext.getUploadedFileNames());
+        }
+        // 2순위: 새로 업로드된 파일 체크
+        else {
+            Optional<FileUploadResponse> upload = uploadContext.consume(fileRequest.fileUrl());
+            if (upload.isPresent()) {
+                file = CheckListOptionFile.fromUpload(optionId, upload.get(), fileRequest.fileOrder());
+            } else {
+                String availableFiles = String.join(", ", uploadContext.getUploadedFileNames());
 
-            log.error("파일 매핑 실패 - 요청 파일: '{}', 업로드된 파일: [{}]",
-                    fileRequest.fileUrl(), availableFiles);
+                log.error("파일 매핑 실패 - 요청 파일: '{}', 업로드된 파일: [{}]",
+                        fileRequest.fileUrl(), availableFiles);
 
-            throw new BusinessException(ErrorCode.CHECK_LIST_FILE_MAPPING_NOT_FOUND);
+                throw new BusinessException(ErrorCode.CHECK_LIST_FILE_MAPPING_NOT_FOUND);
+            }
         }
 
         checkListService.saveCheckListOptionFile(file);
