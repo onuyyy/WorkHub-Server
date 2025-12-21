@@ -341,7 +341,15 @@ public class UpdateCheckListService {
 
         // 1순위: URL 형식 체크 (기존 S3 파일 또는 외부 링크)
         if (isValidRemoteUrl(fileRequest.fileUrl())) {
-            file = CheckListOptionFile.of(optionId, fileRequest.fileUrl(), fileRequest.fileOrder());
+            String fileUrl = fileRequest.fileUrl();
+
+            // S3 URL인 경우 UUID 파일명만 추출
+            if (isS3Url(fileUrl)) {
+                fileUrl = extractFileNameFromUrl(fileUrl);
+            }
+            // 외부 링크는 전체 URL 유지
+
+            file = CheckListOptionFile.of(optionId, fileUrl, fileRequest.fileOrder());
         }
         // 2순위: 새로 업로드된 파일 체크
         else {
@@ -481,6 +489,34 @@ public class UpdateCheckListService {
 
         // http:// 또는 https://로 시작하는 문자열은 외부 링크로 간주
         return identifier.startsWith("http://") || identifier.startsWith("https://");
+    }
+
+    /**
+     * S3 URL에서 파일명만 추출 (UUID 파일명)
+     * 예: https://s3.../abc-123.pdf → abc-123.pdf
+     */
+    private String extractFileNameFromUrl(String url) {
+        if (url == null || url.isBlank()) {
+            return url;
+        }
+
+        int lastSlashIndex = url.lastIndexOf('/');
+        if (lastSlashIndex != -1 && lastSlashIndex < url.length() - 1) {
+            return url.substring(lastSlashIndex + 1);
+        }
+
+        return url;
+    }
+
+    /**
+     * S3 도메인 URL인지 확인
+     */
+    private boolean isS3Url(String url) {
+        if (url == null || url.isBlank()) {
+            return false;
+        }
+
+        return url.contains(".s3.") || url.contains("s3.amazonaws.com");
     }
 
     private void trackDeletionIfManaged(CheckListOptionFile file, List<String> filesToDelete) {
