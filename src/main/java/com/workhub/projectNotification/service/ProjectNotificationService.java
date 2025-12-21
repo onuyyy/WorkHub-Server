@@ -8,6 +8,7 @@ import com.workhub.projectNotification.entity.ProjectNotification;
 import com.workhub.projectNotification.repository.ProjectNotificationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -28,9 +29,10 @@ public class ProjectNotificationService {
      * 알림 저장 후 SSE로 즉시 푸시.
      * (Redis Pub/Sub 연동 시 여기서 convertAndSend 추가)
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public NotificationResponse publish(NotificationPublishRequest request) {
         ProjectNotification entity = request.toEntity();
-        ProjectNotification saved = notificationRepository.saveAndFlush(entity); // PK 확보 후 푸시
+        ProjectNotification saved = notificationRepository.saveAndFlush(entity); // PK 확보
         NotificationResponse response = NotificationResponse.from(saved);
         emitterService.send(request.receiverId(), response); // SSE 푸시
         return response;
