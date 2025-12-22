@@ -114,6 +114,8 @@ class CreateCheckListServiceTest {
         ownerInfo = CheckListUserInfo.of("담당자", "010-1111-1111");
         lenient().when(checkListService.resolveUserInfo(anyLong())).thenReturn(ownerInfo);
         lenient().when(fileService.uploadFiles(any())).thenReturn(List.of());
+        lenient().doNothing().when(checkListAccessValidator).checkProjectDevMemberOrAdmin(anyLong());
+        lenient().doNothing().when(checkListService).existNodeCheck(anyLong());
     }
 
     @Test
@@ -144,6 +146,8 @@ class CreateCheckListServiceTest {
         assertThat(result.items()).hasSize(1);
 
         verify(checkListAccessValidator).validateProjectAndNode(projectId, nodeId);
+        verify(checkListAccessValidator).checkProjectDevMemberOrAdmin(projectId);
+        verify(checkListService).existNodeCheck(nodeId);
         verify(checkListService).saveCheckList(any(CheckList.class));
         verify(checkListService).saveCheckListItem(any(CheckListItem.class));
         verify(checkListService).saveCheckListOption(any(CheckListOption.class));
@@ -174,6 +178,8 @@ class CreateCheckListServiceTest {
 
         // then
         verify(checkListAccessValidator).validateProjectAndNode(projectId, nodeId);
+        verify(checkListAccessValidator).checkProjectDevMemberOrAdmin(projectId);
+        verify(checkListService).existNodeCheck(nodeId);
         verify(checkListService).saveCheckList(any(CheckList.class));
         verify(checkListService).saveCheckListItem(any(CheckListItem.class));
         verify(checkListService).saveCheckListOption(any(CheckListOption.class));
@@ -211,6 +217,8 @@ class CreateCheckListServiceTest {
         assertThat(result.items()).hasSize(2);
 
         verify(checkListAccessValidator).validateProjectAndNode(projectId, nodeId);
+        verify(checkListAccessValidator).checkProjectDevMemberOrAdmin(projectId);
+        verify(checkListService).existNodeCheck(nodeId);
         verify(checkListService).saveCheckList(any(CheckList.class));
         verify(checkListService, times(2)).saveCheckListItem(any(CheckListItem.class));
         verify(checkListService, times(3)).saveCheckListOption(any(CheckListOption.class));
@@ -238,6 +246,8 @@ class CreateCheckListServiceTest {
 
         // then
         verify(checkListAccessValidator).validateProjectAndNode(projectId, nodeId);
+        verify(checkListAccessValidator).checkProjectDevMemberOrAdmin(projectId);
+        verify(checkListService).existNodeCheck(nodeId);
         verify(checkListService).saveCheckList(argThat(checkList ->
                 checkList.getCheckListDescription().equals("전달사항") &&
                         checkList.getProjectNodeId().equals(nodeId) &&
@@ -272,6 +282,8 @@ class CreateCheckListServiceTest {
         when(checkListService.saveCheckList(any(CheckList.class))).thenReturn(mockCheckList);
         when(checkListService.saveCheckListItem(any(CheckListItem.class))).thenReturn(mockItem1).thenReturn(mockItem2);
         when(checkListService.saveCheckListOption(any(CheckListOption.class))).thenReturn(mockOption1);
+        when(createCheckListTemplateService.create(eq(projectId), eq(nodeId), any()))
+                .thenReturn(new CheckListTemplateResponse(100L, "템플릿 제목", "템플릿 설명", List.of()));
 
         // when
         createCheckListService.create(projectId, nodeId, userId, request, List.of());
@@ -544,10 +556,19 @@ class CreateCheckListServiceTest {
     }
 
     private CheckListCreateRequest createRequest(List<CheckListItemRequest> items) {
-        return createRequest(items, false);
+        return createRequest(items, false, null, null);
     }
 
     private CheckListCreateRequest createRequest(List<CheckListItemRequest> items, boolean saveAsTemplate) {
-        return new CheckListCreateRequest("전달사항", items, saveAsTemplate);
+        String title = saveAsTemplate ? "템플릿 제목" : null;
+        String description = saveAsTemplate ? "템플릿 설명" : null;
+        return createRequest(items, saveAsTemplate, title, description);
+    }
+
+    private CheckListCreateRequest createRequest(List<CheckListItemRequest> items,
+                                                 boolean saveAsTemplate,
+                                                 String templateTitle,
+                                                 String templateDescription) {
+        return new CheckListCreateRequest("전달사항", items, saveAsTemplate, templateTitle, templateDescription);
     }
 }

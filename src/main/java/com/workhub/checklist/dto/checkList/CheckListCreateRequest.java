@@ -15,6 +15,12 @@ public record CheckListCreateRequest(
         @Size(min = 1, message = "최소 1개의 항목이 필요합니다")
         List<CheckListItemRequest> items,
 
-        Boolean saveAsTemplate
+        Boolean saveAsTemplate,
+
+        @Size(max = 50, message = "템플릿 제목은 50자 이하여야 합니다.")
+        String templateTitle,
+
+        @Size(max = 2000, message = "템플릿 설명은 2000자 이하여야 합니다.")
+        String templateDescription
 ) {
 }

@@ -22,6 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -68,16 +69,24 @@ public class CreateCheckListService {
         try {
             // 4) CheckList 엔티티 생성
             CheckList checkList = createCheckList(request, userId, nodeId);
-            // CheckListItem 및 하위 엔티티 생성
-            List<CheckListItemResponse> itemResponses =
-                    createCheckListItems(checkList.getCheckListId(), request.items(), userId, uploadContext);
 
-            // 5) 템플릿으로 저장 (체크박스 체크 시)
+            // 5) 템플릿으로 저장 (체크박스 체크 시) - 아이템 생성 전에 먼저 템플릿 생성
+            Map<Integer, Long> templateIdMap = new java.util.HashMap<>();
             if (Boolean.TRUE.equals(request.saveAsTemplate())) {
-                saveAsTemplates(projectId, nodeId, request.items());
+                templateIdMap = saveAsTemplates(
+                        projectId,
+                        nodeId,
+                        request.items(),
+                        request.templateTitle(),
+                        request.templateDescription()
+                );
             }
 
-            // 6) 미소비 파일 검증
+            // 6) CheckListItem 및 하위 엔티티 생성
+            List<CheckListItemResponse> itemResponses =
+                    createCheckListItems(checkList.getCheckListId(), request.items(), userId, uploadContext, templateIdMap);
+
+            // 7) 미소비 파일 검증
             if (uploadContext.hasUnconsumedFiles()) {
                 List<String> unconsumed = uploadContext.getUnconsumedFileNames();
                 log.error("체크리스트 생성 실패 - 미사용 파일 {} 개: {}", unconsumed.size(), unconsumed);
@@ -113,15 +122,18 @@ public class CreateCheckListService {
      * @param checkListId CheckList 식별자
      * @param itemRequests CheckListItem 생성 요청 목록
      * @param userId 사용자 식별자
+     * @param uploadContext 파일 업로드 컨텍스트
+     * @param templateIdMap itemOrder를 키로 하는 템플릿 ID 맵
      * @return CheckListItemResponse 목록
      */
     private List<CheckListItemResponse> createCheckListItems(Long checkListId,
                                                             List<CheckListItemRequest> itemRequests,
                                                             Long userId,
-                                                            CheckListFileUploadContext uploadContext) {
+                                                            CheckListFileUploadContext uploadContext,
+                                                            Map<Integer, Long> templateIdMap) {
 
         return itemRequests.stream().map(itemRequest ->
-                createCheckListItem(checkListId, itemRequest, userId, uploadContext))
+                createCheckListItem(checkListId, itemRequest, userId, uploadContext, templateIdMap))
                 .collect(Collectors.toList());
     }
 
@@ -130,15 +142,26 @@ public class CreateCheckListService {
      * @param checkListId CheckList 식별자
      * @param itemRequest CheckListItem 생성 요청
      * @param userId 사용자 식별자
+     * @param uploadContext 파일 업로드 컨텍스트
+     * @param templateIdMap itemOrder를 키로 하는 템플릿 ID 맵
      * @return CheckListItemResponse
      */
     private CheckListItemResponse createCheckListItem(Long checkListId,
                                                       CheckListItemRequest itemRequest,
                                                       Long userId,
-                                                      CheckListFileUploadContext uploadContext) {
+                                                      CheckListFileUploadContext uploadContext,
+                                                      Map<Integer, Long> templateIdMap) {
         // Item 생성 및 저장
         CheckListItem item = CheckListItem.of(checkListId, itemRequest, userId);
         item = checkListService.saveCheckListItem(item);
+
+        // 템플릿 ID가 있으면 설정 (saveAsTemplate이 true인 경우)
+        if (templateIdMap != null && !templateIdMap.isEmpty()) {
+            Long templateId = templateIdMap.get(itemRequest.itemOrder());
+            if (templateId != null) {
+                item.updateItem(null, null, templateId);
+            }
+        }
 
         // 히스토리 기록
         checkListService.snapShotAndRecordHistory(item, item.getCheckListItemId(), ActionType.CREATE);
@@ -289,11 +312,27 @@ public class CreateCheckListService {
      * @param projectId 프로젝트 식별자
      * @param nodeId 노드 식별자
      * @param itemRequests CheckListItem 생성 요청 목록
+     * @param templateTitle 템플릿 제목
+     * @param templateDescription 템플릿 설명
+     * @return itemOrder를 키로, 생성된 템플릿 ID를 값으로 하는 맵
      */
-    private void saveAsTemplates(Long projectId, Long nodeId, List<CheckListItemRequest> itemRequests) {
+    private Map<Integer, Long> saveAsTemplates(Long projectId,
+                                                          Long nodeId,
+                                                          List<CheckListItemRequest> itemRequests,
+                                                          String templateTitle,
+                                                          String templateDescription) {
+        Map<Integer, Long> templateIdMap = new java.util.HashMap<>();
+
         for (CheckListItemRequest itemRequest : itemRequests) {
-            CheckListTemplateRequest templateRequest = CheckListTemplateRequest.from(itemRequest);
-            createCheckListTemplateService.create(projectId, nodeId, templateRequest);
+            CheckListTemplateRequest templateRequest = CheckListTemplateRequest.from(
+                    itemRequest,
+                    templateTitle,
+                    templateDescription
+            );
+            CheckListTemplateResponse response = createCheckListTemplateService.create(projectId, nodeId, templateRequest);
+            templateIdMap.put(itemRequest.itemOrder(), response.templateId());
         }
+
+        return templateIdMap;
     }
 }

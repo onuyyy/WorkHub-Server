@@ -14,12 +14,16 @@ public record CheckListTemplateRequest(
     /**
      * CheckListItemRequest로부터 CheckListTemplateRequest를 생성한다.
      * @param itemRequest CheckListItem 생성 요청
+     * @param templateTitle 템플릿 제목
+     * @param templateDescription 템플릿 설명
      * @return CheckListTemplateRequest
      */
-    public static CheckListTemplateRequest from(CheckListItemRequest itemRequest) {
+    public static CheckListTemplateRequest from(CheckListItemRequest itemRequest,
+                                                 String templateTitle,
+                                                 String templateDescription) {
         return new CheckListTemplateRequest(
-                itemRequest.itemTitle(),
-                null
+                templateTitle != null ? templateTitle : itemRequest.itemTitle(),
+                templateDescription
         );
     }
 }
