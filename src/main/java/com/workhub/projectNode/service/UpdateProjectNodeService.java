@@ -146,7 +146,7 @@ public class UpdateProjectNodeService {
     private ProjectNode getOriginalAndSaveHistory (Long projectId, Long nodeId) {
 
         Long loginUser = SecurityUtil.getCurrentUserIdOrThrow();
-        projectNodeValidator.validateLoginUserPermission(projectId, loginUser);
+        projectNodeValidator.validateProjectMemberPermission(projectId, loginUser);
 
         ProjectNode original = projectNodeService.findByIdAndProjectId(nodeId, projectId);
         NodeSnapshot snapshot = NodeSnapshot.from(original);
