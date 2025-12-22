@@ -22,8 +22,7 @@ public class DashBoardController implements DashBoardApi {
     @GetMapping("/summary")
     public ResponseEntity<ApiResponse<DashBoardResponse>> getSummary() {
         Long userId = SecurityUtil.getCurrentUserIdOrThrow();
-        String role = SecurityUtil.hasRole("DEV") ? "DEV" : "CLIENT";
-        DashBoardResponse response = dashBoardService.getSummary(userId, role);
+        DashBoardResponse response = dashBoardService.getSummary(userId);
         return ApiResponse.success(response);
     }
 }

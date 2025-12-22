@@ -41,7 +41,7 @@ class DashBoardServiceTest {
         given(projectNodeService.countByProjectIdInAndStatusIn(anyList(), eq(List.of(NodeStatus.PENDING_REVIEW))))
                 .willReturn(4L);
 
-        DashBoardResponse res = dashBoardService.getSummary(1L, "DEV");
+        DashBoardResponse res = dashBoardService.getSummary(1L);
 
         assertThat(res.pendingApprovals()).isEqualTo(4L);
         assertThat(res.totalProjects()).isEqualTo(2L);
@@ -50,13 +50,14 @@ class DashBoardServiceTest {
     @Test
     @DisplayName("고객사 역할이면 PENDING 노드 수와 총 프로젝트를 반환한다")
     void getSummary_client() {
+        given(projectService.getDevMemberByUserId(2L)).willReturn(List.of());
         given(projectService.getClientMemberByUserId(2L)).willReturn(List.of(
                 ProjectClientMember.builder().projectId(20L).build()
         ));
         given(projectNodeService.countByProjectIdInAndStatusIn(anyList(), eq(List.of(NodeStatus.PENDING_REVIEW))))
                 .willReturn(1L);
 
-        DashBoardResponse res = dashBoardService.getSummary(2L, "CLIENT");
+        DashBoardResponse res = dashBoardService.getSummary(2L);
 
         assertThat(res.pendingApprovals()).isEqualTo(1L);
         assertThat(res.totalProjects()).isEqualTo(1L);
@@ -66,8 +67,9 @@ class DashBoardServiceTest {
     @DisplayName("소속 프로젝트가 없으면 0,0을 반환한다")
     void getSummary_empty() {
         given(projectService.getDevMemberByUserId(3L)).willReturn(List.of());
+        given(projectService.getClientMemberByUserId(3L)).willReturn(List.of());
 
-        DashBoardResponse res = dashBoardService.getSummary(3L, "DEV");
+        DashBoardResponse res = dashBoardService.getSummary(3L);
 
         assertThat(res.pendingApprovals()).isZero();
         assertThat(res.totalProjects()).isZero();

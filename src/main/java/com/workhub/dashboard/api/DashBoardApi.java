@@ -14,12 +14,12 @@ public interface DashBoardApi {
 
     /**
      * 대시보드 요약 조회
-     * - 로그인한 사용자의 역할(개발사/고객사)에 따라 승인 건수와 총 프로젝트 개수를 반환합니다.
+     * - 로그인한 사용자의 소속 프로젝트 기준으로 승인 대기 건수와 총 프로젝트 개수를 반환합니다.
      * - 응답 필드:
-     *   pendingApprovals: 개발사, 고객사→ 승인 대기 건수(PENDING_REVIEW)
+     *   pendingApprovals: 소속 프로젝트의 승인 대기(PENDING_REVIEW) 노드 건수
      *   totalProjects: 사용자가 소속된 프로젝트 수
      */
-    @Operation(summary = "대시보드 요약 조회", description = "로그인한 사용자의 역할(개발사/고객사)에 맞는 요약 정보를 반환합니다.")
+    @Operation(summary = "대시보드 요약 조회", description = "로그인한 사용자의 소속 프로젝트 기준 요약 정보를 반환합니다.")
     @GetMapping("/summary")
     ResponseEntity<ApiResponse<DashBoardResponse>> getSummary();
 }

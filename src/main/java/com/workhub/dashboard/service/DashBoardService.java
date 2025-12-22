@@ -1,8 +1,6 @@
 package com.workhub.dashboard.service;
 
 import com.workhub.dashboard.dto.DashBoardResponse;
-import com.workhub.project.entity.ProjectClientMember;
-import com.workhub.project.entity.ProjectDevMember;
 import com.workhub.project.service.ProjectService;
 import com.workhub.projectNode.entity.NodeStatus;
 import com.workhub.projectNode.service.ProjectNodeService;
@@ -11,7 +9,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -22,19 +22,22 @@ public class DashBoardService {
     private final ProjectService projectService;
     private final ProjectNodeService projectNodeService;
 
-    public DashBoardResponse getSummary(Long userId, String role) {
-        List<Long> projectIds = isDev(role)
-                ? projectService.getDevMemberByUserId(userId).stream().map(ProjectDevMember::getProjectId).toList()
-                : projectService.getClientMemberByUserId(userId).stream().map(ProjectClientMember::getProjectId).toList();
-        if (projectIds.isEmpty()) return new DashBoardResponse(0, 0);
+    public DashBoardResponse getSummary(Long userId) {
+        Set<Long> projectIds = new HashSet<>();
+        projectService.getDevMemberByUserId(userId)
+                .forEach(dev -> projectIds.add(dev.getProjectId()));
+        projectService.getClientMemberByUserId(userId)
+                .forEach(client -> projectIds.add(client.getProjectId()));
 
-        // 개발사/고객사 모두 승인 대기(PENDING) 노드 수를 카운트해 보여준다.
-        long pendingOrApproved = projectNodeService.countByProjectIdInAndStatusIn(projectIds, List.of(NodeStatus.PENDING_REVIEW));
+        if (projectIds.isEmpty()) {
+            return new DashBoardResponse(0, 0);
+        }
 
-        return new DashBoardResponse(pendingOrApproved, projectIds.size());
-    }
+        long pending = projectNodeService.countByProjectIdInAndStatusIn(
+                projectIds.stream().toList(),
+                List.of(NodeStatus.PENDING_REVIEW)
+        );
 
-    private boolean isDev(String role) {
-        return role != null && role.contains("DEV");
+        return new DashBoardResponse(pending, projectIds.size());
     }
 }
