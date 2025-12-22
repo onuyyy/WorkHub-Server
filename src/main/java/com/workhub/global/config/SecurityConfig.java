@@ -78,6 +78,7 @@ public class SecurityConfig {
 
                         .requestMatchers("/api/v1/projects/{projectId}/nodes/{nodeId}").authenticated()
                         .requestMatchers("/api/v1/projects/{projectId}/nodes/list").authenticated()
+                        .requestMatchers("/api/v1/projects/{projectId}/nodes/{nodeId}/confirm").authenticated()
                         .requestMatchers("/api/v1/projects/{projectId}/nodes/**").hasAnyRole("DEVELOPER", "ADMIN")
 
                         .requestMatchers("/api/v1/notifications/**").authenticated()
