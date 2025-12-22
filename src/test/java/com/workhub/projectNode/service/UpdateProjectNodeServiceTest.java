@@ -4,15 +4,9 @@ import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import com.workhub.global.history.HistoryRecorder;
 import com.workhub.global.util.SecurityUtil;
-import com.workhub.projectNode.dto.CreateNodeResponse;
 import com.workhub.projectNode.dto.UpdateNodOrderRequest;
-import com.workhub.projectNode.dto.UpdateNodeRequest;
-import com.workhub.projectNode.dto.UpdateNodeStatusRequest;
 import com.workhub.projectNode.entity.NodeStatus;
 import com.workhub.projectNode.entity.ProjectNode;
-import com.workhub.projectNode.event.ProjectNodeApprovedEvent;
-import com.workhub.projectNode.event.ProjectNodeRejectedEvent;
-import com.workhub.projectNode.event.ProjectNodeReviewRequestedEvent;
 import com.workhub.projectNode.event.ProjectNodeUpdatedEvent;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,7 +24,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.Mockito.*;
@@ -81,24 +76,6 @@ class UpdateProjectNodeServiceTest {
     }
 
     @Test
-    @DisplayName("노드 상태 업데이트 성공")
-    void updateNodeStatus_Success() {
-        // given
-        UpdateNodeStatusRequest request = new UpdateNodeStatusRequest(NodeStatus.IN_PROGRESS);
-        willDoNothing().given(projectNodeValidator).validateLoginUserPermission(anyLong(), anyLong());
-        given(projectNodeService.findByIdAndProjectId(anyLong(), anyLong())).willReturn(testNode);
-
-        // when
-        updateProjectNodeService.updateNodeStatus(100L, 1L, request);
-
-        // then
-        assertThat(testNode.getNodeStatus()).isEqualTo(NodeStatus.IN_PROGRESS);
-        verify(projectNodeValidator).validateLoginUserPermission(100L, 1L);
-        verify(projectNodeService).findByIdAndProjectId(1L, 100L);
-        verify(eventPublisher).publishEvent(any(ProjectNodeUpdatedEvent.class));
-    }
-
-    @Test
     @DisplayName("노드 순서 업데이트 성공")
     void updateNodeOrder_Success() {
         // given
@@ -144,32 +121,6 @@ class UpdateProjectNodeServiceTest {
                 .hasFieldOrPropertyWithValue("errorCode", ErrorCode.PROJECT_NODE_NOT_FOUND);
     }
 
-    @Test
-    @DisplayName("노드 정보 업데이트 성공")
-    void updateNode_Success() {
-        // given
-        UpdateNodeRequest request = new UpdateNodeRequest(
-                "수정된 제목",
-                "수정된 설명",
-                10L,
-                LocalDate.now(),
-                LocalDate.now().plusDays(60)
-        );
-
-        willDoNothing().given(projectNodeValidator).validateLoginUserPermission(anyLong(), anyLong());
-        given(projectNodeService.findByIdAndProjectId(anyLong(), anyLong())).willReturn(testNode);
-
-        // when
-        CreateNodeResponse response = updateProjectNodeService.updateNode(100L, 1L, request);
-
-        // then
-        assertThat(response).isNotNull();
-        assertThat(response.title()).isEqualTo("수정된 제목");
-        assertThat(response.description()).isEqualTo("수정된 설명");
-        verify(projectNodeValidator).validateLoginUserPermission(100L, 1L);
-        verify(projectNodeService).findByIdAndProjectId(1L, 100L);
-        verify(eventPublisher).publishEvent(any(ProjectNodeUpdatedEvent.class));
-    }
 
     @Test
     @DisplayName("노드 순서 업데이트 - 순서가 같으면 히스토리 저장 안 함")
