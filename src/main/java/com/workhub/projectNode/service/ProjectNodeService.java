@@ -2,6 +2,7 @@ package com.workhub.projectNode.service;
 
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
+import com.workhub.projectNode.dto.ConfirmStatusResponse;
 import com.workhub.projectNode.dto.ProjectNodeCount;
 import com.workhub.projectNode.entity.ConfirmStatus;
 import com.workhub.projectNode.entity.NodeStatus;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -64,8 +66,16 @@ public class ProjectNodeService {
         return projectNodeRepository.countByProjectIdInAndNodeStatusIn(projectIds, statuses);
     }
 
-    public ConfirmStatus getNodeConfirmStatus(Long nodeId) {
-        return projectNodeRepository.findConfirmStatusById(nodeId)
+    public ConfirmStatusResponse getNodeConfirmStatus(Long nodeId) {
+
+        ConfirmStatusResponse statusResponse = projectNodeRepository.findConfirmStatusById(nodeId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PROJECT_NODE_NOT_FOUND));
+
+        ConfirmStatus finalStatus = Optional.ofNullable(statusResponse.confirmStatus())
                 .orElse(ConfirmStatus.NOT_PENDING);
+        String rejectText = Optional.ofNullable(statusResponse.rejectText())
+                .orElse("");
+
+        return  ConfirmStatusResponse.from(finalStatus, rejectText);
     }
 }

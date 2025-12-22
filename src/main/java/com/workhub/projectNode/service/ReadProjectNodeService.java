@@ -1,8 +1,8 @@
 package com.workhub.projectNode.service;
 
 import com.workhub.global.util.SecurityUtil;
+import com.workhub.projectNode.dto.ConfirmStatusResponse;
 import com.workhub.projectNode.dto.NodeResponse;
-import com.workhub.projectNode.entity.ConfirmStatus;
 import com.workhub.projectNode.entity.ProjectNode;
 import com.workhub.userTable.entity.UserTable;
 import com.workhub.userTable.service.UserService;
@@ -48,7 +48,7 @@ public class ReadProjectNodeService {
                 .toList();
     }
 
-    public ConfirmStatus getNodeConfirmStatus(Long projectId, Long nodeId) {
+    public ConfirmStatusResponse getNodeConfirmStatus(Long projectId, Long nodeId) {
 
         Long loginUser = SecurityUtil.getCurrentUserIdOrThrow();
         projectNodeValidator.validateProjectMemberPermission(projectId, loginUser);

@@ -3,7 +3,6 @@ package com.workhub.projectNode.controller;
 import com.workhub.global.response.ApiResponse;
 import com.workhub.projectNode.api.ProjectNodeApi;
 import com.workhub.projectNode.dto.*;
-import com.workhub.projectNode.entity.ConfirmStatus;
 import com.workhub.projectNode.service.CreateProjectNodeService;
 import com.workhub.projectNode.service.DeleteProjectNodeService;
 import com.workhub.projectNode.service.ReadProjectNodeService;
@@ -27,10 +26,10 @@ public class ProjectNodeController implements ProjectNodeApi {
     private final DeleteProjectNodeService deleteProjectNodeService;
 
     @GetMapping("/{nodeId}")
-    public ResponseEntity<ApiResponse<ConfirmStatus>> getNodeStatus(@PathVariable("projectId") Long projectId,
-                                                                    @PathVariable("nodeId") Long nodeId) {
+    public ResponseEntity<ApiResponse<ConfirmStatusResponse>> getNodeStatus(@PathVariable("projectId") Long projectId,
+                                                                            @PathVariable("nodeId") Long nodeId) {
 
-        ConfirmStatus nodeConfirmStatus = readProjectNodeService.getNodeConfirmStatus(projectId, nodeId);
+        ConfirmStatusResponse nodeConfirmStatus = readProjectNodeService.getNodeConfirmStatus(projectId, nodeId);
 
         return ApiResponse.success(nodeConfirmStatus);
     }
