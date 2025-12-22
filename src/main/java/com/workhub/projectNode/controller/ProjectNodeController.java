@@ -26,7 +26,7 @@ public class ProjectNodeController implements ProjectNodeApi {
     private final ReadProjectNodeService readProjectNodeService;
     private final DeleteProjectNodeService deleteProjectNodeService;
 
-    @GetMapping("{nodeId}")
+    @GetMapping("/{nodeId}")
     public ResponseEntity<ApiResponse<ConfirmStatus>> getNodeStatus(@PathVariable("projectId") Long projectId,
                                                                     @PathVariable("nodeId") Long nodeId) {
 
