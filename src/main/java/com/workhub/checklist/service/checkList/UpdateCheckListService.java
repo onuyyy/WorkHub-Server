@@ -338,10 +338,11 @@ public class UpdateCheckListService {
                             CheckListOptionFileUpdateRequest fileRequest,
                             CheckListFileUploadContext uploadContext) {
         CheckListOptionFile file;
+        String requestedFileUrl = fileRequest.fileUrl();
 
-        // 1순위: URL 형식 체크 (기존 S3 파일 또는 외부 링크)
-        if (isValidRemoteUrl(fileRequest.fileUrl())) {
-            String fileUrl = fileRequest.fileUrl();
+        // 1순위: 완전한 URL 형식 (https://... 링크)
+        if (isValidRemoteUrl(requestedFileUrl)) {
+            String fileUrl = requestedFileUrl;
 
             // S3 URL인 경우 UUID 파일명만 추출
             if (isS3Url(fileUrl)) {
@@ -351,16 +352,22 @@ public class UpdateCheckListService {
 
             file = CheckListOptionFile.of(optionId, fileUrl, fileRequest.fileOrder());
         }
-        // 2순위: 새로 업로드된 파일 체크
+        // 2순위: S3 UUID 파일명 (기존에 저장된 파일)
+        // 예: dc96bcff-276d-4862-8a25-5b9910a3110e.png
+        else if (isS3FileName(requestedFileUrl)) {
+            log.debug("기존 S3 파일 인식: {}", requestedFileUrl);
+            file = CheckListOptionFile.of(optionId, requestedFileUrl, fileRequest.fileOrder());
+        }
+        // 3순위: 새로 업로드된 파일 (원본 파일명)
         else {
-            Optional<FileUploadResponse> upload = uploadContext.consume(fileRequest.fileUrl());
+            Optional<FileUploadResponse> upload = uploadContext.consume(requestedFileUrl);
             if (upload.isPresent()) {
                 file = CheckListOptionFile.fromUpload(optionId, upload.get(), fileRequest.fileOrder());
             } else {
                 String availableFiles = String.join(", ", uploadContext.getUploadedFileNames());
 
                 log.error("파일 매핑 실패 - 요청 파일: '{}', 업로드된 파일: [{}]",
-                        fileRequest.fileUrl(), availableFiles);
+                        requestedFileUrl, availableFiles);
 
                 throw new BusinessException(ErrorCode.CHECK_LIST_FILE_MAPPING_NOT_FOUND);
             }
@@ -517,6 +524,27 @@ public class UpdateCheckListService {
         }
 
         return url.contains(".s3.") || url.contains("s3.amazonaws.com");
+    }
+
+    /**
+     * S3에 저장된 UUID 형태의 파일명인지 확인
+     * 예: dc96bcff-276d-4862-8a25-5b9910a3110e.png
+     * UUID 형식: 8-4-4-4-12 형태의 16진수 (총 36자 + 확장자)
+     *
+     * @param fileName 확인할 파일명
+     * @return UUID 형태이면 true
+     */
+    private boolean isS3FileName(String fileName) {
+        if (fileName == null || fileName.isBlank()) {
+            return false;
+        }
+
+        // UUID 패턴: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+        // 정규식으로 정확하게 매칭
+        // 예: dc96bcff-276d-4862-8a25-5b9910a3110e.png
+        String uuidPattern = "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}.*";
+
+        return fileName.toLowerCase().matches(uuidPattern);
     }
 
     private void trackDeletionIfManaged(CheckListOptionFile file, List<String> filesToDelete) {
