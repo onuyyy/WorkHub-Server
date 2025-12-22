@@ -71,6 +71,10 @@ public class ProjectService {
         return projectRepository.findAll();
     }
 
+    public Long countInProgressOrCompletedProjects() {
+        return projectRepository.countByStatusIn(List.of(Status.IN_PROGRESS, Status.COMPLETED));
+    }
+
     public List<ProjectClientMember> getClientMemberByProjectIdIn(List<Long> projectIds) {
         return clientMemberRepository.findByProjectIdIn(projectIds);
     }
@@ -85,6 +89,10 @@ public class ProjectService {
 
     public List<ProjectDevMember> getDevMemberByProjectId(Long projectId) {
         return devMemberRepository.findByProjectIdIn(List.of(projectId));
+    }
+
+    public Long countProjectsOverlapping(LocalDate monthStart, LocalDate monthEnd) {
+        return projectRepository.countProjectsOverlapping(monthStart, monthEnd);
     }
 
     public void validateDevMemberForProject(Long projectId, Long devMemberId) {

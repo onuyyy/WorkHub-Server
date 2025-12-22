@@ -5,6 +5,7 @@ import com.workhub.userTable.entity.UserTable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -43,5 +44,24 @@ public class UserRepositoryImpl implements UserRepositoryCustom {
                 .selectFrom(userTable)
                 .where(userTable.companyId.in(companyId))
                 .fetch();
+    }
+
+    @Override
+    public Long countActiveUsersUntil(LocalDateTime until) {
+        if (until == null) {
+            return 0L;
+        }
+
+        Long count = queryFactory
+                .select(userTable.count())
+                .from(userTable)
+                .where(
+                        userTable.createdAt.loe(until),
+                        userTable.deletedAt.isNull()
+                                .or(userTable.deletedAt.after(until))
+                )
+                .fetchOne();
+
+        return count == null ? 0L : count;
     }
 }

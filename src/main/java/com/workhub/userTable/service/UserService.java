@@ -21,6 +21,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -137,5 +138,13 @@ public class UserService {
         return userNames.stream()
                 .map(UserNameResponse::from)
                 .toList();
+    }
+
+    public Long countActiveUsers(){
+        return userRepository.countByStatus(Status.ACTIVE);
+    }
+
+    public Long countActiveUsersUntil(LocalDateTime monthEnd) {
+        return userRepository.countActiveUsersUntil(monthEnd);
     }
 }

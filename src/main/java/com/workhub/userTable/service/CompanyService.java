@@ -96,4 +96,9 @@ public class CompanyService {
                 .stream()
                 .collect(Collectors.toMap(Company::getCompanyId, company -> company));
     }
+
+    @Transactional(readOnly = true)
+    public Long countActiveCompanies() {
+        return companyRepository.countByCompanystatus(CompanyStatus.ACTIVE);
+    }
 }

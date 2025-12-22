@@ -1,5 +1,6 @@
 package com.workhub.userTable.repository;
 
+import com.workhub.userTable.entity.Status;
 import com.workhub.userTable.entity.UserTable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -13,4 +14,6 @@ public interface UserRepository extends JpaRepository<UserTable, Long>, UserRepo
     boolean existsByEmail(String email);
 
     Optional<UserTable> findByEmail(String email);
+
+    Long countByStatus(Status status);
 }

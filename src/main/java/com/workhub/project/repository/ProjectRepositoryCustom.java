@@ -23,4 +23,6 @@ public interface ProjectRepositoryCustom {
      */
     List<Project> findProjectsWithPaging(List<Long> projectIds, LocalDate startDate, LocalDate endDate,
             Status status, ProjectListRequest.SortOrder sortOrder, Long cursor, int size);
+
+    Long countProjectsOverlapping(LocalDate monthStart, LocalDate monthEnd);
 }

@@ -44,6 +44,25 @@ public class ProjectRepositoryImpl implements ProjectRepositoryCustom {
                 .fetch();
     }
 
+    @Override
+    public Long countProjectsOverlapping(LocalDate monthStart, LocalDate monthEnd) {
+        if (monthStart == null || monthEnd == null) {
+            return 0L;
+        }
+
+        Long count = queryFactory
+                .select(project.count())
+                .from(project)
+                .where(
+                        project.contractStartDate.loe(monthEnd),
+                        project.contractEndDate.goe(monthStart),
+                        project.deletedAt.isNull()
+                )
+                .fetchOne();
+
+        return count == null ? 0L : count;
+    }
+
     /**
      * 프로젝트 ID 리스트 조건
      */
