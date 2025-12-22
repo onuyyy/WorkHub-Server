@@ -76,7 +76,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/projects/list").authenticated()
                         .requestMatchers("/api/v1/projects/*/status").hasAnyRole("DEVELOPER", "ADMIN")
 
-                        .requestMatchers("/api/v1/projects/{projectId}/nodes//{nodeId}").authenticated()
+                        .requestMatchers("/api/v1/projects/{projectId}/nodes/{nodeId}").authenticated()
                         .requestMatchers("/api/v1/projects/{projectId}/nodes/list").authenticated()
                         .requestMatchers("/api/v1/projects/{projectId}/nodes/**").hasAnyRole("DEVELOPER", "ADMIN")
 
