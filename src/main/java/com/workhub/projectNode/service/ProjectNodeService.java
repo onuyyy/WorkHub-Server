@@ -3,6 +3,7 @@ package com.workhub.projectNode.service;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import com.workhub.projectNode.dto.ProjectNodeCount;
+import com.workhub.projectNode.entity.ConfirmStatus;
 import com.workhub.projectNode.entity.ProjectNode;
 import com.workhub.projectNode.repository.ProjectNodeRepository;
 import lombok.RequiredArgsConstructor;
@@ -56,5 +57,10 @@ public class ProjectNodeService {
         return projectNodeRepository.findTopByProjectIdAndDeletedAtIsNullOrderByNodeOrderDesc(projectId)
                 .map(ProjectNode::getNodeOrder)
                 .orElse(0);
+    }
+
+    public ConfirmStatus getNodeConfirmStatus(Long nodeId) {
+        return projectNodeRepository.findConfirmStatusById(nodeId)
+                .orElse(ConfirmStatus.NOT_PENDING);
     }
 }

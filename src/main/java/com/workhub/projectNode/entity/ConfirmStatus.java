@@ -1,5 +1,5 @@
 package com.workhub.projectNode.entity;
 
 public enum ConfirmStatus {
-    PENDING, APPROVED, REJECTED
+    NOT_PENDING, PENDING, APPROVED, REJECTED
 }
