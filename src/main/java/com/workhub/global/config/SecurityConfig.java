@@ -82,6 +82,8 @@ public class SecurityConfig {
 
                         .requestMatchers("/api/v1/notifications/**").authenticated()
 
+                        .requestMatchers("/api/v1/projects/*/csPosts/**").hasAnyRole("CLIENT", "DEVELOPER", "ADMIN")
+
                         .requestMatchers("/api/v1/projects/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/admin/users/**").hasRole("ADMIN")
                         .anyRequest().permitAll()
