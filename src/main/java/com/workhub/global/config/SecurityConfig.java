@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.Customizer;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -76,15 +77,16 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/projects/list").authenticated()
                         .requestMatchers("/api/v1/projects/*/status").hasAnyRole("DEVELOPER", "ADMIN")
 
-                        .requestMatchers("/api/v1/projects/{projectId}/nodes/{nodeId}").authenticated()
-                        .requestMatchers("/api/v1/projects/{projectId}/nodes/list").authenticated()
-                        .requestMatchers("/api/v1/projects/{projectId}/nodes/{nodeId}/confirm").authenticated()
-                        .requestMatchers("/api/v1/projects/{projectId}/nodes/**").hasAnyRole("DEVELOPER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/projects/*/nodes/*").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/projects/*/nodes/list").authenticated()
+                        .requestMatchers("/api/v1/projects/*/nodes/{nodeId}/confirm").authenticated()
+                        .requestMatchers("/api/v1/projects/*/nodes/**").hasAnyRole("DEVELOPER", "ADMIN")
 
                         .requestMatchers("/api/v1/notifications/**").authenticated()
 
                         .requestMatchers("/api/v1/projects/*/csPosts/**").hasAnyRole("CLIENT", "DEVELOPER", "ADMIN")
 
+                        .requestMatchers(HttpMethod.GET, "/api/v1/projects/*").authenticated()
                         .requestMatchers("/api/v1/projects/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/admin/users/**").hasRole("ADMIN")
                         .anyRequest().permitAll()

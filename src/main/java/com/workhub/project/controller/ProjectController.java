@@ -62,6 +62,12 @@ public class ProjectController implements ProjectApi {
         return ApiResponse.success("프로젝트가 삭제되었습니다.");
     }
 
+    @GetMapping("/{projectId}")
+    public ResponseEntity<ApiResponse<ProjectResponse>> getProject(@PathVariable("projectId") Long projectId) {
+        ProjectResponse response = readProjectService.findProject(projectId);
+        return ApiResponse.success(response, "프로젝트 단일조회에 성공했습니다.");
+    }
+
     /**
      * 페이징, 필터링, 정렬이 적용된 프로젝트 목록 조회 (무한 스크롤용)
      *

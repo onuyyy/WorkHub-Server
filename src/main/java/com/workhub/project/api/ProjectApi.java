@@ -156,6 +156,27 @@ public interface ProjectApi {
     );
 
     @Operation(
+            summary = "프로젝트 단건 조회",
+            description = "프로젝트 ID로 프로젝트 기본 정보를 조회합니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "프로젝트 조회 성공",
+                    content = @Content(schema = @Schema(implementation = ProjectResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "프로젝트를 찾을 수 없음"
+            )
+    })
+    @GetMapping("/{projectId}")
+    ResponseEntity<ApiResponse<ProjectResponse>> getProject(
+            @Parameter(description = "프로젝트 ID", required = true)
+            @PathVariable("projectId") Long projectId
+    );
+
+    @Operation(
             summary = "프로젝트 목록 조회",
             description = "페이징, 필터링, 정렬이 적용된 프로젝트 목록을 조회합니다. 무한 스크롤을 지원하며, 권한에 따라 조회 범위가 달라집니다. (ADMIN: 전체, CLIENT/DEVELOPER: 자신이 속한 프로젝트만)"
     )

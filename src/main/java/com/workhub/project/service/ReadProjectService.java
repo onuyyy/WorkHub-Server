@@ -6,6 +6,7 @@ import com.workhub.global.util.SecurityUtil;
 import com.workhub.project.dto.request.ProjectListRequest;
 import com.workhub.project.dto.response.PagedProjectListResponse;
 import com.workhub.project.dto.response.ProjectListResponse;
+import com.workhub.project.dto.response.ProjectResponse;
 import com.workhub.project.entity.Project;
 import com.workhub.project.entity.ProjectClientMember;
 import com.workhub.project.entity.ProjectDevMember;
@@ -127,6 +128,11 @@ public class ReadProjectService {
         return projects.stream()
                 .map(Project::getProjectId)
                 .toList();
+    }
+
+    public ProjectResponse findProject(Long projectId) {
+        Project project = projectService.findProjectById(projectId);
+        return ProjectResponse.from(project);
     }
 
     /**
