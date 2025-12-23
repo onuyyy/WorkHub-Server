@@ -11,4 +11,5 @@ import java.util.List;
 public interface ProjectRepository extends JpaRepository<Project,Long>, ProjectRepositoryCustom {
     Long countByStatusIn(List<Status> statuses);
     Long countByStatus(Status status);
+    List<Project> findByProjectIdInAndDeletedAtIsNull(List<Long> projectIds);
 }

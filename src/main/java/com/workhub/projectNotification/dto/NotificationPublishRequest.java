@@ -20,6 +20,8 @@ public class NotificationPublishRequest {
     private Long csQnaId;
     private Long csPostId;
     private Long senderUserId;
+    private String senderProfileImg;
+    private String senderName;
 
     private NotificationPublishRequest() {}
 
@@ -87,24 +89,26 @@ public class NotificationPublishRequest {
     public NotificationPublishRequest csQnaId(Long csQnaId) { this.csQnaId = csQnaId; return this; }
     public NotificationPublishRequest csPostId(Long csPostId) { this.csPostId = csPostId; return this; }
     public NotificationPublishRequest senderUserId(Long senderUserId) { this.senderUserId = senderUserId; return this; }
+    public NotificationPublishRequest senderProfileImg(String senderProfileImg) { this.senderProfileImg = senderProfileImg; return this; }
+    public NotificationPublishRequest senderName(String senderName) { this.senderName = senderName; return this; }
 
     public Long receiverId() { return receiverId; }
     public NotificationType type() { return type; }
     public String title() { return title; }
     public String content() { return content; }
-    public String relatedUrl() { return relatedUrl; }
     public Long projectId() { return projectId; }
     public Long projectNodeId() { return projectNodeId; }
     public Long postId() { return postId; }
     public Long commentId() { return commentId; }
     public Long csQnaId() { return csQnaId; }
     public Long csPostId() { return csPostId; }
-    public Long senderUserId() { return senderUserId; }
+
 
     public ProjectNotification toEntity() {
         return ProjectNotification.of(
                 receiverId, type, title, content, relatedUrl,
-                projectId, projectNodeId, postId, commentId, csQnaId, csPostId, senderUserId
+                projectId, projectNodeId, postId, commentId, csQnaId, csPostId,
+                senderUserId, senderName, senderProfileImg
         );
     }
 
@@ -123,6 +127,8 @@ public class NotificationPublishRequest {
         copy.csQnaId = this.csQnaId;
         copy.csPostId = this.csPostId;
         copy.senderUserId = this.senderUserId;
+        copy.senderProfileImg = this.senderProfileImg;
+        copy.senderName = this.senderName;
         return copy;
     }
 }

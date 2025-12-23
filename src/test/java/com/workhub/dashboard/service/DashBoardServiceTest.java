@@ -3,6 +3,7 @@ package com.workhub.dashboard.service;
 import com.workhub.dashboard.dto.DashBoardResponse;
 import com.workhub.project.entity.ProjectClientMember;
 import com.workhub.project.entity.ProjectDevMember;
+import com.workhub.project.entity.Project;
 import com.workhub.project.service.ProjectService;
 import com.workhub.projectNode.entity.NodeStatus;
 import com.workhub.projectNode.service.ProjectNodeService;
@@ -38,6 +39,11 @@ class DashBoardServiceTest {
                 ProjectDevMember.builder().projectId(10L).build(),
                 ProjectDevMember.builder().projectId(11L).build()
         ));
+        given(projectService.getClientMemberByUserId(1L)).willReturn(List.of());
+        given(projectService.findActiveProjectsByIds(anyList())).willReturn(List.of(
+                Project.builder().projectId(10L).build(),
+                Project.builder().projectId(11L).build()
+        ));
         given(projectNodeService.countByProjectIdInAndStatusIn(anyList(), eq(List.of(NodeStatus.PENDING_REVIEW))))
                 .willReturn(4L);
 
@@ -53,6 +59,9 @@ class DashBoardServiceTest {
         given(projectService.getDevMemberByUserId(2L)).willReturn(List.of());
         given(projectService.getClientMemberByUserId(2L)).willReturn(List.of(
                 ProjectClientMember.builder().projectId(20L).build()
+        ));
+        given(projectService.findActiveProjectsByIds(anyList())).willReturn(List.of(
+                Project.builder().projectId(20L).build()
         ));
         given(projectNodeService.countByProjectIdInAndStatusIn(anyList(), eq(List.of(NodeStatus.PENDING_REVIEW))))
                 .willReturn(1L);

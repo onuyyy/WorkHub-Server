@@ -18,6 +18,8 @@ public record NotificationResponse(
         Long csQnaId,
         Long csPostId,
         Long senderUserId,
+        String senderName,
+        String senderProfileImg,
         boolean read,
         LocalDateTime createdAt
 ) {
@@ -35,6 +37,8 @@ public record NotificationResponse(
                 n.getCsQnaId(),
                 n.getCsPostId(),
                 n.getSenderUserId(),
+                n.getSenderName(),
+                n.getSenderProfileImg(),
                 n.getReadAt() != null,
                 n.getCreatedAt()
         );

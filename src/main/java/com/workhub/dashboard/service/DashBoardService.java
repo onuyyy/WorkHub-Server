@@ -33,11 +33,20 @@ public class DashBoardService {
             return new DashBoardResponse(0, 0);
         }
 
+        var activeProjects = projectService.findActiveProjectsByIds(projectIds.stream().toList());
+        if (activeProjects.isEmpty()) {
+            return new DashBoardResponse(0, 0);
+        }
+
+        List<Long> activeProjectIds = activeProjects.stream()
+                .map(p -> p.getProjectId())
+                .toList();
+
         long pending = projectNodeService.countByProjectIdInAndStatusIn(
-                projectIds.stream().toList(),
+                activeProjectIds,
                 List.of(NodeStatus.PENDING_REVIEW)
         );
 
-        return new DashBoardResponse(pending, projectIds.size());
+        return new DashBoardResponse(pending, activeProjectIds.size());
     }
 }

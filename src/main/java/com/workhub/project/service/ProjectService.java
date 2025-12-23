@@ -71,6 +71,13 @@ public class ProjectService {
         return projectRepository.findAll();
     }
 
+    public List<Project> findActiveProjectsByIds(List<Long> projectIds) {
+        if (projectIds == null || projectIds.isEmpty()) {
+            return List.of();
+        }
+        return projectRepository.findByProjectIdInAndDeletedAtIsNull(projectIds);
+    }
+
     public Long countInProgressOrCompletedProjects() {
         return projectRepository.countByStatusIn(List.of(Status.IN_PROGRESS, Status.COMPLETED));
     }

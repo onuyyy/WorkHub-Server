@@ -4,6 +4,8 @@ import com.workhub.projectNotification.dto.NotificationPublishRequest;
 import com.workhub.projectNotification.entity.NotificationType;
 import com.workhub.projectNotification.service.ProjectNotificationService;
 import com.workhub.global.util.SecurityUtil;
+import com.workhub.userTable.entity.UserTable;
+import com.workhub.userTable.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -20,6 +22,7 @@ import java.util.Set;
 public class NotificationPublisher {
 
     private final ProjectNotificationService notificationService;
+    private final UserRepository userRepository;
 
     public void publishToUsers(
             Set<Long> receivers,
@@ -39,6 +42,7 @@ public class NotificationPublisher {
         }
         validateExactlyOneRelated(projectId, projectNodeId, postId, commentId, csQnaId, csPostId);
 
+        Sender sender = resolveCurrentSender();
         NotificationPublishRequest baseRequest = NotificationPublishRequest.forProject(null, type, projectId)
                 .projectNodeId(projectNodeId)
                 .postId(postId)
@@ -48,7 +52,9 @@ public class NotificationPublisher {
                 .title(title)
                 .content(content)
                 .relatedUrl(relatedUrl)
-                .senderUserId(SecurityUtil.getCurrentUserId().orElse(null));
+                .senderUserId(sender.userId)
+                .senderName(sender.name)
+                .senderProfileImg(sender.profileImg);
         receivers.forEach(userId -> notificationService.publish(baseRequest.withReceiver(userId)));
     }
 
@@ -69,11 +75,14 @@ public class NotificationPublisher {
             String relatedUrl,
             Long postId
     ) {
+        Sender sender = resolveCurrentSender();
         NotificationPublishRequest base = NotificationPublishRequest.forPost(null, type, postId)
                 .title(title)
                 .content(content)
                 .relatedUrl(relatedUrl)
-                .senderUserId(SecurityUtil.getCurrentUserId().orElse(null));
+                .senderUserId(sender.userId)
+                .senderName(sender.name)
+                .senderProfileImg(sender.profileImg);
         receivers.forEach(userId -> notificationService.publish(base.withReceiver(userId)));
     }
 
@@ -88,11 +97,14 @@ public class NotificationPublisher {
             String relatedUrl,
             Long commentId
     ) {
+        Sender sender = resolveCurrentSender();
         NotificationPublishRequest base = NotificationPublishRequest.forComment(null, type, commentId)
                 .title(title)
                 .content(content)
                 .relatedUrl(relatedUrl)
-                .senderUserId(SecurityUtil.getCurrentUserId().orElse(null));
+                .senderUserId(sender.userId)
+                .senderName(sender.name)
+                .senderProfileImg(sender.profileImg);
         receivers.forEach(userId -> notificationService.publish(base.withReceiver(userId)));
     }
 
@@ -107,11 +119,14 @@ public class NotificationPublisher {
             String relatedUrl,
             Long projectId
     ) {
+        Sender sender = resolveCurrentSender();
         NotificationPublishRequest base = NotificationPublishRequest.forProject(null, type, projectId)
                 .title(title)
                 .content(content)
                 .relatedUrl(relatedUrl)
-                .senderUserId(SecurityUtil.getCurrentUserId().orElse(null));
+                .senderUserId(sender.userId)
+                .senderName(sender.name)
+                .senderProfileImg(sender.profileImg);
         receivers.forEach(userId -> notificationService.publish(base.withReceiver(userId)));
     }
 
@@ -126,11 +141,14 @@ public class NotificationPublisher {
             String relatedUrl,
             Long projectNodeId
     ) {
+        Sender sender = resolveCurrentSender();
         NotificationPublishRequest base = NotificationPublishRequest.forProjectNode(null, type, projectNodeId)
                 .title(title)
                 .content(content)
                 .relatedUrl(relatedUrl)
-                .senderUserId(SecurityUtil.getCurrentUserId().orElse(null));
+                .senderUserId(sender.userId)
+                .senderName(sender.name)
+                .senderProfileImg(sender.profileImg);
         receivers.forEach(userId -> notificationService.publish(base.withReceiver(userId)));
     }
 
@@ -145,11 +163,14 @@ public class NotificationPublisher {
             String relatedUrl,
             Long csQnaId
     ) {
+        Sender sender = resolveCurrentSender();
         NotificationPublishRequest base = NotificationPublishRequest.forCsQna(null, type, csQnaId)
                 .title(title)
                 .content(content)
                 .relatedUrl(relatedUrl)
-                .senderUserId(SecurityUtil.getCurrentUserId().orElse(null));
+                .senderUserId(sender.userId)
+                .senderName(sender.name)
+                .senderProfileImg(sender.profileImg);
         receivers.forEach(userId -> notificationService.publish(base.withReceiver(userId)));
     }
 
@@ -164,11 +185,14 @@ public class NotificationPublisher {
             String relatedUrl,
             Long csPostId
     ) {
+        Sender sender = resolveCurrentSender();
         NotificationPublishRequest base = NotificationPublishRequest.forCsPost(null, type, csPostId)
                 .title(title)
                 .content(content)
                 .relatedUrl(relatedUrl)
-                .senderUserId(SecurityUtil.getCurrentUserId().orElse(null));
+                .senderUserId(sender.userId)
+                .senderName(sender.name)
+                .senderProfileImg(sender.profileImg);
         receivers.forEach(userId -> notificationService.publish(base.withReceiver(userId)));
     }
 
@@ -184,6 +208,24 @@ public class NotificationPublisher {
         }
         if (count != 1) {
             throw new IllegalArgumentException("연관 FK는 하나만 설정해야 합니다.");
+        }
+    }
+
+    private Sender resolveCurrentSender() {
+        Long userId = SecurityUtil.getCurrentUserId().orElse(null);
+        if (userId == null) {
+            return Sender.empty();
+        }
+        UserTable user = userRepository.findById(userId).orElse(null);
+        if (user == null) {
+            return new Sender(userId, null, null);
+        }
+        return new Sender(userId, user.getUserName(), user.getProfileImg());
+    }
+
+    private record Sender(Long userId, String name, String profileImg) {
+        private static Sender empty() {
+            return new Sender(null, null, null);
         }
     }
 }

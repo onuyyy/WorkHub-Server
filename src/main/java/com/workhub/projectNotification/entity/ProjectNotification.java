@@ -41,6 +41,12 @@ public class ProjectNotification extends BaseTimeEntity {
     @Column(name = "sender_user_id")
     private Long senderUserId;
 
+    @Column(name = "sender_name", length = 50)
+    private String senderName;
+
+    @Column(name = "sender_profile_img")
+    private String senderProfileImg;
+
     @Column(name = "user_id")
     private Long userId;
 
@@ -82,11 +88,15 @@ public class ProjectNotification extends BaseTimeEntity {
             Long commentId,
             Long csQnaId,
             Long csPostId,
-            Long senderUserId
+            Long senderUserId,
+            String senderName,
+            String senderProfileImg
     ) {
         return ProjectNotification.builder()
                 .userId(userId)
                 .senderUserId(senderUserId)
+                .senderName(senderName)
+                .senderProfileImg(senderProfileImg)
                 .notificationType(type)
                 .title(title)
                 .notificationContent(content)
