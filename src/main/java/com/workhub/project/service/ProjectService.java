@@ -75,6 +75,10 @@ public class ProjectService {
         return projectRepository.countByStatusIn(List.of(Status.IN_PROGRESS, Status.COMPLETED));
     }
 
+    public Long countInProgressProjects() {
+        return projectRepository.countByStatus(Status.IN_PROGRESS);
+    }
+
     public List<ProjectClientMember> getClientMemberByProjectIdIn(List<Long> projectIds) {
         return clientMemberRepository.findByProjectIdIn(projectIds);
     }

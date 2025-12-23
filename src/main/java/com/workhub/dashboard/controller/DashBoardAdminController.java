@@ -1,6 +1,7 @@
 package com.workhub.dashboard.controller;
 
 import com.workhub.dashboard.api.DashBoardAdminApi;
+import com.workhub.dashboard.dto.ProjectDistributionResponse;
 import com.workhub.dashboard.dto.admin.CompanyCountResponse;
 import com.workhub.dashboard.dto.admin.MonthlyMetricsResponse;
 import com.workhub.dashboard.dto.admin.ProjectCountResponse;
@@ -57,5 +58,14 @@ public class DashBoardAdminController implements DashBoardAdminApi {
         MonthlyMetricsResponse monthlyMetrics = dashBoardAdminService.getMonthlyMetrics(months);
 
         return ApiResponse.success(monthlyMetrics, "월별 지표가 조회되었습니다.");
+    }
+
+    @Override
+    @GetMapping("/project-distribution")
+    public ResponseEntity<ApiResponse<ProjectDistributionResponse>> getProjectDistribution() {
+
+        ProjectDistributionResponse projectDistribution = dashBoardAdminService.getProjectDistribution();
+
+        return ApiResponse.success(projectDistribution, "프로젝트 단계별 비율이 조회되었습니다.");
     }
 }

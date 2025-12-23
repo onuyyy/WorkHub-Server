@@ -1,5 +1,6 @@
 package com.workhub.dashboard.api;
 
+import com.workhub.dashboard.dto.ProjectDistributionResponse;
 import com.workhub.dashboard.dto.admin.CompanyCountResponse;
 import com.workhub.dashboard.dto.admin.MonthlyMetricsResponse;
 import com.workhub.dashboard.dto.admin.ProjectCountResponse;
@@ -141,4 +142,34 @@ public interface DashBoardAdminApi {
     ResponseEntity<ApiResponse<MonthlyMetricsResponse>> getMonthlyMetrics(
             @RequestParam(name = "months", required = false, defaultValue = "12") Integer months
     );
+
+    @Operation(
+            summary = "프로젝트 단계별 분포",
+            description = "진행 중인 프로젝트들의 노드(단계) 분포와 완료 비율을 조회합니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "프로젝트 단계별 비율 조회 성공",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ApiResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "401",
+                    description = "인증 실패",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "403",
+                    description = "관리자 권한 없음",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "500",
+                    description = "서버 오류",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE)
+            )
+    })
+    @GetMapping(value = "/project-distribution", produces = MediaType.APPLICATION_JSON_VALUE)
+    ResponseEntity<ApiResponse<ProjectDistributionResponse>> getProjectDistribution();
 }

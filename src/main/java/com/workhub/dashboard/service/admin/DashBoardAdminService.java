@@ -1,12 +1,13 @@
 package com.workhub.dashboard.service.admin;
 
-import com.workhub.dashboard.dto.admin.CompanyCountResponse;
-import com.workhub.dashboard.dto.admin.MonthlyMetricPoint;
-import com.workhub.dashboard.dto.admin.MonthlyMetricsMetadata;
-import com.workhub.dashboard.dto.admin.MonthlyMetricsResponse;
-import com.workhub.dashboard.dto.admin.ProjectCountResponse;
-import com.workhub.dashboard.dto.admin.UserCountResponse;
+import com.workhub.dashboard.dto.ProjectDistributionResponse;
+import com.workhub.dashboard.dto.ProjectDistributionResponse.NodeCategoryDistribution;
+import com.workhub.dashboard.dto.admin.*;
+import com.workhub.project.entity.Status;
 import com.workhub.project.service.ProjectService;
+import com.workhub.projectNode.dto.ProjectNodeCategoryCount;
+import com.workhub.projectNode.entity.NodeCategory;
+import com.workhub.projectNode.service.ProjectNodeService;
 import com.workhub.userTable.service.CompanyService;
 import com.workhub.userTable.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,9 @@ import java.time.LocalTime;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -35,6 +38,7 @@ public class DashBoardAdminService {
     private final UserService userService;
     private final CompanyService companyService;
     private final ProjectService projectService;
+    private final ProjectNodeService projectNodeService;
 
     /**
      * 활성 사용자 수를 조회한다.
@@ -126,4 +130,27 @@ public class DashBoardAdminService {
     private String formatMonth(YearMonth month) {
         return month.format(MONTH_FORMATTER);
     }
+
+    /**
+     * 진행 중인 프로젝트의 개수
+     * 총 노드 수와 완료 노드 수를 집계
+     */
+    public ProjectDistributionResponse getProjectDistribution() {
+
+        Long totalProgressProjectCount = projectService.countInProgressProjects();
+        Map<NodeCategory, ProjectNodeCategoryCount> categoryCountMap =
+                projectNodeService.getNodeCategoryStatsByProjectStatus(Status.IN_PROGRESS);
+
+        List<NodeCategoryDistribution> distributions = Arrays.stream(NodeCategory.values())
+                .map(category -> {
+                    ProjectNodeCategoryCount count = categoryCountMap.get(category);
+                    Long totalNodes = count == null ? 0L : count.totalNodes();
+                    Long completedNodes = count == null ? 0L : count.completedNodes();
+                    return NodeCategoryDistribution.of(category, totalNodes, completedNodes);
+                })
+                .toList();
+
+        return ProjectDistributionResponse.of(totalProgressProjectCount, distributions);
+    }
+
 }
