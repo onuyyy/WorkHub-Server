@@ -4,7 +4,6 @@ import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import com.workhub.project.entity.Project;
 import com.workhub.project.entity.Status;
-import com.workhub.project.repository.ClientMemberRepository;
 import com.workhub.project.repository.ProjectRepository;
 import com.workhub.userTable.dto.company.request.CompanyRegisterRequest;
 import com.workhub.userTable.dto.company.response.CompanyDetailResponse;
@@ -13,7 +12,9 @@ import com.workhub.userTable.dto.company.response.CompanyResponse;
 import com.workhub.userTable.dto.company.response.CompanyTitleResponse;
 import com.workhub.userTable.entity.Company;
 import com.workhub.userTable.entity.CompanyStatus;
+import com.workhub.userTable.entity.UserRole;
 import com.workhub.userTable.repository.CompanyRepository;
+import com.workhub.userTable.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,7 +31,7 @@ public class CompanyService {
 
     private final CompanyRepository companyRepository;
     private final ProjectRepository projectRepository;
-    private final ClientMemberRepository clientMemberRepository;
+    private final UserRepository userRepository;
 
     @Transactional
     public CompanyResponse registerCompany(CompanyRegisterRequest request) {
@@ -63,13 +64,12 @@ public class CompanyService {
                     .filter(p -> p.getStatus() == Status.COMPLETED)
                     .count();
 
-            // 활성 클라이언트 멤버 수 조회
-            List<Long> projectIds = projects.stream()
-                    .map(Project::getProjectId)
-                    .toList();
-
-            long clientMemberCount = projectIds.isEmpty() ? 0 :
-                    clientMemberRepository.countByProjectIdInAndRemovedAtIsNull(projectIds);
+            // 활성 클라이언트 멤버 수 조회 (company_id 기준)
+            long clientMemberCount = userRepository.countByCompanyIdAndRoleAndStatus(
+                    company.getCompanyId(),
+                    UserRole.CLIENT,
+                    com.workhub.userTable.entity.Status.ACTIVE
+            );
 
             // CompanyListResponse 생성
             return CompanyListResponse.from(company, inProgressCount, completedCount, clientMemberCount);
