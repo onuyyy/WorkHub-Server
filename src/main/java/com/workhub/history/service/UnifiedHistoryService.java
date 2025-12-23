@@ -1,6 +1,7 @@
 package com.workhub.history.service;
 
 import com.workhub.global.entity.HistoryType;
+import com.workhub.global.util.SecurityUtil;
 import com.workhub.history.dto.UnifiedHistoryResponse;
 import com.workhub.history.dto.UserInfo;
 import com.workhub.global.entity.ActionType;
@@ -77,6 +78,20 @@ public class UnifiedHistoryService {
         Page<UnifiedHistory> historyPage = unifiedHistoryRepository.findByHistoryTypes(historyTypes, pageable);
 
         return convertToResponsePage(historyPage, pageable);
+    }
+
+    /**
+     * 전체 히스토리 조회 (사용자용)
+     *
+     * @param pageable 페이징 정보
+     * @return 페이징된 히스토리 목록
+     */
+    public Page<UnifiedHistoryResponse> findAllUserHistory(Pageable pageable) {
+        log.debug("Fetching all user history with pageable: {}", pageable);
+
+        Page<UnifiedHistory> historyPage = unifiedHistoryRepository.findByUpdatedBy(SecurityUtil.getCurrentUserIdOrThrow(), pageable);
+
+        return convertToPublicResponsePage(historyPage, pageable);
     }
 
     /**

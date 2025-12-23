@@ -107,6 +107,23 @@ public class UnifiedHistoryController {
     // ========== 일반 사용자 API (IP, userAgent 제외) ==========
 
     /**
+     * 전체 히스토리 조회 (사용자용)
+     *
+     * @param pageable 페이징 정보 (기본: 10개, updated_at 내림차순)
+     * @return 페이징된 히스토리 목록
+     */
+    @GetMapping("/api/v1//histories/all")
+    public ResponseEntity<ApiResponse<Page<UnifiedHistoryResponse>>> findAllUserHistory(
+            @PageableDefault(size = 10, sort = "updatedAt", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        log.info("Public user requested all history with pageable: {}", pageable);
+
+        Page<UnifiedHistoryResponse> histories = unifiedHistoryService.findAllUserHistory(pageable);
+
+        return ApiResponse.success(histories, "전체 히스토리가 조회되었습니다.");
+    }
+
+    /**
      * 히스토리 타입별 조회 (일반 사용자용 - IP, userAgent 제외)
      *
      * @param historyType 히스토리 타입 (POST, PROJECT, CHECK_LIST_ITEM 등)
