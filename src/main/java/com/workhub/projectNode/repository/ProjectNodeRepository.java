@@ -24,6 +24,6 @@ public interface ProjectNodeRepository extends JpaRepository<ProjectNode,Long>, 
 
     long countByProjectIdInAndNodeStatusIn(List<Long> projectIds, List<NodeStatus> statuses);
 
-    @Query("SELECT p.confirmStatus, p.rejectText FROM ProjectNode p WHERE p.projectNodeId = :nodeId")
+    @Query("SELECT p.confirmStatus, p.rejectText, p.title FROM ProjectNode p WHERE p.projectNodeId = :nodeId")
     Optional<ConfirmStatusResponse> findConfirmStatusById(@Param("nodeId") Long nodeId);
 }

@@ -75,7 +75,8 @@ public class ProjectNodeService {
                 .orElse(ConfirmStatus.NOT_PENDING);
         String rejectText = Optional.ofNullable(statusResponse.rejectText())
                 .orElse("");
+        String nodeTitle = statusResponse.nodeTitle();
 
-        return  ConfirmStatusResponse.from(finalStatus, rejectText);
+        return  ConfirmStatusResponse.from(finalStatus, rejectText, nodeTitle);
     }
 }
