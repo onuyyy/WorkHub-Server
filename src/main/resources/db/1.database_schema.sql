@@ -138,6 +138,7 @@ CREATE TABLE project_node (
     project_node_id BIGSERIAL PRIMARY KEY,
     title VARCHAR(50) NOT NULL,
     description TEXT NOT NULL,
+    node_category VARCHAR(20) NOT NULL,
     node_status VARCHAR(20) NOT NULL,
     confirm_status VARCHAR(20) NULL,
     contract_start_date DATE NULL,

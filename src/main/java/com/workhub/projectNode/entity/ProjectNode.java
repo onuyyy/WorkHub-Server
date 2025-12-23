@@ -31,6 +31,10 @@ public class ProjectNode extends BaseTimeEntity {
     private String description;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "node_category")
+    private NodeCategory nodeCategory;
+
+    @Enumerated(EnumType.STRING)
     @Column(name = "node_status")
     private NodeStatus nodeStatus;
 

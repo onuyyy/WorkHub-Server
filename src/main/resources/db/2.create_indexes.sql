@@ -151,6 +151,11 @@ CREATE INDEX idx_project_node_deleted
     ON project_node(deleted_at DESC)
     WHERE deleted_at IS NOT NULL;
 
+-- 노드별 카테고리 조회
+CREATE INDEX idx_project_node_category
+    ON project_node(project_id, node_category)
+    WHERE deleted_at IS NULL;
+
 -- project_node_history indexes
 -- 프로젝트 노드별 변경 이력 조회 (최신순)
 CREATE INDEX idx_project_node_history_target_action_updated
