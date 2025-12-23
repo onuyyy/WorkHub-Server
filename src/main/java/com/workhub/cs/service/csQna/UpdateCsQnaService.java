@@ -4,6 +4,7 @@ import com.workhub.cs.dto.csQna.CsQnaResponse;
 import com.workhub.cs.dto.csQna.CsQnaUpdateRequest;
 import com.workhub.cs.entity.CsQna;
 import com.workhub.cs.service.CsPostAccessValidator;
+import com.workhub.global.port.AuthorLookupPort;
 import com.workhub.global.entity.ActionType;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
@@ -18,6 +19,7 @@ public class UpdateCsQnaService {
 
     private final CsQnaService csQnaService;
     private final CsPostAccessValidator csPostAccessValidator;
+    private final AuthorLookupPort authorLookupPort;
 
     public CsQnaResponse update(Long projectId, Long csPostId, Long csQnaId, Long userId, CsQnaUpdateRequest request) {
         // 1. 댓글 조회 및 작성자 검증 (가장 구체적인 검증)
@@ -32,7 +34,10 @@ public class UpdateCsQnaService {
         csQnaService.snapShotAndRecordHistory(csQna, csQna.getCsQnaId(), ActionType.UPDATE);
 
         csQna.updateContent(request.qnaContent());
-        return CsQnaResponse.from(csQna);
+        String authorName = authorLookupPort.findByUserId(userId)
+                .map(profile -> profile.userName())
+                .orElse(null);
+        return CsQnaResponse.from(csQna, authorName);
     }
 
     /**

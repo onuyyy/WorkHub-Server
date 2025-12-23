@@ -22,6 +22,7 @@ public class ReadCsQnaService {
 
     private final CsQnaService csQnaService;
     private final CsPostAccessValidator csPostAccessValidator;
+    private final com.workhub.global.port.AuthorLookupPort authorLookupPort;
 
     /**
      * CS 게시글의 댓글 목록을 계층 구조로 조회한다.
@@ -92,6 +93,10 @@ public class ReadCsQnaService {
                 .map(child -> buildCommentWithChildren(child, childrenMap))
                 .collect(Collectors.toList());
 
-        return CsQnaResponse.from(comment).withChildren(childResponses);
+        String authorName = authorLookupPort.findByUserId(comment.getUserId())
+                .map(profile -> profile.userName())
+                .orElse(null);
+
+        return CsQnaResponse.from(comment, authorName).withChildren(childResponses);
     }
 }

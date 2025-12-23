@@ -5,6 +5,7 @@ import com.workhub.cs.dto.csQna.CsQnaResponse;
 import com.workhub.cs.entity.CsPost;
 import com.workhub.cs.entity.CsQna;
 import com.workhub.cs.service.CsPostAccessValidator;
+import com.workhub.global.port.AuthorLookupPort;
 import com.workhub.global.entity.ActionType;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
@@ -20,6 +21,7 @@ public class CreateCsQnaService {
     private final CsQnaService csQnaService;
     private final CsPostAccessValidator csPostAccessValidator;
     private final CsQnaNotificationService csQnaNotificationService;
+    private final AuthorLookupPort authorLookupPort;
 
     public CsQnaResponse create(Long projectId, Long csPostId, Long userId, CsQnaRequest csQnaRequest) {
 
@@ -37,7 +39,10 @@ public class CreateCsQnaService {
         Long parentAuthor = parentQnaId != null ? csQnaService.findById(parentQnaId).getUserId() : null;
         csQnaNotificationService.notifyCreated(projectId, csPostId, csQna.getCsQnaId(), csPost.getUserId(), parentAuthor);
 
-        return CsQnaResponse.from(csQna);
+        String authorName = authorLookupPort.findByUserId(userId)
+                .map(profile -> profile.userName())
+                .orElse(null);
+        return CsQnaResponse.from(csQna, authorName);
     }
 
     /**

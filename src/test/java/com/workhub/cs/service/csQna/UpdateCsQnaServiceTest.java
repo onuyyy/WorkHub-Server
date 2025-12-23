@@ -4,6 +4,8 @@ import com.workhub.cs.dto.csQna.CsQnaResponse;
 import com.workhub.cs.dto.csQna.CsQnaUpdateRequest;
 import com.workhub.cs.entity.CsQna;
 import com.workhub.cs.service.CsPostAccessValidator;
+import com.workhub.global.port.AuthorLookupPort;
+import com.workhub.global.port.dto.AuthorProfile;
 import com.workhub.global.entity.ActionType;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
@@ -28,6 +30,9 @@ class UpdateCsQnaServiceTest {
     @Mock
     private CsPostAccessValidator csPostAccessValidator;
 
+    @Mock
+    private AuthorLookupPort authorLookupPort;
+
     @InjectMocks
     private UpdateCsQnaService updateCsQnaService;
 
@@ -47,6 +52,7 @@ class UpdateCsQnaServiceTest {
 
         when(csQnaService.findByCsQnaAndMatchedUserId(csQnaId, userId))
                 .thenReturn(existing);
+        when(authorLookupPort.findByUserId(userId)).thenReturn(java.util.Optional.of(new AuthorProfile(userId, "author")));
 
         CsQnaUpdateRequest request = new CsQnaUpdateRequest("수정된 내용");
 

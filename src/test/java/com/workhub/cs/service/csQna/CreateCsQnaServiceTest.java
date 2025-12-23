@@ -5,6 +5,8 @@ import com.workhub.cs.dto.csQna.CsQnaResponse;
 import com.workhub.cs.entity.CsPost;
 import com.workhub.cs.entity.CsQna;
 import com.workhub.cs.service.CsPostAccessValidator;
+import com.workhub.global.port.AuthorLookupPort;
+import com.workhub.global.port.dto.AuthorProfile;
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
 import org.junit.jupiter.api.DisplayName;
@@ -31,6 +33,9 @@ class CreateCsQnaServiceTest {
     @Mock
     private CsQnaNotificationService csQnaNotificationService;
 
+    @Mock
+    private AuthorLookupPort authorLookupPort;
+
     @InjectMocks
     private CreateCsQnaService createCsQnaService;
 
@@ -53,6 +58,7 @@ class CreateCsQnaServiceTest {
         when(csPostAccessValidator.validateProjectAndGetPost(projectId, csPostId))
                 .thenReturn(CsPost.builder().csPostId(csPostId).projectId(projectId).userId(1L).title("t").content("c").build());
         when(csQnaService.save(any(CsQna.class))).thenReturn(saved);
+        when(authorLookupPort.findByUserId(userId)).thenReturn(java.util.Optional.of(new AuthorProfile(userId, "author")));
 
         CsQnaResponse response = createCsQnaService.create(projectId, csPostId, userId, request);
 

@@ -4,6 +4,8 @@ import com.workhub.cs.dto.csQna.CsQnaResponse;
 import com.workhub.cs.entity.CsPost;
 import com.workhub.cs.entity.CsQna;
 import com.workhub.cs.service.CsPostAccessValidator;
+import com.workhub.global.port.AuthorLookupPort;
+import com.workhub.global.port.dto.AuthorProfile;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.anyLong;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -32,6 +35,9 @@ class ReadCsQnaServiceTest {
 
     @Mock
     private CsPostAccessValidator csPostAccessValidator;
+
+    @Mock
+    private AuthorLookupPort authorLookupPort;
 
     @InjectMocks
     private ReadCsQnaService readCsQnaService;
@@ -75,6 +81,8 @@ class ReadCsQnaServiceTest {
                 .thenReturn(CsPost.builder().csPostId(csPostId).projectId(projectId).userId(1L).title("t").content("c").build());
         when(csQnaService.findAllByCsPostId(csPostId)).thenReturn(allComments);
         when(csQnaService.findCsQnasWithReplies(csPostId, pageable)).thenReturn(mockPage);
+        when(authorLookupPort.findByUserId(anyLong()))
+                .thenAnswer(invocation -> java.util.Optional.of(new AuthorProfile(invocation.getArgument(0), "user" + invocation.getArgument(0))));
 
         Page<CsQnaResponse> result = readCsQnaService.findCsQnas(projectId, csPostId, pageable);
 
@@ -129,6 +137,8 @@ class ReadCsQnaServiceTest {
                 .thenReturn(CsPost.builder().csPostId(csPostId).projectId(projectId).userId(1L).title("t").content("c").build());
         when(csQnaService.findAllByCsPostId(csPostId)).thenReturn(topLevelComments);
         when(csQnaService.findCsQnasWithReplies(csPostId, pageable)).thenReturn(mockPage);
+        when(authorLookupPort.findByUserId(anyLong()))
+                .thenAnswer(invocation -> java.util.Optional.of(new AuthorProfile(invocation.getArgument(0), "user" + invocation.getArgument(0))));
 
         Page<CsQnaResponse> result = readCsQnaService.findCsQnas(projectId, csPostId, pageable);
 
@@ -150,6 +160,7 @@ class ReadCsQnaServiceTest {
                 .thenReturn(CsPost.builder().csPostId(csPostId).projectId(projectId).userId(1L).title("t").content("c").build());
         when(csQnaService.findAllByCsPostId(csPostId)).thenReturn(List.of());
         when(csQnaService.findCsQnasWithReplies(csPostId, pageable)).thenReturn(emptyPage);
+        // authorLookupPort 호출되지 않음(댓글 없음)
 
         Page<CsQnaResponse> result = readCsQnaService.findCsQnas(projectId, csPostId, pageable);
 
@@ -192,6 +203,8 @@ class ReadCsQnaServiceTest {
                 .thenReturn(CsPost.builder().csPostId(csPostId).projectId(projectId).userId(1L).title("t").content("c").build());
         when(csQnaService.findAllByCsPostId(csPostId)).thenReturn(allComments);
         when(csQnaService.findCsQnasWithReplies(csPostId, pageable)).thenReturn(mockPage);
+        when(authorLookupPort.findByUserId(anyLong()))
+                .thenAnswer(invocation -> java.util.Optional.of(new AuthorProfile(invocation.getArgument(0), "user" + invocation.getArgument(0))));
 
         Page<CsQnaResponse> result = readCsQnaService.findCsQnas(projectId, csPostId, pageable);
 
@@ -228,6 +241,8 @@ class ReadCsQnaServiceTest {
                 .thenReturn(CsPost.builder().csPostId(csPostId).projectId(projectId).userId(1L).title("t").content("c").build());
         when(csQnaService.findAllByCsPostId(csPostId)).thenReturn(allComments);
         when(csQnaService.findCsQnasWithReplies(csPostId, pageable)).thenReturn(mockPage);
+        when(authorLookupPort.findByUserId(anyLong()))
+                .thenAnswer(invocation -> java.util.Optional.of(new AuthorProfile(invocation.getArgument(0), "user" + invocation.getArgument(0))));
 
         Page<CsQnaResponse> result = readCsQnaService.findCsQnas(projectId, csPostId, pageable);
 

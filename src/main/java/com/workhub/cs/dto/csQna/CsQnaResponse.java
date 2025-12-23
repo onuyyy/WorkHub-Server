@@ -10,17 +10,19 @@ public record CsQnaResponse(
         Long csQnaId,
         Long csPostId,
         Long userId,
+        String userName,
         Long parentQnaId,
         String qnaContent,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
         List<CsQnaResponse> children
 ) {
-    public static CsQnaResponse from(CsQna csQna) {
+    public static CsQnaResponse from(CsQna csQna, String userName) {
         return new CsQnaResponse(
                 csQna.getCsQnaId(),
                 csQna.getCsPostId(),
                 csQna.getUserId(),
+                userName,
                 csQna.getParentQnaId(),
                 csQna.getQnaContent(),
                 csQna.getCreatedAt(),
@@ -34,6 +36,7 @@ public record CsQnaResponse(
                 csQnaId,
                 csPostId,
                 userId,
+                userName,
                 parentQnaId,
                 qnaContent,
                 createdAt,
