@@ -86,6 +86,9 @@ public class ProjectNode extends BaseTimeEntity {
         if(request.title() != null){
             this.title = request.title();
         }
+        if(request.nodeCategory() != null){
+            this.nodeCategory = request.nodeCategory();
+        }
         if(request.description() != null){
             this.description = request.description();
         }
@@ -108,6 +111,7 @@ public class ProjectNode extends BaseTimeEntity {
     public static ProjectNode of(Long projectId, CreateNodeRequest request, Integer nodeOrder) {
         return ProjectNode.builder()
                 .title(request.title())
+                .nodeCategory(request.nodeCategory())
                 .description(request.description())
                 .nodeStatus(NodeStatus.NOT_STARTED)
                 .contractStartDate(request.startDate())

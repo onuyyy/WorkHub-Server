@@ -3,6 +3,7 @@ package com.workhub.projectNode.dto;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.workhub.project.dto.response.DevMembers;
 import com.workhub.projectNode.entity.ConfirmStatus;
+import com.workhub.projectNode.entity.NodeCategory;
 import com.workhub.projectNode.entity.NodeStatus;
 import com.workhub.projectNode.entity.ProjectNode;
 import com.workhub.userTable.entity.UserTable;
@@ -17,6 +18,7 @@ public record NodeResponse(
         Long projectId,
         Long projectNodeId,
         String title,
+        NodeCategory nodeCategory,
         String description,
         NodeStatus nodeStatus,
         ConfirmStatus confirmStatus,
@@ -35,6 +37,7 @@ public record NodeResponse(
                 .projectId(projectNode.getProjectId())
                 .projectNodeId(projectNode.getProjectNodeId())
                 .title(projectNode.getTitle())
+                .nodeCategory(projectNode.getNodeCategory())
                 .description(projectNode.getDescription())
                 .nodeStatus(projectNode.getNodeStatus())
                 .confirmStatus(projectNode.getConfirmStatus())

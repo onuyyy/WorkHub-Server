@@ -6,6 +6,7 @@ import com.workhub.project.entity.Project;
 import com.workhub.project.entity.Status;
 import com.workhub.projectNode.dto.CreateNodeRequest;
 import com.workhub.projectNode.dto.CreateNodeResponse;
+import com.workhub.projectNode.entity.NodeCategory;
 import com.workhub.projectNode.entity.NodeStatus;
 import com.workhub.projectNode.entity.ProjectNode;
 import com.workhub.projectNode.event.ProjectNodeCreatedEvent;
@@ -63,6 +64,7 @@ class CreateProjectNodeServiceTest {
         // Test data
         request = new CreateNodeRequest(
                 "테스트 노드",
+                NodeCategory.DEVELOPMENT,
                 "테스트 설명",
                 10L,
                 LocalDate.now(),
