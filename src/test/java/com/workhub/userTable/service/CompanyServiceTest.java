@@ -17,6 +17,11 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -110,19 +115,21 @@ class CompanyServiceTest {
     class GetCompanys {
 
         @Test
-        @DisplayName("전체 고객사 목록을 조회한다")
+        @DisplayName("전체 고객사 목록을 페이지로 조회한다")
         void success() {
             Company company = persistedCompany();
-            given(companyRepository.findAllByCompanystatus(CompanyStatus.ACTIVE)).willReturn(List.of(company));
+            Pageable pageable = PageRequest.of(0, 20);
+            Page<Company> companyPage = new PageImpl<>(List.of(company), pageable, 1);
+            given(companyRepository.findAllByCompanystatus(CompanyStatus.ACTIVE, pageable)).willReturn(companyPage);
 
-            List<CompanyListResponse> responses = companyService.getCompanys();
+            Page<CompanyListResponse> responses = companyService.getCompanies(pageable);
 
-            assertThat(responses)
+            assertThat(responses.getContent())
                     .hasSize(1)
                     .first()
                     .isEqualTo(CompanyListResponse.from(company));
 
-            verify(companyRepository).findAllByCompanystatus(CompanyStatus.ACTIVE);
+            verify(companyRepository).findAllByCompanystatus(CompanyStatus.ACTIVE, pageable);
         }
     }
 

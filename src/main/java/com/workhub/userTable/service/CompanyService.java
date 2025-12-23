@@ -10,6 +10,8 @@ import com.workhub.userTable.dto.company.response.CompanyTitleResponse;
 import com.workhub.userTable.entity.Company;
 import com.workhub.userTable.entity.CompanyStatus;
 import com.workhub.userTable.repository.CompanyRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -39,10 +41,9 @@ public class CompanyService {
         }
     }
     @Transactional(readOnly = true)
-    public List<CompanyListResponse> getCompanys() {
-        return companyRepository.findAllByCompanystatus(CompanyStatus.ACTIVE).stream()
-                .map(CompanyListResponse::from)
-                .toList();
+    public Page<CompanyListResponse> getCompanies(Pageable pageable) {
+        Page<Company> companies = companyRepository.findAllByCompanystatus(CompanyStatus.ACTIVE, pageable);
+        return companies.map(CompanyListResponse::from);
     }
 
     @Transactional(readOnly = true)
