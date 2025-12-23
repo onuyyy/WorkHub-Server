@@ -147,7 +147,8 @@ public enum ErrorCode {
     NOT_AUTHORIZED_CHECK_LIST_ITEM_COMMENT_USER(HttpStatus.FORBIDDEN, "CH-019", "댓글 작성자만 수정할 수 있습니다."),
     CHECK_LIST_FILE_MAPPING_NOT_FOUND(HttpStatus.BAD_REQUEST, "CH-020", "요청한 파일 정보를 찾을 수 없습니다."),
     ALREADY_DELETED_CHECK_LIST_ITEM_COMMENT(HttpStatus.BAD_REQUEST, "CH-021", "이미 삭제된 체크리스트 댓글입니다."),
-    CHECK_LIST_TEMPLATE_NOT_FOUND(HttpStatus.NOT_FOUND, "CH-022", "체크리스트 템플릿을 찾을 수 없습니다.");
+    CHECK_LIST_TEMPLATE_NOT_FOUND(HttpStatus.NOT_FOUND, "CH-022", "체크리스트 템플릿을 찾을 수 없습니다."),
+    CHECK_LIST_OPTION_NOT_SELECTED(HttpStatus.BAD_REQUEST, "CH-023", "동의하려면 최소 1개의 옵션을 선택해야 합니다.");
 
     private final HttpStatus httpStatus;
     private final String errorCode;

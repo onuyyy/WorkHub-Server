@@ -220,4 +220,35 @@ public interface CheckListApi {
             @PathVariable Long checkListItemId,
             @RequestParam(required = false) CheckListItemStatus status
     );
+
+    @Operation(
+            summary = "체크리스트 옵션 선택 토글",
+            description = "클라이언트가 체크리스트 옵션의 선택 상태를 토글합니다. (true ↔ false)",
+            parameters = {
+                    @Parameter(name = "projectId", description = "프로젝트 식별자", in = ParameterIn.PATH, required = true),
+                    @Parameter(name = "nodeId", description = "노드 식별자", in = ParameterIn.PATH, required = true),
+                    @Parameter(name = "checkListId", description = "체크리스트 식별자", in = ParameterIn.PATH, required = true),
+                    @Parameter(name = "checkListItemId", description = "체크리스트 항목 식별자", in = ParameterIn.PATH, required = true),
+                    @Parameter(name = "optionId", description = "체크리스트 옵션 식별자", in = ParameterIn.PATH, required = true)
+            }
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "옵션 선택 상태 토글 성공",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = Boolean.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한이 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "체크리스트 또는 옵션을 찾을 수 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류")
+    })
+    @PatchMapping(value = "/nodes/{nodeId}/checkLists/{checkListId}/items/{checkListItemId}/options/{optionId}/toggle", produces = MediaType.APPLICATION_JSON_VALUE)
+    ResponseEntity<ApiResponse<Boolean>> toggleOptionSelection(
+            @PathVariable Long projectId,
+            @PathVariable Long nodeId,
+            @PathVariable Long checkListId,
+            @PathVariable Long checkListItemId,
+            @PathVariable Long optionId
+    );
 }

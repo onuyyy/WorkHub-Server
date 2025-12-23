@@ -319,8 +319,17 @@ class UpdateCheckListServiceTest {
                 .status(CheckListItemStatus.PENDING)
                 .build();
 
+        CheckListOption selectedOption = CheckListOption.builder()
+                .checkListOptionId(1000L)
+                .checkListItemId(itemId)
+                .optionContent("선택된 옵션")
+                .optionOrder(1)
+                .isSelected(true)
+                .build();
+
         given(checkListService.findById(checkListId)).willReturn(checkList);
         given(checkListService.findCheckListItem(itemId)).willReturn(item);
+        given(checkListService.findOptionsByCheckListItemId(itemId)).willReturn(List.of(selectedOption));
 
         // when
         CheckListItemStatus result = updateCheckListService.updateStatus(
@@ -339,6 +348,47 @@ class UpdateCheckListServiceTest {
         verify(checkListAccessValidator).chekProjectClientMember(projectId);
         verify(checkListService).snapShotAndRecordHistory(item, itemId, ActionType.UPDATE);
         verify(eventPublisher).publishEvent(any(CheckListItemStatusChangedEvent.class));
+    }
+
+    @Test
+    @DisplayName("동의 처리 시 선택된 옵션이 없으면 예외가 발생한다")
+    void givenNoSelectedOption_whenUpdateStatusToAgreed_thenThrowsBusinessException() {
+        // given
+        Long projectId = 1L;
+        Long nodeId = 10L;
+        Long checkListId = checkList.getCheckListId();
+        Long itemId = 779L;
+
+        CheckListItem item = CheckListItem.builder()
+                .checkListItemId(itemId)
+                .checkListId(checkListId)
+                .status(CheckListItemStatus.PENDING)
+                .build();
+
+        CheckListOption unselectedOption = CheckListOption.builder()
+                .checkListOptionId(2000L)
+                .checkListItemId(itemId)
+                .optionContent("미선택 옵션")
+                .optionOrder(1)
+                .isSelected(false)
+                .build();
+
+        given(checkListService.findById(checkListId)).willReturn(checkList);
+        given(checkListService.findCheckListItem(itemId)).willReturn(item);
+        given(checkListService.findOptionsByCheckListItemId(itemId)).willReturn(List.of(unselectedOption));
+
+        // when & then
+        assertThatThrownBy(() -> updateCheckListService.updateStatus(
+                projectId,
+                nodeId,
+                checkListId,
+                itemId,
+                CheckListItemStatus.AGREED
+        ))
+                .isInstanceOf(BusinessException.class)
+                .hasMessage(ErrorCode.CHECK_LIST_OPTION_NOT_SELECTED.getMessage());
+
+        verify(checkListService, never()).snapShotAndRecordHistory(item, itemId, ActionType.UPDATE);
     }
 
     @Test

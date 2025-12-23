@@ -134,4 +134,21 @@ public class CheckListController implements CheckListApi {
         return ApiResponse.success(response, "체크리스트 아이템 상태가 입력되었습니다.");
     }
 
+    @Override
+    @PatchMapping("/{checkListId}/items/{checkListItemId}/options/{optionId}/toggle")
+    public ResponseEntity<ApiResponse<Boolean>> toggleOptionSelection(
+            @PathVariable Long projectId,
+            @PathVariable Long nodeId,
+            @PathVariable Long checkListId,
+            @PathVariable Long checkListItemId,
+            @PathVariable Long optionId
+    ) {
+
+        Boolean response = updateCheckListService.toggleOptionSelection(
+                projectId, nodeId, checkListId, checkListItemId, optionId
+        );
+
+        return ApiResponse.success(response, "체크리스트 옵션 선택 상태가 변경되었습니다.");
+    }
+
 }

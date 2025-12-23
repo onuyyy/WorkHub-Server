@@ -435,6 +435,11 @@ public class UpdateCheckListService {
         CheckListItem item = checkListService.findCheckListItem(checkListItemId);
         validateItemBelongsToCheckList(item, checkList.getCheckListId());
 
+        // AGREED로 변경 시 최소 1개의 옵션이 선택되어 있어야 함
+        if (status == CheckListItemStatus.AGREED) {
+            validateAtLeastOneOptionSelected(checkListItemId);
+        }
+
         item.updateStatus(status);
         checkListService.snapShotAndRecordHistory(item, item.getCheckListItemId(), ActionType.UPDATE);
 
@@ -448,6 +453,45 @@ public class UpdateCheckListService {
         ));
 
         return item.getStatus();
+    }
+
+    /**
+     * 체크리스트 옵션 선택 상태 토글
+     */
+    public Boolean toggleOptionSelection(
+            Long projectId,
+            Long nodeId,
+            Long checkListId,
+            Long checkListItemId,
+            Long optionId
+    ) {
+        checkListAccessValidator.validateProjectAndNode(projectId, nodeId);
+        checkListAccessValidator.chekProjectClientMember(projectId);
+
+        CheckList checkList = checkListService.findById(checkListId);
+        CheckListItem item = checkListService.findCheckListItem(checkListItemId);
+        validateItemBelongsToCheckList(item, checkList.getCheckListId());
+
+        CheckListOption option = checkListService.findCheckListOption(optionId);
+        validateOptionBelongs(option, checkListItemId);
+
+        option.toggleSelection();
+
+        return option.getIsSelected();
+    }
+
+    /**
+     * 체크리스트 아이템의 옵션 중 최소 1개가 선택되어 있는지 검증
+     */
+    private void validateAtLeastOneOptionSelected(Long checkListItemId) {
+        List<CheckListOption> options = checkListService.findOptionsByCheckListItemId(checkListItemId);
+
+        boolean hasSelectedOption = options.stream()
+                .anyMatch(CheckListOption::getIsSelected);
+
+        if (!hasSelectedOption) {
+            throw new BusinessException(ErrorCode.CHECK_LIST_OPTION_NOT_SELECTED);
+        }
     }
 
     private Long requireItemId(CheckListItemUpdateRequest request) {

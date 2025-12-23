@@ -29,11 +29,15 @@ public class CheckListOption {
     @Column(name = "check_list_item_id", nullable = false)
     private Long checkListItemId;
 
+    @Column(name = "is_selected", nullable = false)
+    private Boolean isSelected;
+
     public static CheckListOption of(Long checkListItemId, CheckListOptionRequest request) {
         return CheckListOption.builder()
                 .optionContent(request.optionContent())
                 .optionOrder(request.optionOrder())
                 .checkListItemId(checkListItemId)
+                .isSelected(false)
                 .build();
     }
 
@@ -50,6 +54,7 @@ public class CheckListOption {
                 .optionContent(optionContent)
                 .optionOrder(optionOrder)
                 .checkListItemId(checkListItemId)
+                .isSelected(false)
                 .build();
     }
 
@@ -60,5 +65,12 @@ public class CheckListOption {
         if (optionOrder != null) {
             this.optionOrder = optionOrder;
         }
+    }
+
+    /**
+     * 옵션 선택 상태를 토글한다.
+     */
+    public void toggleSelection() {
+        this.isSelected = !this.isSelected;
     }
 }

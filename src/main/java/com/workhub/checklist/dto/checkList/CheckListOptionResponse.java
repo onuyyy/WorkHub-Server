@@ -8,6 +8,7 @@ public record CheckListOptionResponse(
         Long checkListOptionId,
         String optionContent,
         Integer optionOrder,
+        Boolean isSelected,
         List<CheckListOptionFileResponse> files
 ) {
     public static CheckListOptionResponse from(CheckListOption option, List<CheckListOptionFileResponse> files) {
@@ -15,6 +16,7 @@ public record CheckListOptionResponse(
                 option.getCheckListOptionId(),
                 option.getOptionContent(),
                 option.getOptionOrder(),
+                option.getIsSelected(),
                 files
         );
     }

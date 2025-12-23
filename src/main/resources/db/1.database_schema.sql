@@ -350,6 +350,7 @@ CREATE TABLE check_list_option (
     option_content VARCHAR(300) NOT NULL,
     option_order INTEGER NOT NULL,
     check_list_item_id BIGINT NOT NULL,
+    is_selected BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NULL,
     updated_at TIMESTAMP NULL,
     deleted_at TIMESTAMP NULL
