@@ -112,7 +112,7 @@ public class UnifiedHistoryController {
      * @param pageable 페이징 정보 (기본: 10개, updated_at 내림차순)
      * @return 페이징된 히스토리 목록
      */
-    @GetMapping("/api/v1//histories/all")
+    @GetMapping("/api/v1/histories/all")
     public ResponseEntity<ApiResponse<Page<UnifiedHistoryResponse>>> findAllUserHistory(
             @PageableDefault(size = 10, sort = "updatedAt", direction = Sort.Direction.DESC) Pageable pageable
     ) {
