@@ -2,6 +2,10 @@ package com.workhub.userTable.service;
 
 import com.workhub.global.error.ErrorCode;
 import com.workhub.global.error.exception.BusinessException;
+import com.workhub.project.entity.Project;
+import com.workhub.project.entity.Status;
+import com.workhub.project.repository.ClientMemberRepository;
+import com.workhub.project.repository.ProjectRepository;
 import com.workhub.userTable.dto.company.request.CompanyRegisterRequest;
 import com.workhub.userTable.dto.company.response.CompanyDetailResponse;
 import com.workhub.userTable.dto.company.response.CompanyListResponse;
@@ -10,11 +14,12 @@ import com.workhub.userTable.dto.company.response.CompanyTitleResponse;
 import com.workhub.userTable.entity.Company;
 import com.workhub.userTable.entity.CompanyStatus;
 import com.workhub.userTable.repository.CompanyRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.transaction.annotation.Transactional;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -24,6 +29,8 @@ import java.util.stream.Collectors;
 public class CompanyService {
 
     private final CompanyRepository companyRepository;
+    private final ProjectRepository projectRepository;
+    private final ClientMemberRepository clientMemberRepository;
 
     @Transactional
     public CompanyResponse registerCompany(CompanyRegisterRequest request) {
@@ -43,7 +50,30 @@ public class CompanyService {
     @Transactional(readOnly = true)
     public Page<CompanyListResponse> getCompanies(Pageable pageable) {
         Page<Company> companies = companyRepository.findAllByCompanystatus(CompanyStatus.ACTIVE, pageable);
-        return companies.map(CompanyListResponse::from);
+
+        return companies.map(company -> {
+            // 해당 회사의 프로젝트 조회
+            List<Project> projects = projectRepository.findAllByClientCompanyId(company.getCompanyId());
+
+            // IN_PROGRESS와 COMPLETED 카운트
+            long inProgressCount = projects.stream()
+                    .filter(p -> p.getStatus() == Status.IN_PROGRESS)
+                    .count();
+            long completedCount = projects.stream()
+                    .filter(p -> p.getStatus() == Status.COMPLETED)
+                    .count();
+
+            // 활성 클라이언트 멤버 수 조회
+            List<Long> projectIds = projects.stream()
+                    .map(Project::getProjectId)
+                    .toList();
+
+            long clientMemberCount = projectIds.isEmpty() ? 0 :
+                    clientMemberRepository.countByProjectIdInAndRemovedAtIsNull(projectIds);
+
+            // CompanyListResponse 생성
+            return CompanyListResponse.from(company, inProgressCount, completedCount, clientMemberCount);
+        });
     }
 
     @Transactional(readOnly = true)

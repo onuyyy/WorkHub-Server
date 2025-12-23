@@ -11,4 +11,5 @@ public interface ClientMemberRepository extends JpaRepository<ProjectClientMembe
 
     List<ProjectClientMember> findByUserId(Long userId);
     boolean existsByProjectIdAndUserId(Long projectId, Long devMemberId);
+    Long countByProjectIdInAndRemovedAtIsNull(List<Long> projectIds);
 }

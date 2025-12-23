@@ -4,6 +4,7 @@ import com.workhub.global.response.ApiResponse;
 import com.workhub.userTable.api.PasswordResetApi;
 import com.workhub.userTable.dto.user.request.PasswordResetConfirmRequest;
 import com.workhub.userTable.dto.user.request.PasswordResetSendRequest;
+import com.workhub.userTable.dto.user.request.VerifyCodeRequest;
 import com.workhub.userTable.service.PasswordResetService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,6 +24,12 @@ public class PasswordResetController implements PasswordResetApi {
     @PostMapping("/send")
     public ResponseEntity<ApiResponse<Void>> sendResetCode(@Valid @RequestBody PasswordResetSendRequest request) {
         passwordResetService.sendResetCode(request);
+        return ApiResponse.success(null, "비밀번호 재설정 인증 코드가 발송되었습니다.");
+    }
+
+    @PostMapping("/verify")
+    public ResponseEntity<ApiResponse<Void>> verifyCode(@Valid @RequestBody VerifyCodeRequest request) {
+        passwordResetService.verificationCode(request);
         return ApiResponse.success(null, "비밀번호 재설정 인증 코드가 발송되었습니다.");
     }
 
