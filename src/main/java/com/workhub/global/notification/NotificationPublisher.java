@@ -3,6 +3,7 @@ package com.workhub.global.notification;
 import com.workhub.projectNotification.dto.NotificationPublishRequest;
 import com.workhub.projectNotification.entity.NotificationType;
 import com.workhub.projectNotification.service.ProjectNotificationService;
+import com.workhub.global.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -46,7 +47,8 @@ public class NotificationPublisher {
                 .csPostId(csPostId)
                 .title(title)
                 .content(content)
-                .relatedUrl(relatedUrl);
+                .relatedUrl(relatedUrl)
+                .senderUserId(SecurityUtil.getCurrentUserId().orElse(null));
         receivers.forEach(userId -> notificationService.publish(baseRequest.withReceiver(userId)));
     }
 
@@ -70,7 +72,8 @@ public class NotificationPublisher {
         NotificationPublishRequest base = NotificationPublishRequest.forPost(null, type, postId)
                 .title(title)
                 .content(content)
-                .relatedUrl(relatedUrl);
+                .relatedUrl(relatedUrl)
+                .senderUserId(SecurityUtil.getCurrentUserId().orElse(null));
         receivers.forEach(userId -> notificationService.publish(base.withReceiver(userId)));
     }
 
@@ -88,7 +91,8 @@ public class NotificationPublisher {
         NotificationPublishRequest base = NotificationPublishRequest.forComment(null, type, commentId)
                 .title(title)
                 .content(content)
-                .relatedUrl(relatedUrl);
+                .relatedUrl(relatedUrl)
+                .senderUserId(SecurityUtil.getCurrentUserId().orElse(null));
         receivers.forEach(userId -> notificationService.publish(base.withReceiver(userId)));
     }
 
@@ -106,7 +110,8 @@ public class NotificationPublisher {
         NotificationPublishRequest base = NotificationPublishRequest.forProject(null, type, projectId)
                 .title(title)
                 .content(content)
-                .relatedUrl(relatedUrl);
+                .relatedUrl(relatedUrl)
+                .senderUserId(SecurityUtil.getCurrentUserId().orElse(null));
         receivers.forEach(userId -> notificationService.publish(base.withReceiver(userId)));
     }
 
@@ -124,7 +129,8 @@ public class NotificationPublisher {
         NotificationPublishRequest base = NotificationPublishRequest.forProjectNode(null, type, projectNodeId)
                 .title(title)
                 .content(content)
-                .relatedUrl(relatedUrl);
+                .relatedUrl(relatedUrl)
+                .senderUserId(SecurityUtil.getCurrentUserId().orElse(null));
         receivers.forEach(userId -> notificationService.publish(base.withReceiver(userId)));
     }
 
@@ -142,7 +148,8 @@ public class NotificationPublisher {
         NotificationPublishRequest base = NotificationPublishRequest.forCsQna(null, type, csQnaId)
                 .title(title)
                 .content(content)
-                .relatedUrl(relatedUrl);
+                .relatedUrl(relatedUrl)
+                .senderUserId(SecurityUtil.getCurrentUserId().orElse(null));
         receivers.forEach(userId -> notificationService.publish(base.withReceiver(userId)));
     }
 
@@ -160,7 +167,8 @@ public class NotificationPublisher {
         NotificationPublishRequest base = NotificationPublishRequest.forCsPost(null, type, csPostId)
                 .title(title)
                 .content(content)
-                .relatedUrl(relatedUrl);
+                .relatedUrl(relatedUrl)
+                .senderUserId(SecurityUtil.getCurrentUserId().orElse(null));
         receivers.forEach(userId -> notificationService.publish(base.withReceiver(userId)));
     }
 

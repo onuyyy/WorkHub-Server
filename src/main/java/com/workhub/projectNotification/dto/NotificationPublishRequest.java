@@ -19,6 +19,7 @@ public class NotificationPublishRequest {
     private Long commentId;
     private Long csQnaId;
     private Long csPostId;
+    private Long senderUserId;
 
     private NotificationPublishRequest() {}
 
@@ -85,6 +86,7 @@ public class NotificationPublishRequest {
     public NotificationPublishRequest commentId(Long commentId) { this.commentId = commentId; return this; }
     public NotificationPublishRequest csQnaId(Long csQnaId) { this.csQnaId = csQnaId; return this; }
     public NotificationPublishRequest csPostId(Long csPostId) { this.csPostId = csPostId; return this; }
+    public NotificationPublishRequest senderUserId(Long senderUserId) { this.senderUserId = senderUserId; return this; }
 
     public Long receiverId() { return receiverId; }
     public NotificationType type() { return type; }
@@ -97,11 +99,12 @@ public class NotificationPublishRequest {
     public Long commentId() { return commentId; }
     public Long csQnaId() { return csQnaId; }
     public Long csPostId() { return csPostId; }
+    public Long senderUserId() { return senderUserId; }
 
     public ProjectNotification toEntity() {
         return ProjectNotification.of(
                 receiverId, type, title, content, relatedUrl,
-                projectId, projectNodeId, postId, commentId, csQnaId, csPostId
+                projectId, projectNodeId, postId, commentId, csQnaId, csPostId, senderUserId
         );
     }
 
@@ -119,6 +122,7 @@ public class NotificationPublishRequest {
         copy.commentId = this.commentId;
         copy.csQnaId = this.csQnaId;
         copy.csPostId = this.csPostId;
+        copy.senderUserId = this.senderUserId;
         return copy;
     }
 }

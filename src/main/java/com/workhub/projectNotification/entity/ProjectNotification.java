@@ -38,6 +38,9 @@ public class ProjectNotification extends BaseTimeEntity {
     @Column(name = "read_at")
     private LocalDateTime readAt;
 
+    @Column(name = "sender_user_id")
+    private Long senderUserId;
+
     @Column(name = "user_id")
     private Long userId;
 
@@ -78,10 +81,12 @@ public class ProjectNotification extends BaseTimeEntity {
             Long postId,
             Long commentId,
             Long csQnaId,
-            Long csPostId
+            Long csPostId,
+            Long senderUserId
     ) {
         return ProjectNotification.builder()
                 .userId(userId)
+                .senderUserId(senderUserId)
                 .notificationType(type)
                 .title(title)
                 .notificationContent(content)

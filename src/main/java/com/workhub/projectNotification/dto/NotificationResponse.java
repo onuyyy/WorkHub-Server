@@ -17,6 +17,7 @@ public record NotificationResponse(
         Long commentId,
         Long csQnaId,
         Long csPostId,
+        Long senderUserId,
         boolean read,
         LocalDateTime createdAt
 ) {
@@ -33,6 +34,7 @@ public record NotificationResponse(
                 n.getCommentId(),
                 n.getCsQnaId(),
                 n.getCsPostId(),
+                n.getSenderUserId(),
                 n.getReadAt() != null,
                 n.getCreatedAt()
         );
