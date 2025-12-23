@@ -80,7 +80,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/projects/*/nodes/*").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/projects/*/nodes/list").authenticated()
                         .requestMatchers("/api/v1/projects/*/nodes/{nodeId}/confirm").authenticated()
-                        .requestMatchers("/api/v1/projects/*/nodes/**").hasAnyRole("DEVELOPER", "ADMIN")
+                        .requestMatchers("/api/v1/projects/*/nodes/**").hasAnyRole("DEVELOPER", "CLIENT", "ADMIN")
 
                         .requestMatchers("/api/v1/notifications/**").authenticated()
 
