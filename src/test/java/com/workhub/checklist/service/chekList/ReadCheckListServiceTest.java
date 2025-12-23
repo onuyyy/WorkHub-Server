@@ -11,6 +11,8 @@ import com.workhub.checklist.entity.checkList.CheckListOptionFile;
 import com.workhub.checklist.service.CheckListAccessValidator;
 import com.workhub.checklist.service.checkList.CheckListService;
 import com.workhub.checklist.service.checkList.ReadCheckListService;
+import com.workhub.userTable.dto.user.response.UserDetailResponse;
+import com.workhub.userTable.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -32,6 +34,9 @@ class ReadCheckListServiceTest {
 
     @Mock
     private CheckListAccessValidator checkListAccessValidator;
+
+    @Mock
+    private UserService userService;
 
     @InjectMocks
     private ReadCheckListService readCheckListService;
@@ -78,7 +83,13 @@ class ReadCheckListServiceTest {
 
         CheckListDetails details = new CheckListDetails(checkList, List.of(item), List.of(option), List.of(file));
 
-        CheckListUserInfo userInfo = CheckListUserInfo.of("홍길동", "010-0000-0000");
+        UserDetailResponse userDetailResponse = UserDetailResponse.builder()
+                .userId(10L)
+                .userName("홍길동")
+                .phone("010-0000-0000")
+                .build();
+
+        CheckListUserInfo userInfo = CheckListUserInfo.of(userDetailResponse);
 
         CheckListResponse expectedResponse = new CheckListResponse(
                 checkListId,
@@ -92,7 +103,7 @@ class ReadCheckListServiceTest {
 
         when(checkListService.findByNodeId(nodeId)).thenReturn(checkList);
         when(checkListService.findCheckListDetailsById(checkListId)).thenReturn(details);
-        when(checkListService.resolveUserInfo(checkList.getUserId())).thenReturn(userInfo);
+        when(userService.getUser(checkList.getUserId())).thenReturn(userDetailResponse);
         when(checkListService.buildResponse(details, userInfo)).thenReturn(expectedResponse);
 
         // when
@@ -106,7 +117,7 @@ class ReadCheckListServiceTest {
         verify(checkListAccessValidator).checkProjectMemberOrAdmin(projectId);
         verify(checkListService).findByNodeId(nodeId);
         verify(checkListService).findCheckListDetailsById(checkListId);
-        verify(checkListService).resolveUserInfo(checkList.getUserId());
+        verify(userService).getUser(checkList.getUserId());
         verify(checkListService).buildResponse(details, userInfo);
     }
 }
