@@ -20,20 +20,20 @@ public record CompanyListResponse (
     @Builder
     public record ProjectOverview (
             Long inProgressProject,
-            Long completeProject,
+            Long totalProject,
             Long clientMember
     ) {
-        public static ProjectOverview of(Long inProgressProject, Long completeProject, Long clientMember) {
+        public static ProjectOverview of(Long inProgressProject, Long totalProject, Long clientMember) {
             return ProjectOverview.builder()
                     .inProgressProject(inProgressProject)
-                    .completeProject(completeProject)
+                    .totalProject(totalProject)
                     .clientMember(clientMember)
                     .build();
         }
     }
 
-    public static CompanyListResponse from(Company company, Long inProgressCount, Long completedCount, Long clientMemberCount){
-        ProjectOverview projectOverview = ProjectOverview.of(inProgressCount, completedCount, clientMemberCount);
+    public static CompanyListResponse from(Company company, Long inProgressCount, Long totalProjectCount, Long clientMemberCount){
+        ProjectOverview projectOverview = ProjectOverview.of(inProgressCount, totalProjectCount, clientMemberCount);
 
         return CompanyListResponse.builder()
                 .companyId(company.getCompanyId())

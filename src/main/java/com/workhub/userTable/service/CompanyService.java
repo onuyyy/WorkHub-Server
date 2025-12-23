@@ -56,13 +56,11 @@ public class CompanyService {
             // 해당 회사의 프로젝트 조회
             List<Project> projects = projectRepository.findAllByClientCompanyId(company.getCompanyId());
 
-            // IN_PROGRESS와 COMPLETED 카운트
+            // IN_PROGRESS와 총 프로젝트 카운트
             long inProgressCount = projects.stream()
                     .filter(p -> p.getStatus() == Status.IN_PROGRESS)
                     .count();
-            long completedCount = projects.stream()
-                    .filter(p -> p.getStatus() == Status.COMPLETED)
-                    .count();
+            long totalProjectCount = projects.size();
 
             // 활성 클라이언트 멤버 수 조회 (company_id 기준)
             long clientMemberCount = userRepository.countByCompanyIdAndRoleAndStatus(
@@ -72,7 +70,7 @@ public class CompanyService {
             );
 
             // CompanyListResponse 생성
-            return CompanyListResponse.from(company, inProgressCount, completedCount, clientMemberCount);
+            return CompanyListResponse.from(company, inProgressCount, totalProjectCount, clientMemberCount);
         });
     }
 
