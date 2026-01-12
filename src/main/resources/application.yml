@@ -5,3 +5,55 @@ spring:
   profiles:
     active: dev
     include: secret  # 민감한 정보를 application-secret.yml에서 로드
+
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+
+  datasource:
+    hikari:
+      maximum-pool-size: 60  # 최대 커넥션 수
+      minimum-idle: 10       # 최소 유휴 커넥션
+      connection-timeout: 30000  # 커넥션 대기 시간 (30초)
+      idle-timeout: 600000   # 유휴 커넥션 유지 시간 (10분)
+      max-lifetime: 1800000  # 커넥션 최대 수명 (30분)
+      leak-detection-threshold: 60000  # 커넥션 누수 감지 (1분)
+
+server:
+  forward-headers-strategy: framework  # Nginx X-Forwarded 헤더 인식
+  servlet:
+    session:
+      cookie:
+        same-site: none  # 크로스 오리진 요청에서 쿠키 전송 허용
+        secure: true     # HTTPS에서만 쿠키 전송 (same-site=none일 때 필수)
+
+file:
+  upload:
+    max-size: 52428800  #  50MB
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    # Publish latency histograms for HTTP requests so Prometheus/Grafana can calculate response-time percentiles
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      slo:
+        http.server.requests: 50ms, 100ms, 250ms, 500ms, 1s, 3s, 5s
+  prometheus:
+    metrics:
+      export:
+        enabled: true

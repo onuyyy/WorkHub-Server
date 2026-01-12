@@ -1,26 +1,49 @@
 spring:
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: workhub.devteam@gmail.com
+    password: ${SMTP_PASSWORD}
+    properties:
+      mail.smtp.starttls.enable: true
+      mail.smtp.auth: true
+
+  cloud:
+    aws:
+      region:
+        static: ap-northeast-2
+      credentials:
+        instance-profile: true
+      s3:
+        bucket: bucket-workhub
+
   # Database Configuration
   datasource:
-    url: jdbc:postgresql://localhost:5432/workhub
-    username: workhub
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   # JPA Configuration
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     show-sql: true
     properties:
       hibernate:
         format_sql: true
         default_batch_fetch_size: 100
+        javax:
+          persistence:
+            schema-generation:
+              create-source: metadata
     database-platform: org.hibernate.dialect.PostgreSQLDialect
 
   # Redis Configuration
-  data:
-    redis:
-      host: localhost
-      port: 6379
+#  data:
+#    redis:
+#      host: redis
+#      port: 6379
 
 # Logging Configuration
 logging:
@@ -28,6 +51,12 @@ logging:
     com.workhub: DEBUG
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n'
+  file:
+    name: /app/logs/workhub.log
+    max-size: 100MB
+    max-history: 30
 
 # Server Configuration
 server:
@@ -35,3 +64,14 @@ server:
   servlet:
     session:
       timeout: 30m  # 세션 타임아웃 30분
+
+# Swagger/OpenAPI Configuration
+springdoc:
+  swagger-ui:
+    servers:
+      - url: https://workhub.o-r.kr
+        description: 운영 서버 (HTTPS)
+
+workhub:
+  mail:
+    verification-expiry-minutes: 10

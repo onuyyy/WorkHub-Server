@@ -1,0 +1,24 @@
+package com.workhub.userTable.repository;
+
+import com.workhub.userTable.entity.Company;
+import com.workhub.userTable.entity.CompanyStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.List;
+import java.util.Optional;
+
+public interface CompanyRepository extends JpaRepository<Company, Long> {
+    boolean existsByCompanyNumber(String companyNumber);
+
+    List<Company> findAllByCompanystatus(CompanyStatus status);
+
+    Page<Company> findAllByCompanystatus(CompanyStatus status, Pageable pageable);
+
+    Optional<Company> findByCompanyIdAndCompanystatus(Long companyId, CompanyStatus status);
+
+    List<Company> findAllByCompanyIdInAndCompanystatus(List<Long> companyIds, CompanyStatus status);
+
+    Long countByCompanystatus(CompanyStatus status);
+}

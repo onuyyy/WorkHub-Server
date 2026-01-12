@@ -1,0 +1,93 @@
+package com.workhub.userTable.controller;
+
+import com.workhub.file.service.UpdateProfileService;
+import com.workhub.global.response.ApiResponse;
+import com.workhub.global.security.CustomUserDetails;
+import com.workhub.userTable.api.UserApi;
+import com.workhub.userTable.dto.email.EmailVerificationConfirmRequest;
+import com.workhub.userTable.dto.user.request.UpdatePhoneRequest;
+import com.workhub.userTable.dto.user.request.UserLoginRecord;
+import com.workhub.userTable.dto.user.request.UserPasswordChangeRequest;
+import com.workhub.userTable.dto.user.response.LoginResult;
+import com.workhub.userTable.dto.user.response.UserLoginResponse;
+import com.workhub.userTable.service.UpdateUserService;
+import com.workhub.userTable.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
+@RestController
+@RequestMapping("/api/v1/users")
+@RequiredArgsConstructor
+public class UserController implements UserApi {
+
+    private final UserService userService;
+    private final UpdateProfileService profileService;
+    private final UpdateUserService updateUserService;
+
+
+    @PostMapping("/login")
+    @Override
+    public ResponseEntity<ApiResponse<UserLoginResponse>> login(@RequestBody UserLoginRecord userLoginRecord,
+                                                                HttpServletRequest request) {
+
+        // 서비스에서 실제 인증 (authenticationManager.authenticate 호출) 및 로그인 응답 생성
+        LoginResult loginResult = userService.login(userLoginRecord);
+        Authentication authentication = loginResult.authentication();
+
+        // SecurityContext 생성해서 Authentication 넣기
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(authentication);
+        SecurityContextHolder.setContext(context);
+
+        // 세션에 SecurityContext 저장 → 다음 요청에서도 인증 유지
+        HttpSession session = request.getSession(true);
+        session.setAttribute(
+                HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY,
+                context
+        );
+
+        return ApiResponse.success(loginResult.user(), "로그인 성공");
+    }
+
+    @PatchMapping("/auth/passwordReset/confirm")
+    @Override
+    public ResponseEntity<ApiResponse<String>> updatePassword(@AuthenticationPrincipal CustomUserDetails userDetails,
+                                                              @Valid @RequestBody UserPasswordChangeRequest passwordUpdateDto) {
+        userService.changePassword(userDetails.getUserId(), passwordUpdateDto);
+        return ApiResponse.success("비밀번호 재설정 완료", "비밀번호 재설정 요청 성공");
+    }
+
+    @PatchMapping("/profile")
+    @Override
+    public ResponseEntity<ApiResponse<String>> updateProfile(@RequestPart("file") MultipartFile file) {
+
+        String profile = profileService.updateProfile(file);
+        return ApiResponse.success(profile);
+
+    }
+
+    @PostMapping("/confirm")
+    public ResponseEntity<ApiResponse<String>> confirm(
+            @RequestBody @Valid EmailVerificationConfirmRequest request ) {
+
+        updateUserService.verifyCodeAndUpdateEmail(request);
+        return ApiResponse.success("이메일 변경 완료");
+    }
+
+    @PatchMapping("/phone")
+    public ResponseEntity<ApiResponse<String>> updatePhone(@RequestBody UpdatePhoneRequest request) {
+
+        updateUserService.updatePhone(request);
+        return ApiResponse.success("전화번호 변경 성공");
+    }
+}

@@ -1,0 +1,168 @@
+package com.workhub.cs.service.csPost;
+
+import com.workhub.cs.entity.CsPost;
+import com.workhub.cs.entity.CsPostFile;
+import com.workhub.global.error.ErrorCode;
+import com.workhub.global.error.exception.BusinessException;
+import com.workhub.global.history.HistoryRecorder;
+import com.workhub.global.util.SecurityUtil;
+import com.workhub.project.entity.Project;
+import com.workhub.project.entity.Status;
+import com.workhub.project.service.ProjectService;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockedStatic;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+class DeleteCsPostServiceTest {
+
+    @Mock
+    private CsPostService csPostService;
+
+    @Mock
+    private ProjectService projectService;
+
+    @Mock
+    private HistoryRecorder historyRecorder;
+
+    @InjectMocks
+    private DeleteCsPostService deleteCsPostService;
+
+    private CsPost mockSaved;
+    private CsPostFile mockFile;
+    private MockedStatic<SecurityUtil> securityUtil;
+
+    @BeforeEach
+    void init() {
+        mockSaved = CsPost.builder()
+                .csPostId(1L)
+                .projectId(1L)
+                .userId(2L)
+                .title("문의 제목")
+                .content("문의 내용")
+                .build();
+
+        mockFile = CsPostFile.builder()
+                .csPostFileId(10L)
+                .csPostId(mockSaved.getCsPostId())
+                .fileName("첨부파일")
+                .fileOrder(1)
+                .build();
+
+        securityUtil = mockStatic(SecurityUtil.class);
+        securityUtil.when(() -> SecurityUtil.hasRole("ADMIN")).thenReturn(false);
+    }
+
+    @AfterEach
+    void tearDown() {
+        if (securityUtil != null) {
+            securityUtil.close();
+        }
+    }
+
+    @Test
+    @DisplayName("CS POST 게시글이 정상적으로 삭제된다.")
+    void givenDeleteCsPost_whenDelete_thenSuccess() {
+        Long projectId = 1L;
+        Long csPostId = 1L;
+
+        mockProjectLookup(projectId);
+        when(csPostService.findById(csPostId)).thenReturn(mockSaved);
+        when(csPostService.findFilesByCsPostId(csPostId)).thenReturn(List.of(mockFile));
+
+        deleteCsPostService.delete(projectId, csPostId, mockSaved.getUserId());
+
+        assertThat(mockSaved.getDeletedAt()).isNotNull();
+        assertThat(mockFile.isDeleted()).isTrue();
+        verify(projectService).validateCompletedProject(projectId);
+        verify(csPostService).findById(csPostId);
+        verify(csPostService).findFilesByCsPostId(csPostId);
+    }
+
+    @Test
+    @DisplayName("CS POST 게시글 삭제시 예외 처리")
+    void givenNotExistsCsPost_whenDelete_thenThrowNotFound() {
+        Long projectId = 1L;
+        Long csPostId = 1L;
+
+        mockProjectLookup(projectId);
+        when(csPostService.findById(csPostId)).thenThrow(new BusinessException(ErrorCode.NOT_EXISTS_CS_POST));
+
+        assertThatThrownBy(() -> deleteCsPostService.delete(projectId, csPostId, mockSaved.getUserId()))
+                .isInstanceOf(BusinessException.class);
+
+        verify(projectService).validateCompletedProject(projectId);
+    }
+
+    @Test
+    @DisplayName("이미 삭제된 게시글 삭제 시 예외 발생")
+    void givenAlreadyDeletedPost_whenDelete_thenThrow() {
+        Long projectId = 1L;
+        Long csPostId = 1L;
+
+        mockProjectLookup(projectId);
+        mockSaved.markDeleted();
+        when(csPostService.findById(csPostId)).thenReturn(mockSaved);
+
+        assertThatThrownBy(() -> deleteCsPostService.delete(projectId, csPostId, mockSaved.getUserId()))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.ALREADY_DELETED_CS_POST);
+
+        verify(projectService).validateCompletedProject(projectId);
+    }
+
+    @Test
+    @DisplayName("작성자나 관리자가 아니면 CS POST 삭제 권한 예외")
+    void givenUnauthorizedUser_whenDelete_thenThrowForbidden() {
+        Long projectId = 1L;
+        Long csPostId = 1L;
+
+        mockProjectLookup(projectId);
+        when(csPostService.findById(csPostId)).thenReturn(mockSaved);
+
+        assertThatThrownBy(() -> deleteCsPostService.delete(projectId, csPostId, 999L))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.FORBIDDEN_CS_POST_DELETE);
+
+        verify(projectService).validateCompletedProject(projectId);
+    }
+
+    @Test
+    @DisplayName("관리자는 다른 사용자의 CS POST도 삭제 가능")
+    void givenAdmin_whenDeleteOtherUsersPost_thenSuccess() {
+        Long projectId = 1L;
+        Long csPostId = 1L;
+
+        mockProjectLookup(projectId);
+        when(csPostService.findById(csPostId)).thenReturn(mockSaved);
+        when(csPostService.findFilesByCsPostId(csPostId)).thenReturn(List.of(mockFile));
+        securityUtil.when(() -> SecurityUtil.hasRole("ADMIN")).thenReturn(true);
+
+        deleteCsPostService.delete(projectId, csPostId, 999L);
+
+        assertThat(mockSaved.getDeletedAt()).isNotNull();
+        verify(projectService).validateCompletedProject(projectId);
+    }
+
+    private void mockProjectLookup(Long projectId) {
+        when(projectService.validateCompletedProject(projectId)).thenReturn(
+                Project.builder()
+                        .projectId(projectId)
+                        .projectTitle("project")
+                        .status(Status.COMPLETED)
+                        .build()
+        );
+    }
+}

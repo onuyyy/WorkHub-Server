@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+      - dev
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: workhub
+          POSTGRES_USER: workhub
+          POSTGRES_PASSWORD: ${{ secrets.CI_DB_PASSWORD }}
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U workhub -d workhub"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      SPRING_PROFILES_ACTIVE: test
+      TEST_DB_URL: jdbc:postgresql://localhost:5432/workhub
+      TEST_DB_USERNAME: workhub
+      TEST_DB_PASSWORD: ${{ secrets.CI_DB_PASSWORD }}
+      TEST_REDIS_HOST: localhost
+      TEST_REDIS_PORT: 6379
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Grant Gradle execute permission
+        run: chmod +x ./gradlew
+
+      - name: Run tests
+        run: ./gradlew clean test --build-cache
+
+      - name: Upload Test Report (if tests failed)
+        uses: actions/upload-artifact@v4 # 아티팩트 업로드 액션 사용
+        if: always() # 테스트가 실패했더라도 이 단계는 항상 실행되도록 설정
+        with:
+          name: test-reports-${{ github.sha }} # 아티팩트 파일 이름 (고유 ID 포함)
+          path: build/reports/tests/test/ # 업로드할 리포트 파일 디렉토리 경로
+          retention-days: 7 # 아티팩트 보존 기간 (선택 사항)

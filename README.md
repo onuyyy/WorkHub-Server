@@ -1,4 +1,17 @@
-# Work Hub
+# Work Hub 개발 가이드라인
+
+## 목차
+1. [프로젝트 개요](#1-프로젝트-개요)
+2. [기술 스택](#2-기술-스택)
+3. [프로젝트 구조](#3-프로젝트-구조)
+4. [공통 응답 형식](#4-공통-응답-형식)
+5. [예외 처리](#5-예외-처리)
+6. [API 설계 규칙](#6-api-설계-규칙)
+7. [코드 컨벤션](#7-코드-컨벤션)
+8. [Git 전략](#8-git-전략)
+9. [PR/코드 리뷰 프로세스](#9-pr코드-리뷰-프로세스)
+10. [기타 참고사항](#10-기타-참고사항)
+11. [로그 관리](#11-로그-관리)
 
 웹 개발사와 고객사 간의 프로젝트 관리 및 커뮤니케이션을 위한 웹 기반 협업 플랫폼
 
@@ -47,8 +60,14 @@ Work Hub는 웹 개발 프로젝트의 전체 생명주기를 관리하고, 개�
 - **GitHub Actions**: CI/CD 파이프라인
 - **Prometheus & Grafana**: 모니터링 및 메트릭 시각화
 
-### API & Documentation
-- **Swagger/OpenAPI**: API 문서 자동화
+## CI 파이프라인
+
+- `.github/workflows/ci.yml` 워크플로우가 `main`, `develop` 대상 PR 생성·업데이트 시 자동으로 실행되어 `./gradlew clean test --build-cache`를 수행합니다.
+- 워크플로우 내부 `services`에서 Postgres 16, Redis 7 컨테이너를 띄우고 `SPRING_PROFILES_ACTIVE=test`로 테스트 전용 설정(`src/main/resources/application-test.yml`)을 적용합니다.
+- CI 실행에 필요한 Secrets: `CI_DB_PASSWORD`(데이터베이스 비밀번호). 필요 시 `TEST_DB_URL`, `TEST_DB_USERNAME`, `TEST_REDIS_*`를 추가로 등록하면 기본값 대신 사용할 수 있습니다.
+- 로컬에서 CI 환경을 재현하려면 `docker compose up postgres redis` 실행 후 `SPRING_PROFILES_ACTIVE=test ./gradlew clean test`를 수행하세요.
+
+---
 
 ## 시작하기
 
@@ -185,7 +204,54 @@ GitHub Actions를 통해 자동화된 테스트가 실행됩니다:
 - **환경**: PostgreSQL 16
 - **실행**: `./gradlew clean test --build-cache`
 
-## 아키텍처 특징
+### 7-5. DTO/Entity 규칙
+
+#### Record 사용
+- **DTO는 Java Record를 사용**하여 불변 객체로 작성합니다.
+- Record는 간결한 문법과 불변성을 제공하여 안전한 데이터 전달이 가능합니다.
+
+#### Static 메서드 네이밍 규칙
+- **Record**: `from` static 메서드 사용 (Entity → DTO 변환)
+- **Entity**: `of` static 메서드 사용 (DTO → Entity 변환)
+
+```java
+// Record 예시 (DTO)
+public record UserResponse(
+    Long userId,
+    String username,
+    String email
+) {
+    // Entity → DTO 변환
+    public static UserResponse from(User user) {
+        return new UserResponse(
+            user.getId(),
+            user.getUsername(),
+            user.getEmail()
+        );
+    }
+}
+
+// Entity 예시
+@Entity
+public class User {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String username;
+    private String email;
+
+    // DTO → Entity 변환
+    public static User of(UserCreateRequest request) {
+        User user = new User();
+        user.username = request.username();
+        user.email = request.email();
+        return user;
+    }
+}
+```
+
+---
 
 ### 1. 도메인 기반 레이어드 아키텍처
 각 도메인이 독립적인 레이어(Controller-Service-Repository-Entity)를 가지며, 도메인 간 의존성을 최소화합니다.
@@ -238,4 +304,78 @@ docker compose --profile monitor up -d
 
 ---
 
-**Work Hub 개발팀**
+## 11. 로그 관리
+
+### 11-1. Docker Compose 실행
+
+```bash
+# 전체 서비스 실행 (Redis + Spring Boot)
+DB_PASSWORD=your_password docker compose up -d
+
+# 빌드 포함 실행
+DB_PASSWORD=your_password docker compose up --build -d
+
+# 로그 확인
+docker logs -f workhub-app
+
+# 서비스 중지
+docker compose down
+```
+
+### 11-2. 로그 확인 방법
+
+| 방법 | 명령어/위치 | 용도 |
+|------|------------|------|
+| **Docker Logs** | `docker logs -f workhub-app` | 실시간 디버깅 |
+| **로컬 파일** | `docker exec workhub-app tail -f /app/logs/workhub.log` | 로컬 백업 |
+| **CloudWatch Console** | AWS Console → CloudWatch → Logs → /ecs/workhub | 검색, 필터링, 분석 |
+| **CloudWatch CLI** | `aws logs tail /ecs/workhub --follow` | CLI에서 실시간 확인 |
+
+### 11-3. 로그 활용 예시
+
+#### 개발 환경
+```bash
+# 실시간 로그 확인
+docker logs -f workhub-app
+
+# ERROR만 필터링
+docker logs workhub-app 2>&1 | grep ERROR
+
+# 최근 100줄만 보기
+docker logs --tail 100 workhub-app
+```
+
+#### 운영 환경 (EC2)
+```bash
+# CloudWatch Logs 실시간 확인
+aws logs tail /ecs/workhub --follow
+
+# 특정 키워드 검색
+aws logs filter-log-events \
+  --log-group-name /ecs/workhub \
+  --filter-pattern "ERROR"
+```
+
+### 11-4. CloudWatch Logs 설정
+
+#### EC2 IAM 역할 설정
+
+1. **IAM → Roles → Create role**
+2. **Trusted entity**: AWS service → EC2
+3. **Permissions**: `CloudWatchAgentServerPolicy` 선택
+4. **Role name**: `EC2-CloudWatch-Logs-Role`
+5. **EC2 인스턴스에 역할 부여**: EC2 Console → Actions → Security → Modify IAM role
+
+#### 로그 확인
+- **Console**: CloudWatch → Logs → Log groups → `/ecs/workhub`
+- **CLI**: `aws logs tail /ecs/workhub --follow`
+
+### 11-5. 로그 파일 위치
+
+- **컨테이너 내부**: `/app/logs/workhub.log`
+- **호스트 볼륨**: Docker volume `work-hub_app_logs`
+- **CloudWatch**: Log group `/ecs/workhub`, Stream `workhub-app`
+
+---
+
+**작성자**: Work Hub 개발팀

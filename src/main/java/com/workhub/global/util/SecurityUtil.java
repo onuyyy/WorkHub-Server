@@ -1,5 +1,6 @@
 package com.workhub.global.util;
 
+import com.workhub.global.security.CustomUserDetails;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
@@ -53,6 +54,12 @@ public final class SecurityUtil {
                 .map(principal -> (UserDetails) principal);
     }
 
+    private static Optional<CustomUserDetails> getCustomUserDetails() {
+        return getCurrentUserDetails()
+                .filter(userDetails -> userDetails instanceof CustomUserDetails)
+                .map(userDetails -> (CustomUserDetails) userDetails);
+    }
+
     /**
      * 현재 인증된 사용자의 username(로그인 ID)을 반환
      *
@@ -76,23 +83,16 @@ public final class SecurityUtil {
 
     /**
      * 현재 인증된 사용자의 ID를 반환
-     * TODO: User 엔티티 생성 후 구현
      *
      * @return Optional<Long>
      */
     public static Optional<Long> getCurrentUserId() {
-        // TODO: UserDetails 구현체에서 사용자 ID 추출
-        // 예시:
-        // return getCurrentUserDetails()
-        //         .filter(userDetails -> userDetails instanceof CustomUserDetails)
-        //         .map(userDetails -> ((CustomUserDetails) userDetails).getUserId());
-        log.warn("getCurrentUserId() is not implemented yet. User entity is required.");
-        return Optional.empty();
+        return getCustomUserDetails()
+                .map(CustomUserDetails::getUserId);
     }
 
     /**
      * 현재 인증된 사용자의 ID를 반환 (없으면 예외 발생)
-     * TODO: User 엔티티 생성 후 구현
      *
      * @return Long
      * @throws IllegalStateException 인증되지 않은 경우
@@ -100,6 +100,26 @@ public final class SecurityUtil {
     public static Long getCurrentUserIdOrThrow() {
         return getCurrentUserId()
                 .orElseThrow(() -> new IllegalStateException("인증된 사용자가 없습니다."));
+    }
+
+    /**
+     * 현재 인증된 사용자의 실명(표시 이름)을 반환
+     *
+     * @return Optional<String>
+     */
+    public static Optional<String> getCurrentUserRealName() {
+        return getCustomUserDetails()
+                .map(CustomUserDetails::getUserName);
+    }
+
+    /**
+     * 현재 인증된 사용자의 전화번호를 반환
+     *
+     * @return Optional<String>
+     */
+    public static Optional<String> getCurrentUserPhone() {
+        return getCustomUserDetails()
+                .map(CustomUserDetails::getPhone);
     }
 
     /**
@@ -240,7 +260,9 @@ public final class SecurityUtil {
     public static Optional<String> getRemoteAddr() {
         return getCurrentRequest()
                 .map(request -> {
+
                     String ip = request.getHeader("X-Forwarded-For");
+
                     if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
                         ip = request.getHeader("Proxy-Client-IP");
                     }
@@ -248,13 +270,16 @@ public final class SecurityUtil {
                         ip = request.getHeader("WL-Proxy-Client-IP");
                     }
                     if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-                        ip = request.getHeader("HTTP_CLIENT_IP");
-                    }
-                    if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
                         ip = request.getHeader("HTTP_X_FORWARDED_FOR");
                     }
                     if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+                        ip = request.getHeader("HTTP_CLIENT_IP");
+                    }
+                    if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
                         ip = request.getRemoteAddr();
+                    }
+                    if (ip != null && ip.contains(",")) {
+                        ip = ip.split(",")[0].trim();
                     }
                     return ip;
                 });
@@ -267,7 +292,7 @@ public final class SecurityUtil {
      */
     public static Optional<String> getUserAgent() {
         return getCurrentRequest()
-                .map(request -> request.getHeader("User-Agent"));
+                .map(request -> request.getHeader("user-agent"));
     }
 
     /**
